@@ -14,10 +14,7 @@ export class JWTService {
     const secretOrKey = process.env.SECRET_KEY;
     const userInfo = { phone: phone, roles: roles };
     const token = jwt.sign(userInfo, secretOrKey, { expiresIn });
-    return {
-      expires_in: expiresIn,
-      access_token: token,
-    };
+    return {token} ;
   }
 
   async validateUser(signedUser: IUser): Promise<IUser> {

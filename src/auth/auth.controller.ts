@@ -12,15 +12,11 @@ export class AuthController {
 
     @Post('register')
     async createUser(@Body() createUserDto: CreateUserDto): Promise<IResponse<IUser>> {
-        try {
-
-            await this.userService.createUser(createUserDto);
-            return success({
-                message: "REGISTRATION.USER_REGISTERED_SUCCESSFULLY"
-            })
-        } catch(err) {
-            return err;
-        }
+        
+        await this.userService.createUser(createUserDto);
+        return success({
+            message: "REGISTRATION.USER_REGISTERED_SUCCESSFULLY"
+        })
     }
 
     @Post('login')

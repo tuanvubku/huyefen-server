@@ -14,7 +14,7 @@ export class UserService {
         const phoneRegistered = await this.userModel.findOne({ phone: user.phone });
         const emailRegistered = await this.userModel.findOne({ email: user.email });
 
-        if (!phoneRegistered && !emailRegistered) {
+        if (!phoneRegistered || !emailRegistered) {
             user.password = await bcrypt.hash(user.password, SALT);
             user.roles = [Role.User]
             const newUser = this.userModel(user);
@@ -27,7 +27,7 @@ export class UserService {
 
 
     async findUserFromDB(phone: string): Promise<IUser> {
-        return await this.userModel.findOne({phone});
+        return await this.userModel.findOne({phone}).lean().exec();
     }
 
     async getUser(phone: string): Promise<IUser> {

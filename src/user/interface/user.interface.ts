@@ -9,16 +9,5 @@ export interface IUser extends Document{
   gender: string;
   birthday: Date;
   job: string,
-  roles?: string[],
-  auth?: {
-    email : {
-      valid : boolean,
-    },
-    facebook: {
-      userid: string
-    },
-    linkedin: {
-      userid: string
-    }
-  }
+  roles?: string[]
 }
