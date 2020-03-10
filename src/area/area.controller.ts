@@ -1,37 +1,38 @@
-import { Controller, Body, Post, HttpCode, Get, Param } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { ResponseSuccess } from 'src/utils/dto/response.dto';
+import { IResponse } from '../utils/interface/response.interface';
 import { AreaService } from './area.service';
-import { IArea } from './interfaces/area.interface';
 import { CreateAreaDto } from './dto/create-area.dto';
-import { IResponse } from '../utils/response.interface'
-import { success } from '../utils/common'
-import { ICategory } from './interfaces/category.interface';
 import { CreateCategoryDto } from './dto/create-category.dto';
-@Controller('area')
+import { IArea } from './interfaces/area.interface';
+import { ICategory } from './interfaces/category.interface';
+@Controller('areas')
 export class AreaController {
     constructor(private readonly areaService: AreaService) {}
 
     @Get()
     async findAll(): Promise<IResponse<IArea[]>> {
         const areas = await this.areaService.findAll()
-        return success(areas);
+        return new ResponseSuccess("AREA.GET_SUCCESSS",areas);
     }
 
     @Get('category')
     async findAllCategory(): Promise<IResponse<ICategory[]>> {
         const categories = await this.areaService.findAllCategories();
-        return success(categories);
+        return new ResponseSuccess("CATEGORY.GET_SUCCESSS",categories);
     }
 
     @Get(':id')
     async findOne(@Param('id') id: string): Promise<IResponse<IArea>> {
         const area = await this.areaService.findOne(id);
-        return success(area);
+        return new ResponseSuccess("AREA.GET_BY_ID_SUCCESSS",area);
     }
 
+    
     @Post()
     async create(@Body() createAreaDto: CreateAreaDto): Promise<IResponse<IArea>> {
         const area =  await this.areaService.create(createAreaDto);
-        return success(area);
+        return new ResponseSuccess("AREA.CREATE_SUCCESSS",area);
     }
 
 
@@ -41,7 +42,7 @@ export class AreaController {
         const area = await this.areaService.findOne(areaId);
         area[0].category.push(newCategory.id);
         this.areaService.update(areaId, area[0]);
-        return success(newCategory);
+        return new ResponseSuccess("CATEGORY.CREATE_SUCCESSS",newCategory);
     }
 
 

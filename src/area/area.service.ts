@@ -15,7 +15,7 @@ export class AreaService {
     }
 
     async findOne(id: string): Promise<IArea> {
-        return await this.areaModel.find({_id: id});
+        return this.areaModel.findOne({_id: id});
     }
 
     async update(id: string, area: IArea): Promise<IArea> {

@@ -1,31 +1,31 @@
-import { Controller, Post, Body, Get, Param, UseGuards, Req } from '@nestjs/common';
-import { UserService } from './user.service';
-import { IResponse } from 'src/utils/response.interface';
-import { IUser } from './interface/user.interface';
-import { success } from 'src/utils/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from 'src/utils/guard/roles.guard';
-import { Roles } from 'src/utils/roles.decorator';
-import {Role}  from '../utils/constant'
+import { Roles } from 'src/utils/decorator/roles.decorator';
 import { User } from 'src/utils/decorator/user.decorator';
+import { ResponseSuccess } from 'src/utils/dto/response.dto';
+import { RolesGuard } from 'src/utils/guard/roles.guard';
+import { IResponse } from 'src/utils/interface/response.interface';
+import { Role } from '../utils/constant';
+import { IUser } from './interface/user.interface';
+import { UserService } from './user.service';
 
 @Controller('user')
 export class UserController {
-    constructor(private readonly userService: UserService) {}
+    constructor(private readonly userService: UserService) { }
 
     @Get()
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
-    async findUser_(@User() userFromDB: IUser): Promise<IResponse<IUser>> {
+    async findUser(@User() userFromDB: IUser): Promise<IResponse<IUser>> {
         const user = await this.userService.getUser(userFromDB.phone);
-        return success(user);
+        return new ResponseSuccess("USER.GET_SUCCESS", user);
     }
 
     @Get(':phone')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
-    async findUser(@Param('phone') phone: string): Promise<IResponse<IUser>> {
+    async findUserByPhone(@Param('phone') phone: string): Promise<IResponse<IUser>> {
         const user = await this.userService.getUser(phone);
-        return success(user);
+        return new ResponseSuccess("USER.GET_BY_ID_SUCCESS", user);
     }
 }
