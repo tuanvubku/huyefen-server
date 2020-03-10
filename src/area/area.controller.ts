@@ -1,50 +1,76 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
 import { ResponseSuccess } from 'src/utils/dto/response.dto';
 import { IResponse } from '../utils/interface/response.interface';
 import { AreaService } from './area.service';
-import { CreateAreaDto } from './dto/create-area.dto';
+import { CreateAreaDto, UpdateAreaDto } from './dto/create-area.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { IArea } from './interfaces/area.interface';
 import { ICategory } from './interfaces/category.interface';
+
 @Controller('areas')
 export class AreaController {
-    constructor(private readonly areaService: AreaService) {}
+    constructor(private readonly areaService: AreaService) { }
 
     @Get()
-    async findAll(): Promise<IResponse<IArea[]>> {
+    async findAllArea(): Promise<IResponse<IArea[]>> {
         const areas = await this.areaService.findAll()
-        return new ResponseSuccess("AREA.GET_SUCCESSS",areas);
+        return new ResponseSuccess("AREA.GET_SUCCESSS", areas);
     }
 
-    @Get('category')
+    @Get('categories')
     async findAllCategory(): Promise<IResponse<ICategory[]>> {
         const categories = await this.areaService.findAllCategories();
-        return new ResponseSuccess("CATEGORY.GET_SUCCESSS",categories);
+        return new ResponseSuccess("CATEGORY.GET_SUCCESSS", categories);
     }
 
     @Get(':id')
-    async findOne(@Param('id') id: string): Promise<IResponse<IArea>> {
+    async findAreaById(@Param('id') id: string): Promise<IResponse<IArea>> {
         const area = await this.areaService.findOne(id);
-        return new ResponseSuccess("AREA.GET_BY_ID_SUCCESSS",area);
+        return new ResponseSuccess("AREA.GET_BY_ID_SUCCESSS", area);
     }
 
-    
+
     @Post()
-    async create(@Body() createAreaDto: CreateAreaDto): Promise<IResponse<IArea>> {
-        const area =  await this.areaService.create(createAreaDto);
-        return new ResponseSuccess("AREA.CREATE_SUCCESSS",area);
+    async createArea(@Body() createAreaDto: CreateAreaDto): Promise<IResponse<IArea>> {
+        const area = await this.areaService.create(createAreaDto);
+        return new ResponseSuccess("AREA.CREATE_SUCCESSS", area);
+    }
+
+    @Put('id')
+    async updateArea(@Param('id') id: string, @Body() updateAreaDto: UpdateAreaDto): Promise<IResponse<IArea>> {
+        const updatedArea = await this.areaService.updateArea(updateAreaDto, id);
+        return new ResponseSuccess("AREA.UPDATE_SUCCESS", updatedArea);
+    }
+
+    @Delete('id')
+    async deleteArea(@Param('id') id: string): Promise<IResponse<IArea>> {
+        const deletedArea = await this.areaService.deleteArea(id);
+        return new ResponseSuccess("AREA.DELET_SUCCESS", deletedArea);
     }
 
 
-    @Post('category/:areaId')
-    async createCategory(@Param('areaId') areaId: string, @Body() createCategoryDto: CreateCategoryDto): Promise<IResponse<ICategory>> {
-        const newCategory =  await this.areaService.createCategory(createCategoryDto);
-        const area = await this.areaService.findOne(areaId);
-        area[0].category.push(newCategory.id);
-        this.areaService.update(areaId, area[0]);
-        return new ResponseSuccess("CATEGORY.CREATE_SUCCESSS",newCategory);
+    @Post('categories')
+    async createCategory(@Body() createCategoryDto: CreateCategoryDto): Promise<IResponse<ICategory>> {
+        const newCategory = await this.areaService.createCategory(createCategoryDto);
+        return new ResponseSuccess("CATEGORY.CREATE_SUCCESSS", newCategory);
     }
 
+    @Get('categories/:id')
+    async findCategoryById(@Param('id') id: string): Promise<IResponse<ICategory>> {
+        const category = await this.areaService.findCategoryById(id);
+        return new ResponseSuccess("CATEGORY.GET_BY_ID_SUCCESSS", category);
+    }
 
+    @Put(':id')
+    async updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateAreaDto): Promise<IResponse<ICategory>> {
+        const updateCategory = this.areaService.updateCategory(updateCategoryDto, id);
+        return new ResponseSuccess("CATEGORY.UPDATE_SUCCESS", updateCategory);
+    }
+
+    @Delete('id')
+    async deleteCategory(@Param('id') id: string) {
+        const deleteCategory = this.areaService.deleteCategory(id);
+        return new ResponseSuccess("CATEGORY.DELETE_SUCCESS", deleteCategory);
+    }
 }
 

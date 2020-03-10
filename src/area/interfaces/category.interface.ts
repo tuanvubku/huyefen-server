@@ -1,4 +1,6 @@
-export interface ICategory {
-    id?: string;
+import { Document } from 'mongoose';
+
+export interface ICategory extends Document {
     name: string;
+    areaId: string;
 }

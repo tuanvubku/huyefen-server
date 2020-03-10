@@ -9,7 +9,7 @@ import { Role } from '../utils/constant';
 import { IUser } from './interface/user.interface';
 import { UserService } from './user.service';
 
-@Controller('user')
+@Controller('users')
 export class UserController {
     constructor(private readonly userService: UserService) { }
 
