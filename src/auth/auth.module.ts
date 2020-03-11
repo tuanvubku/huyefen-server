@@ -6,10 +6,11 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JWTService } from './jwt.service';
 import { JwtStrategy } from './jwt.strategy';
+import { TeacherModule } from 'src/teacher/teacher.module';
 
 @Module({
   imports: [MongooseModule.forFeature([
-    {name: 'User', schema: UserSchema}]), UserModule],
+    {name: 'User', schema: UserSchema}]), UserModule, TeacherModule],
     controllers: [AuthController],
     providers: [ AuthService, JWTService, JwtStrategy]
 })

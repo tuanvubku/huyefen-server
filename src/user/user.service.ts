@@ -56,4 +56,13 @@ export class UserService {
             throw new HttpException("USER.NOT_FOUND", HttpStatus.NOT_FOUND);
         return userFromDB;
     }
+
+    checkValidObjecID(ids: string[]) {
+        ids.forEach(id => {
+            if (!id.match(/^[0-9a-fA-F]{24}$/))
+                return false;
+        })
+        return true;
+    }
+
 }

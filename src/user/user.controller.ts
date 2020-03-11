@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Put, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from 'src/utils/decorator/roles.decorator';
 import { User } from 'src/utils/decorator/user.decorator';
@@ -33,18 +33,21 @@ export class UserController {
     @Put('concerns')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
-    async updateConcern(@Body('catesOfConcern') catesOfConcern: string[], @User() user): Promise<IResponse<any>> {
+    async updateConcern(@Body('catesOfConcern') catesOfConcern_: string[], @User() user): Promise<IResponse<any>> {
         const userFromDB = await this.userService.findUserFromDB(user.phone);
-        userFromDB.catesOfConcern = catesOfConcern;
+        const isValidObjecID = this.userService.checkValidObjecID(catesOfConcern_);
+        if(!isValidObjecID)
+            throw new HttpException("USER.CONCERN_FAILD", HttpStatus.BAD_REQUEST);
         const updateUser = await this.userService.updateUserById(user.id, userFromDB);
-        return new ResponseSuccess("USER.UPDATE_CONCERN_SUCCESS", updateUser);
+        const {catesOfConcern} = updateUser;
+        return new ResponseSuccess("USER.UPDATE_CONCERN_SUCCESS", catesOfConcern);
     }
     
     @Put('info')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
     async updateInfo(@Body() updateUserDto: UpdateUserDto, @User() user): Promise<IResponse<IUser>> {
-        const updateUser = this.userService.updateUserInfo(user.phone, updateUserDto);
+        const updateUser = await this.userService.updateUserInfo(user.phone, updateUserDto);
         return new ResponseSuccess("USER.UPDATE_INFO_SUCCESS", updateUser);
     }
 }
