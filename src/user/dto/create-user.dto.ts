@@ -1,3 +1,5 @@
+import { CreateURLDto } from "src/shared/dto/create-url.dto";
+
 export class CreateUserDto {
     readonly userName: string;
     readonly password: string;
@@ -7,4 +9,6 @@ export class CreateUserDto {
     readonly job: string;
     readonly birthday: Date;
     readonly roles?: string[];
-  }
+}
+
+export type UpdateUserDto = Partial<CreateURLDto>

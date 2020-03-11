@@ -1,9 +1,10 @@
-import { Model } from 'mongoose';
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { IUser } from './interface/user.interface';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
+import { Model } from 'mongoose';
 import { Role, SALT } from '../utils/constant';
+import { UpdateUserDto } from './dto/create-user.dto';
+import { IUser } from './interface/user.interface';
 
 @Injectable()
 export class UserService {
@@ -25,14 +26,34 @@ export class UserService {
 
     }
 
-
     async findUserFromDB(phone: string): Promise<IUser> {
-        return await this.userModel.findOne({phone}).lean().exec();
+        return await this.userModel.findOne({ phone }).lean().exec();
     }
 
     async getUser(phone: string): Promise<IUser> {
         const user = await this.findUserFromDB(phone);
         user.password = undefined;
         return user;
+    }
+
+    async updateUserById(id: string, user: IUser): Promise<IUser> {
+        const userFromDB = await this.userModel.findByIdAndUpdate(id, user, { new: true });
+        if (!userFromDB)
+            throw new HttpException("USER.NOT_FOUND", HttpStatus.NOT_FOUND);
+        return userFromDB;
+    }
+
+    async updateUserByPhone(phone: string, user: IUser): Promise<IUser> {
+        const userFromDB = await this.userModel.findOneAndUpdate({ phone }, user, { new: true });
+        if (!userFromDB)
+            throw new HttpException("USER.NOT_FOUND", HttpStatus.NOT_FOUND);
+        return userFromDB;
+    }
+
+    async updateUserInfo(phone: string, updateUser: UpdateUserDto): Promise<IUser> {
+        const userFromDB = await this.userModel.findOneAndUpdate({ phone }, updateUser, { new: true });
+        if (!userFromDB)
+            throw new HttpException("USER.NOT_FOUND", HttpStatus.NOT_FOUND);
+        return userFromDB;
     }
 }
