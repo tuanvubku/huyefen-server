@@ -27,6 +27,7 @@
     "@nestjs/mongoose": "^6.3.1",
     "@nestjs/passport": "^6.2.0",
     "@nestjs/platform-express": "^6.10.14",
+    "@nestjs/serve-static": "^2.0.0",
     "@types/bcryptjs": "^2.4.2",
     "@types/lodash": "^4.14.149",
     "bcryptjs": "^2.4.3",

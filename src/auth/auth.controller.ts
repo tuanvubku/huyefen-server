@@ -15,6 +15,7 @@ import { TeacherService } from 'src/teacher/teacher.service';
 import { CreateTeacherDto } from 'src/teacher/dto/create-teacher.dto';
 import { async } from 'rxjs/internal/scheduler/async';
 import { ITeacher } from 'src/teacher/interface/teacher.interface';
+import { response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -72,5 +73,14 @@ export class AuthController {
         return new ResponseSuccess(msg, statusCode);
     }
 
+    @Put('image-url')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User, Role.Teacher)
+    async saveURL(@Body('base64') base64: string, @User() user): Promise<IResponse<any>> {
+       const res = await this.authService.saveURL(base64, user);
 
+        return new ResponseSuccess("SUCCESS", res);
+    }
+
+    
 }

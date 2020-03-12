@@ -1,11 +1,13 @@
 export interface ITeacher {
+    id?: string;
     name: string;
     phone: string;
     password:string;
-    role?: string[]
+    roles?: string[]
     avatar?: string;
     job?: string;
     noOfUsNotification?: number;
+    biography?: string;
     twitter?: string;
     facebook?: string;
     youtube?: string;

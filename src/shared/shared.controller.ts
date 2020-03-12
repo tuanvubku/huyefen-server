@@ -18,7 +18,7 @@ export class SharedController {
 //   @Roles('User','Teacher')
 //   async convertBase64ToURL(@Body() createURLDto: CreateURLDto, @User() user): Promise<any> {
 //     const url = await this.shareService.convertBase64ToURL(createURLDto.base64);
-//     const userFromDB = await this.userService.findUserFromDB(user.phone);
+//     const userFromDB = await this.userService.findUserByPhone(user.phone);
 //     userFromDB.avatar = url;
 //     const updateUser = this.userService
 //   }

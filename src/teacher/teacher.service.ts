@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import { SALT, Role } from 'src/utils/constant';
+import { UpdateTeacherDto } from './dto/update-teacher.dto';
 
 @Injectable()
 export class TeacherService {
@@ -13,7 +14,7 @@ export class TeacherService {
         const teacherFromDB = await this.teacherModel.findOne({phone: teacher.phone});
         if(!teacherFromDB) {
             teacher.password = await bcrypt.hash(teacher.password, SALT);
-            teacher.role = [Role.Teacher];
+            teacher.roles = [Role.Teacher];
             const newTeacher = this.teacherModel(teacher);
             return await newTeacher.save()
         } else {
@@ -23,5 +24,16 @@ export class TeacherService {
 
     async findTeacherByPhone(phone: string): Promise<ITeacher> {
         return await this.teacherModel.findOne({phone}).lean().exec();
+    }
+
+    async findTeacherById(id: string): Promise<ITeacher> {
+        return await this.teacherModel.findById(id).lean().exec();
+    }
+
+    async updateTeacher(phone: string,updateTacher: UpdateTeacherDto): Promise<ITeacher> {
+        const teacherFromDB = await this.teacherModel.findOneAndUpdate({phone}, updateTacher, {new: true});
+        if (!teacherFromDB)
+            throw new HttpException("TEACHER.NOT_FOUND", HttpStatus.NOT_FOUND);
+        return teacherFromDB;
     }
 }

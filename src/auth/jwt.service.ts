@@ -1,24 +1,34 @@
-import * as jwt from 'jsonwebtoken';
 import { Injectable } from '@nestjs/common';
-import { Model } from 'mongoose';
-import { InjectModel } from '../../node_modules/@nestjs/mongoose';
+import * as jwt from 'jsonwebtoken';
+import { ITeacher } from 'src/teacher/interface/teacher.interface';
+import { TeacherService } from 'src/teacher/teacher.service';
 import { IUser } from 'src/user/interface/user.interface';
-import {TOKEN_EXPIRED} from '../utils/constant'
+import { UserService } from 'src/user/user.service';
+import { TOKEN_EXPIRED } from '../utils/constant';
 @Injectable()
 export class JWTService {
-  constructor(@InjectModel('User') private readonly userModel: Model<IUser>) { }
+  constructor(private readonly userService: UserService,
+    private readonly teacherService: TeacherService) { }
 
 
-  async createToken(phone, roles) {
+  async createToken(id, roles) {
     const expiresIn = TOKEN_EXPIRED;
     const secretOrKey = process.env.SECRET_KEY;
-    const userInfo = { phone: phone, roles: roles };
+     const userInfo = { id: id, roles: roles };
     const token = jwt.sign(userInfo, secretOrKey, { expiresIn });
-    return {token} ;
+    return { token };
   }
 
   async validateUser(signedUser: IUser): Promise<IUser> {
-    var userFromDb = await this.userModel.findOne({ phone: signedUser.phone });
+    var userFromDb = await this.userService.findUserById(signedUser.id);
+    if (userFromDb) {
+      return userFromDb;
+    }
+    return null;
+  }
+
+  async validateTeacher(signedUser: ITeacher): Promise<ITeacher> {
+    var userFromDb = await this.teacherService.findTeacherById(signedUser.id);
     if (userFromDb) {
       return userFromDb;
     }

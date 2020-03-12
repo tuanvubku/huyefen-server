@@ -9,6 +9,7 @@ import { Role } from '../utils/constant';
 import { IUser } from './interface/user.interface';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/create-user.dto';
+import { checkValidObjecID } from 'src/utils/validate/validate';
 
 @Controller('users')
 export class UserController {
@@ -30,12 +31,12 @@ export class UserController {
         return new ResponseSuccess("USER.GET_BY_ID_SUCCESS", user);
     }
 
-    @Put('concerns')
+    @Put('concern')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
     async updateConcern(@Body('catesOfConcern') catesOfConcern_: string[], @User() user): Promise<IResponse<any>> {
-        const userFromDB = await this.userService.findUserFromDB(user.phone);
-        const isValidObjecID = this.userService.checkValidObjecID(catesOfConcern_);
+        const userFromDB = await this.userService.findUserByPhone(user.phone);
+        const isValidObjecID = checkValidObjecID(catesOfConcern_);
         if(!isValidObjecID)
             throw new HttpException("USER.CONCERN_FAILD", HttpStatus.BAD_REQUEST);
         const updateUser = await this.userService.updateUserById(user.id, userFromDB);

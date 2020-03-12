@@ -26,12 +26,17 @@ export class UserService {
 
     }
 
-    async findUserFromDB(phone: string): Promise<IUser> {
+    async findUserByPhone(phone: string): Promise<IUser> {
         return await this.userModel.findOne({ phone }).lean().exec();
     }
 
+    async findUserById(id: string): Promise<IUser> {
+        const user =  await this.userModel.findById(id).lean().exec();
+        return user;
+    }
+
     async getUser(phone: string): Promise<IUser> {
-        const user = await this.findUserFromDB(phone);
+        const user = await this.findUserByPhone(phone);
         user.password = undefined;
         return user;
     }
@@ -57,12 +62,5 @@ export class UserService {
         return userFromDB;
     }
 
-    checkValidObjecID(ids: string[]) {
-        ids.forEach(id => {
-            if (!id.match(/^[0-9a-fA-F]{24}$/))
-                return false;
-        })
-        return true;
-    }
 
 }
