@@ -36,4 +36,9 @@ export class TeacherService {
             throw new HttpException("TEACHER.NOT_FOUND", HttpStatus.NOT_FOUND);
         return teacherFromDB;
     }
+
+    async findProfileTeacher(teacherId: string): Promise<ITeacher> {
+        const teacherFromDB = await this.teacherModel.findById(teacherId).select('name phone').lean().exec();
+        return teacherFromDB;
+    }
 }

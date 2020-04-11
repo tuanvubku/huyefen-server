@@ -1,21 +1,19 @@
-import { Body, Controller, Post, UseGuards, Put } from '@nestjs/common';
+import { Body, Controller, Post, Put, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { CreateTeacherDto } from 'src/teacher/dto/create-teacher.dto';
+import { ITeacher } from 'src/teacher/interface/teacher.interface';
+import { TeacherService } from 'src/teacher/teacher.service';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { IUser } from 'src/user/interface/user.interface';
 import { UserService } from 'src/user/user.service';
+import { Role } from 'src/utils/constant';
+import { Roles } from 'src/utils/decorator/roles.decorator';
+import { User } from 'src/utils/decorator/user.decorator';
 import { ResponseSuccess } from 'src/utils/dto/response.dto';
+import { RolesGuard } from 'src/utils/guard/roles.guard';
 import { IResponse } from 'src/utils/interface/response.interface';
 import { AuthService } from './auth.service';
 import { CreateLoginDto } from './dto/create-login.dto';
-import { Roles } from 'src/utils/decorator/roles.decorator';
-import { RolesGuard } from 'src/utils/guard/roles.guard';
-import { Role } from 'src/utils/constant';
-import { AuthGuard } from '@nestjs/passport';
-import { User } from 'src/utils/decorator/user.decorator';
-import { TeacherService } from 'src/teacher/teacher.service';
-import { CreateTeacherDto } from 'src/teacher/dto/create-teacher.dto';
-import { async } from 'rxjs/internal/scheduler/async';
-import { ITeacher } from 'src/teacher/interface/teacher.interface';
-import { response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -77,10 +75,10 @@ export class AuthController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User, Role.Teacher)
     async saveURL(@Body('base64') base64: string, @User() user): Promise<IResponse<any>> {
-       const res = await this.authService.saveURL(base64, user);
-
+        const res = await this.authService.saveURL(base64, user);
         return new ResponseSuccess("SUCCESS", res);
     }
 
+    
     
 }

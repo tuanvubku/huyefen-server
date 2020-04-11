@@ -15,6 +15,19 @@ export interface IUser extends Document {
   linkedin?: string,
   noOfUsMessage?: number,
   noOfUsNotification?: number,
-  catesOfConcern?: string[]
+  notifications?: Notification[],
+  catesOfConcern?: string[],
+  friendIds?: string[],
+  friendRequestIds?: string[],
+  followIds?: string[],
+}
+
+interface Notification {
+  id: string,
+  type: number,
+  content: string,
+  user: string,
+  createdAt: Date,
+  seen: boolean
 }
 

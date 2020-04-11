@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Put, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Get, Param, Query, Put, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from 'src/utils/decorator/roles.decorator';
 import { User } from 'src/utils/decorator/user.decorator';
@@ -51,4 +51,39 @@ export class UserController {
         const updateUser = await this.userService.updateUserInfo(user.phone, updateUserDto);
         return new ResponseSuccess("USER.UPDATE_INFO_SUCCESS", updateUser);
     }
+
+    @Get('notifications')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async findNotifications(@User() user, @Query() query ){
+        const notifications = await this.userService.findNotifications(user.phone,query.page, query.limit);
+        return new ResponseSuccess("USER.UPDATE_INFO_SUCCESS", notifications);
+    }
+
+
+
+    @Get('profile/:userId')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async findProfile(@User() myUser, @Param('userId') userId: string ) {
+        const profile = await this.userService.findProfile(myUser, userId);
+        return new ResponseSuccess("USER.VIEW_PROFILE", profile);
+    }
+
+    @Get('friendOfFriends/:friendId')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async findFriendsOfFriend(@User() myUser, @Param('friendId') friendId: string ) {
+        const friendOfFriends = await this.userService.findFriendsOfFriend(myUser, friendId);
+        return new ResponseSuccess("USER.FIREND_OF_FRIENDS", friendOfFriends);
+    }
+
+    @Get('profile/teacher/:teacherId')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async findTeacher(@User() myUser, @Param('teacherId') teacherId: string ) {
+        const profile = await this.userService.findTeacher(myUser, teacherId);
+        return new ResponseSuccess("USER.VIEW_PROFILE_TEACHER", profile);
+    }
+
 }
