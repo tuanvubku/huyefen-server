@@ -86,4 +86,20 @@ export class UserController {
         return new ResponseSuccess("USER.VIEW_PROFILE_TEACHER", profile);
     }
 
+    @Put('teacher/follow')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async setFollowTeacher(@User() user, @Body('teacherId') teacherId: string, @Body('status') status: boolean) {
+        const respond = await this.userService.setFollowTeacher(user, teacherId, status);
+        return new ResponseSuccess("USER.VIEW_PROFILE_TEACHER", respond);
+    }
+
+    @Put('friend/status')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async setFriendStatus(@User() user, @Body('friendId') friendId: string, @Body('status') status: number) {
+        const respond = await this.userService.setFriendStatus(user, friendId, status);
+        return new ResponseSuccess("USER.VIEW_PROFILE_TEACHER", respond);
+    }
+
 }

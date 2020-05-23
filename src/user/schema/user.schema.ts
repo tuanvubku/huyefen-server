@@ -27,7 +27,7 @@ export const UserSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Category', default: []
   }],
-  friendIds: [{type: String}],
+  friendIds: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
   friendRequestIds: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
   followIds: [{type: mongoose.Schema.Types.ObjectId, ref: 'Teacher',default: []}]
 });

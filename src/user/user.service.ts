@@ -2,25 +2,23 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
 import { Model } from 'mongoose';
-import { Role, SALT } from '../utils/constant';
-import { UpdateUserDto } from './dto/create-user.dto';
-import { IUser } from './interface/user.interface';
-import * as mongoose from 'mongoose';
 import { TeacherService } from 'src/teacher/teacher.service';
-
+import { Role, SALT } from '../utils/constant';
+import { UpdateUserDto, CreateUserDto } from './dto/create-user.dto';
+import { IUser } from './interface/user.interface';
 @Injectable()
 export class UserService {
 
-    constructor(@InjectModel('User') private readonly userModel: Model<IUser>,private readonly teacherService: TeacherService) { }
+    constructor(@InjectModel('User') private readonly userModel: Model<IUser>, private readonly teacherService: TeacherService) { }
 
-    async createUser(user: IUser): Promise<IUser> {
+    async createUser(userDto: CreateUserDto): Promise<IUser> {
+        const user = {...userDto};
         const phoneRegistered = await this.userModel.findOne({ phone: user.phone });
         const emailRegistered = await this.userModel.findOne({ email: user.email });
-
         if (!phoneRegistered && !emailRegistered) {
             user.password = await bcrypt.hash(user.password, SALT);
             user.roles = [Role.User]
-            const newUser = this.userModel(user);
+            const newUser = new this.userModel(user);
             return await newUser.save()
         } else {
             throw new HttpException('REGISTRATION.USER_ALREADY_REGISTERED', HttpStatus.FORBIDDEN);
@@ -28,29 +26,29 @@ export class UserService {
 
     }
 
-    async findUserByPhone(phone: string): Promise<IUser> {
+    async findUserByPhone(phone: string) {
         return await this.userModel.findOne({ phone }).lean().exec();
     }
 
     async findUserById(id: string): Promise<IUser> {
-        const user = await this.userModel.findById(id).lean().exec();
+        const user = await this.userModel.findById(id).exec();
         return user;
     }
 
-    async getUser(phone: string): Promise<IUser> {
+    async getUser(phone: string) {
         const user = await this.findUserByPhone(phone);
         user.password = undefined;
         return user;
     }
 
-    async updateUserById(id: string, user: IUser): Promise<IUser> {
+    async updateUserById(id: string, user: UpdateUserDto): Promise<IUser> {
         const userFromDB = await this.userModel.findByIdAndUpdate(id, user, { new: true });
         if (!userFromDB)
             throw new HttpException("USER.NOT_FOUND", HttpStatus.NOT_FOUND);
         return userFromDB;
     }
 
-    async updateUserByPhone(phone: string, user: IUser): Promise<IUser> {
+    async updateUserByPhone(phone: string, user: UpdateUserDto): Promise<IUser> {
         const userFromDB = await this.userModel.findOneAndUpdate({ phone }, user, { new: true });
         if (!userFromDB)
             throw new HttpException("USER.NOT_FOUND", HttpStatus.NOT_FOUND);
@@ -96,7 +94,7 @@ export class UserService {
                 notiList[i].seen = true;
                 user.notifications = notiList;
                 user.noOfUsNotification--;
-                const newUser = this.userModel(user);
+                const newUser = new this.userModel(user);
                 newUser.save();
                 return "SUCCESS";
             }
@@ -110,7 +108,7 @@ export class UserService {
         user.noOfUsNotification = 0;
         const notiList = user.notifications;
         notiList.forEach((noti, index) => notiList[index].seen = true);
-        const newUser = this.userModel(user);
+        const newUser = new  this.userModel(user);
         newUser.save();
         return "SUCCESS";
     }
@@ -118,17 +116,17 @@ export class UserService {
 
     async findProfile(myUser: IUser, userId: string) {
         const userFromDB = await this.findUserById(userId);
-        let status ;
-        if(!myUser) 
+        let status;
+        if (!myUser)
             status = null;
-        else if(!myUser.friendIds)
+        else if (!myUser.friendIds)
             status = 0
-        else if(myUser.friendIds.indexOf(userId) !== -1)
+        else if (myUser.friendIds.indexOf(userId) !== -1)
             status = 3;
-        else if(myUser.friendRequestIds.indexOf(userId) !== -1)
+        else if (myUser.friendRequestIds.indexOf(userId) !== -1)
             status = 2;
         else status = 1;
-        
+
         const respond = {
             id: userId,
             avatar: userFromDB.avatar,
@@ -138,16 +136,13 @@ export class UserService {
         return respond;
     }
 
-    async findFriendsOfFriend(myUser: IUser, userId: string ) {
+    async findFriendsOfFriend(myUser: IUser, userId: string) {
         const userFromDB = await this.findUserById(userId);
         let friendIds = userFromDB.friendIds;
-        console.log(typeof(friendIds[0]))
-        console.log(myUser.id)
-        console.log(friendIds.indexOf(myUser['_id']))
-        if(friendIds.indexOf(myUser['_id']) == -1) {
+        if (friendIds.indexOf(myUser['_id'].toString()) == -1) {
             throw new HttpException("USER.NOT_IS_FRIEND", HttpStatus.BAD_REQUEST)
         }
-        const friendsOfFriend = await this.userModel.find({'_id':{'$in': friendIds}, 'friendIds': mongoose.Types.ObjectId(userId)}).select('id avatar userName friendIds').lean().exec();
+        const friendsOfFriend = await this.userModel.find({ '_id': { '$in': friendIds, '$ne': myUser['_id'] }, 'friendIds': [userId] }).select('id avatar userName friendIds').lean().exec();
         return friendsOfFriend;
     }
 
@@ -155,10 +150,58 @@ export class UserService {
         const teacher = await this.teacherService.findProfileTeacher(teacherId);
         const isFollow = user.followIds.indexOf(teacherId) == -1 ? false : true;
         const respond = {
-            name:  teacher.name,
-            phone: teacher.phone,
-            isFollow: isFollow,
+            ...teacher, isFollow
         }
         return respond;
+    }
+
+    async setFriendStatus(user: IUser, friendId: string, status: number) {
+        const friendFromDB = await this.findUserById(friendId);
+        const friendIdsOfFriend = friendFromDB.friendIds;
+        const friendRequestIdsOfFriend = friendFromDB.friendRequestIds;
+        const friendIdsOfUser = user.friendIds;
+        const userIndex = friendIdsOfFriend.indexOf(user['_id'].toString());
+        const friendIndex = friendIdsOfUser.indexOf(friendId);
+        const errCode = 0;
+        switch (status) {
+            case 0:
+                {
+                    if (userIndex > -1)
+                        friendIdsOfFriend.splice(userIndex, 1);
+                    if (friendIndex > -1)
+                        friendIdsOfUser.splice(friendIndex, 1);
+                    break;
+                }
+            case 1:
+                {
+                    friendRequestIdsOfFriend.push(user['_id'].toString());
+                    break;
+                }
+            case 3:
+                {
+                    const userIndexOfFriendRequest = friendRequestIdsOfFriend.indexOf(user['_id'].toString());
+                    if (userIndexOfFriendRequest > -1)
+                        friendRequestIdsOfFriend.splice(userIndexOfFriendRequest, 1);
+                    friendIdsOfFriend.push(user['_id'].toString());
+                    friendIdsOfUser.push(friendId);
+                    break;
+                }
+        }
+        this.updateUserById(user['_id'], user);
+        this.updateUserById(friendId, friendFromDB); 
+        return "SUCCESS";
+    }
+
+    async setFollowTeacher(user: IUser, teacherId: string, status: boolean) {
+        if(status == true) {
+            user.followIds.push(teacherId);
+        }
+        else {
+            const index = user.followIds.indexOf(teacherId);
+            if(index > -1)
+                user.followIds.splice(index,1)
+        }      
+        this.updateUserById(user['_id'], user)
+        return "SUCCESS";
     }
 }

@@ -5,6 +5,7 @@ import { TeacherService } from 'src/teacher/teacher.service';
 import { IUser } from 'src/user/interface/user.interface';
 import { UserService } from 'src/user/user.service';
 import { TOKEN_EXPIRED } from '../utils/constant';
+
 @Injectable()
 export class JWTService {
   constructor(private readonly userService: UserService,

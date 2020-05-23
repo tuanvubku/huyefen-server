@@ -12,6 +12,9 @@ import { TeacherModule } from './teacher/teacher.module';
 import { CourseModule } from './course/course.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { NotificationModule } from './notification/notification.module';
+import { DeviceModule } from './device/device.module';
+import { SearchModule } from './search/search.module';
 
 @Module({
   imports: [ ConfigModule.forRoot(),
@@ -19,7 +22,8 @@ import { join } from 'path';
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', 'public'),
     }),
-    AreaModule, UserModule, AuthModule, JobModule, SharedModule,SharedModule, TeacherModule, CourseModule],
+    AreaModule, UserModule, AuthModule, JobModule, SharedModule,SharedModule, 
+    TeacherModule, CourseModule, NotificationModule, DeviceModule, SearchModule],
   controllers: [AppController],
   providers: [AppService],
 })

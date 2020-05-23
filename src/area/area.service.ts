@@ -1,10 +1,11 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { UpdateAreaDto } from './dto/create-area.dto';
+import { UpdateAreaDto, CreateAreaDto } from './dto/create-area.dto';
 import { UpdateCategoryDto } from './dto/create-category.dto';
 import { IArea } from './interfaces/area.interface';
 import { ICategory } from './interfaces/category.interface';
+import { CreateCourseDto } from 'src/course/dto/create-course.dto';
 
 @Injectable()
 export class AreaService {
@@ -24,7 +25,7 @@ export class AreaService {
         return await this.areaModel.findByIdAndUpdate(id, area, { new: true });
     }
 
-    async create(area: IArea): Promise<IArea> {
+    async create(area: CreateAreaDto): Promise<IArea> {
         const newArea = new this.areaModel(area);
         return await newArea.save();
     }
@@ -39,12 +40,12 @@ export class AreaService {
             .populate('areaId').exec();
     }
 
-    async createCategory(category: ICategory): Promise<ICategory> {
+    async createCategory(category: CreateAreaDto): Promise<ICategory> {
         const newCategory = new this.categoryModel(category);
         return await newCategory.save();
     }
 
-    async updateArea(area: UpdateAreaDto, id: string): Promise<IArea> {
+    async updateArea(area: UpdateAreaDto, id: string) {
         const updateArea = this.areaModel.findOne({ _id: id });
         if (!updateArea)
             throw new HttpException('AREA.NOT_FOUND', HttpStatus.BAD_REQUEST);

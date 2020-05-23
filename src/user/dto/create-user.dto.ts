@@ -11,4 +11,4 @@ export class CreateUserDto {
     readonly roles?: string[];
 }
 
-export type UpdateUserDto = Partial<CreateURLDto>
+export type UpdateUserDto = Partial<CreateUserDto>
