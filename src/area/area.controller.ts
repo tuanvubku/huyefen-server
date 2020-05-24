@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
-import { ResponseSuccess } from 'src/utils/dto/response.dto';
-import { IResponse } from '../utils/interface/response.interface';
+import { ResponseSuccess } from '@/utils/dto/response.dto';
+import { IResponse } from '@/utils/interface/response.interface';
 import { AreaService } from './area.service';
 import { CreateAreaDto, UpdateAreaDto } from './dto/create-area.dto';
 import { CreateCategoryDto } from './dto/create-category.dto';

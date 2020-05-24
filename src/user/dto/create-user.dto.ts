@@ -1,4 +1,4 @@
-import { CreateURLDto } from "src/shared/dto/create-url.dto";
+import { CreateURLDto } from "@/shared/dto/create-url.dto";
 
 export class CreateUserDto {
     readonly userName: string;

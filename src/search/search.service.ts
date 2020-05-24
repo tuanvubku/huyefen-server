@@ -1,6 +1,6 @@
 import { Injectable, HttpException } from '@nestjs/common';
 import { ElasticsearchService } from '@nestjs/elasticsearch'
-import { CourseModule } from 'src/course/course.module';
+import { CourseModule } from '@/course/course.module';
 @Injectable()
 export class SearchService {
 

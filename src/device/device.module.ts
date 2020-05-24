@@ -3,7 +3,7 @@ import { DeviceController } from './device.controller';
 import { DeviceService } from './device.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { DeviceSchema } from './schema/device.schema';
-import { NotificationModule } from 'src/notification/notification.module';
+import { NotificationModule } from '@/notification/notification.module';
 
 @Module({
   imports: [

@@ -1,15 +1,15 @@
 import { Body, Controller, Get, Param, Query, Put, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Roles } from 'src/utils/decorator/roles.decorator';
-import { User } from 'src/utils/decorator/user.decorator';
-import { ResponseSuccess } from 'src/utils/dto/response.dto';
-import { RolesGuard } from 'src/utils/guard/roles.guard';
-import { IResponse } from 'src/utils/interface/response.interface';
+import { Roles } from '@/utils/decorator/roles.decorator';
+import { User } from '@/utils/decorator/user.decorator';
+import { ResponseSuccess } from '@/utils/dto/response.dto';
+import { RolesGuard } from '@/utils/guard/roles.guard';
+import { IResponse } from '@/utils/interface/response.interface';
 import { Role } from '../utils/constant';
 import { IUser } from './interface/user.interface';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/create-user.dto';
-import { checkValidObjecID } from 'src/utils/validate/validate';
+import { checkValidObjecID } from '@/utils/validate/validate';
 
 @Controller('users')
 export class UserController {

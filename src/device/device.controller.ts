@@ -1,10 +1,10 @@
 import { Controller, Post, Param, Body, HttpStatus, HttpException } from '@nestjs/common';
 import { CreateDeviceDto } from './dto/create-device.dto';
-import { ResponseSuccess } from 'src/utils/dto/response.dto';
+import { ResponseSuccess } from '@/utils/dto/response.dto';
 import { DeviceService } from './device.service';
 import { IDevice } from './interface/device.interface';
-import { NotificationService } from 'src/notification/notification.service';
-import { MessageDto } from 'src/notification/dto/message.dto';
+import { NotificationService } from '@/notification/notification.service';
+import { MessageDto } from '@/notification/dto/message.dto';
 
 @Controller('device')
 export class DeviceController {

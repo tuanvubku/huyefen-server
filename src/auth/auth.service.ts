@@ -1,10 +1,10 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
-import { UserService } from 'src/user/user.service';
+import { UserService } from '@/user/user.service';
 import { JWTService } from './jwt.service';
-import { SALT } from '../utils/constant'
+import { SALT } from '@/utils/constant'
 import { validatePassword } from '../utils/validate/validate'
-import { TeacherService } from 'src/teacher/teacher.service';
+import { TeacherService } from '@/teacher/teacher.service';
 @Injectable()
 export class AuthService {
   constructor(private readonly userService: UserService,

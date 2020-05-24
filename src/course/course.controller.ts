@@ -1,6 +1,6 @@
 import { Body, Controller, HttpException, HttpStatus, Post } from '@nestjs/common';
-import { SearchService } from 'src/search/search.service';
-import { ResponseSuccess } from 'src/utils/dto/response.dto';
+import { SearchService } from '@/search/search.service';
+import { ResponseSuccess } from '@/utils/dto/response.dto';
 import { CourseService } from './course.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 

@@ -3,7 +3,7 @@ import { ITeacher } from './interface/teacher.interface';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
-import { SALT, Role } from 'src/utils/constant';
+import { SALT, Role } from '@/utils/constant';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 
