@@ -1,0 +1,1 @@
+export const CONFIG_ENV_PATH: string = 'config/env';

@@ -13,10 +13,13 @@ import { CourseModule } from './course/course.module';
 import { NotificationModule } from './notification/notification.module';
 import { DeviceModule } from './device/device.module';
 import { SearchModule } from './search/search.module';
+import { CONFIG_ENV_PATH } from './config/constants';
 
 @Module({
 	imports: [
-		ConfigModule.forRoot(),
+		ConfigModule.forRoot({
+			envFilePath: `${CONFIG_ENV_PATH}/${process.env.APP_TYPE}.local.env`
+		}),
 		MongooseModule.forRoot(
 			process.env.MONGO_URI,
 			{
