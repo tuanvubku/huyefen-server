@@ -14,21 +14,17 @@ import { NotificationModule } from './notification/notification.module';
 import { DeviceModule } from './device/device.module';
 import { SearchModule } from './search/search.module';
 import { CONFIG_ENV_PATH } from './config/constants';
+import { MongooseConfig } from './config/mongoose.config';
 
 @Module({
 	imports: [
 		ConfigModule.forRoot({
-			envFilePath: `${CONFIG_ENV_PATH}/${process.env.APP_TYPE}.local.env`
+			envFilePath: `${CONFIG_ENV_PATH}/${process.env.APP_TYPE}.local.env`,
+			isGlobal: true
 		}),
-		MongooseModule.forRoot(
-			process.env.MONGO_URI,
-			{
-				useNewUrlParser: true,
-				useUnifiedTopology: true,
-				useCreateIndex: true,
-				useFindAndModify: false
-			}
-		), 
+		MongooseModule.forRootAsync({
+			useClass: MongooseConfig
+		}), 
 		ServeStaticModule.forRoot({
 			rootPath: join(__dirname, '..', 'public'),
 		}),
