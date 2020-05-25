@@ -1,34 +1,87 @@
 import * as mongoose from 'mongoose';
 
-const Notification = new mongoose.Schema({
-  user:{type: mongoose.Schema.Types.ObjectId, required: true },
-  type: {type: Number, required: true},
-  content: {type: String},
-  createdAt: {type: Date, default: Date.now},
-  seen: {type: Boolean, default: false}
-})
+const Schema = mongoose.Schema;
 
-export const UserSchema = new mongoose.Schema({
-  userName: { type: String, required: true },
-  password: { type: String, required: true },
-  avatar: { type: String, default: '' },
-  email: { type: String, required: true, unique: true },
-  phone: { type: String, required: true, unique: true },
-  gender: { type: String, required: true, default: 'male' },
-  birthday: { type: Date, required: true, default: Date.now },
-  job: { type: String, required: true, default: '' },
-  roles: [String],
-  facebook: { type: String, default: '' },
-  linkedin: { type: String, default: '' },
-  noOfUsMessage: { type: Number, default: 0 },
-  noOfUsNotification: { type: Number, default: 0 },
-  notifications: { type: [Notification] },
-  catesOfConcern: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Category', default: []
-  }],
-  friendIds: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
-  friendRequestIds: [{type: mongoose.Schema.Types.ObjectId, ref: 'User'}],
-  followIds: [{type: mongoose.Schema.Types.ObjectId, ref: 'Teacher',default: []}]
+const Notification = new Schema({
+	user:{
+		type: Schema.Types.ObjectId,
+		required: true
+	},
+	type: {
+		type: Number,
+		required: true
+	},
+	content: String,
+	seen: {
+		type: Boolean,
+		default: false
+	},
+	createdAt: {
+		type: Date,
+		default: Date.now
+	}
+});
+
+export const UserSchema = new Schema({
+	name: {
+		type: String,
+		minlength: 15,
+		maxlength: 50,
+		required: true
+	},
+	password: {
+		type: String,
+		minlength: 6,
+		required: true
+	},
+	avatar: {
+		type: String,
+		default: ''
+	},
+	email: {
+		type: String,
+		required: true,
+		unique: true
+	},
+	phone: {
+		type: String,
+		required: true,
+		minlength: 10,
+		maxlength: 10,
+		unique: true
+	},
+	gender: {
+		type: String,
+		required: true,
+		enum: ['male', 'female']
+	},
+	birthday: {
+		type: String,
+		required: true
+	},
+	job: {
+		type: Schema.Types.ObjectId,
+		required: true,
+		ref: 'Job'
+	},
+	facebook: String,
+	linkedin: String,
+	noOfUsMessage: {
+		type: Number,
+		default: 0
+	},
+	noOfUsNotification: {
+		type: Number,
+		default: 0
+	},
+	notifications: [Notification],
+	catesOfConcern: [{
+		type: Schema.Types.ObjectId,
+		ref: 'Category',
+		default: []
+	}],
+	friendIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+	friendRequestIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+	followIds: [{ type: Schema.Types.ObjectId, ref: 'Teacher', default: [] }]
 });
 

@@ -3,7 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { CreateTeacherDto } from '@/teacher/dto/create-teacher.dto';
 import { ITeacher } from '@/teacher/interface/teacher.interface';
 import { TeacherService } from '@/teacher/teacher.service';
-import { CreateUserDto } from '@/user/dto/create-user.dto';
+import { RegisterDto } from './dto/register.dto';
 import { IUser } from '@/user/interface/user.interface';
 import { UserService } from '@/user/user.service';
 import { Role } from '@/utils/constant';
@@ -24,8 +24,8 @@ export class AuthController {
     ) {}
 
     @Post('register/user')
-    async registerUser(@Body() createUserDto: CreateUserDto): Promise<IResponse<string>> {
-        await this.userService.createUser(createUserDto);
+    async registerUser(@Body() registerDto: RegisterDto): Promise<IResponse<string>> {
+        await this.userService.createUser(registerDto);
         return new ResponseSuccess<string>("REGISTRATION.USER_REGISTERED_SUCCESSFULLY", '');
     }
 

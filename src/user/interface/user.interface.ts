@@ -2,7 +2,7 @@ import { Document } from 'mongoose';
 
 export interface IUser extends Document {
 	id?: string;
-	userName: string;
+	name: string;
 	password: string;
 	avatar?: string,
 	email: string;
@@ -10,7 +10,6 @@ export interface IUser extends Document {
 	gender: string;
 	birthday: Date;
 	job: string,
-	roles?: string[],
 	facebook?: string,
 	linkedin?: string,
 	noOfUsMessage?: number,
@@ -20,7 +19,7 @@ export interface IUser extends Document {
 	friendIds?: string[],
 	friendRequestIds?: string[],
 	followIds?: string[]
-}
+};
 
 interface Notification {
     id: string,
@@ -29,5 +28,4 @@ interface Notification {
     user: string,
     createdAt: Date,
     seen: boolean
-}
-
+};
