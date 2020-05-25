@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { Module, ValidationPipe } from '@nestjs/common';
+import { APP_PIPE } from '@nestjs/core';
 import { join } from 'path';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ConfigModule } from '@nestjs/config';
@@ -13,8 +14,9 @@ import { CourseModule } from './course/course.module';
 import { NotificationModule } from './notification/notification.module';
 import { DeviceModule } from './device/device.module';
 import { SearchModule } from './search/search.module';
-import { CONFIG_ENV_PATH } from './config/constants';
-import { MongooseConfig } from './config/mongoose.config';
+import { CONFIG_ENV_PATH } from '@/config/constants';
+import { MongooseConfig } from '@/config/mongoose.config';
+import { validationPipeConfig } from '@/config/validationPipe.config';
 
 @Module({
 	imports: [
@@ -38,6 +40,12 @@ import { MongooseConfig } from './config/mongoose.config';
 		NotificationModule,
 		DeviceModule,
 		SearchModule
+	],
+	providers: [
+		{
+			provide: APP_PIPE,
+			useValue: new ValidationPipe(validationPipeConfig)
+		}
 	]
 })
 export class AppModule {}

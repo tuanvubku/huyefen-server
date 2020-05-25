@@ -9,7 +9,7 @@ import { UserService } from '@/user/user.service';
 import { Role } from '@/utils/constant';
 import { Roles } from '@/utils/decorator/roles.decorator';
 import { User } from '@/utils/decorator/user.decorator';
-import { ResponseSuccess } from '@/utils/dto/response.dto';
+import { ResponseSuccess } from '@/utils/utils';
 import { RolesGuard } from '@/utils/guard/roles.guard';
 import { IResponse } from '@/utils/interface/response.interface';
 import { AuthService } from './auth.service';
@@ -17,14 +17,16 @@ import { CreateLoginDto } from './dto/create-login.dto';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService,
+    constructor(
+        private readonly authService: AuthService,
         private readonly userService: UserService,
-        private readonly teacherService: TeacherService) { }
+        private readonly teacherService: TeacherService
+    ) {}
 
     @Post('register/user')
-    async registerUser(@Body() createUserDto: CreateUserDto): Promise<IResponse<IUser>> {
+    async registerUser(@Body() createUserDto: CreateUserDto): Promise<IResponse<string>> {
         await this.userService.createUser(createUserDto);
-        return new ResponseSuccess("REGISTRATION.USER_REGISTERED_SUCCESSFULLY");
+        return new ResponseSuccess<string>("REGISTRATION.USER_REGISTERED_SUCCESSFULLY", '');
     }
 
     @Post('register/teacher')
