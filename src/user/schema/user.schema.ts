@@ -25,7 +25,7 @@ const Notification = new Schema({
 export const UserSchema = new Schema({
 	name: {
 		type: String,
-		minlength: 15,
+		minlength: 8,
 		maxlength: 50,
 		required: true
 	},

@@ -25,8 +25,8 @@ export class UserService {
     }
 
     async createUser(user: RegisterDto): Promise<IUser> {
-        const saltRound: number = this.configService.get<number>('SALT_ROUND');
-        const hashedPassword: string = await bcrypt.hash(user.password, saltRound);
+        const saltRounds: number = parseInt(this.configService.get<string>('SALT_ROUNDS'));
+        const hashedPassword: string = await bcrypt.hash(user.password, saltRounds);
         const newUser: IUser = new this.userModel({
             ...user,
             password: hashedPassword

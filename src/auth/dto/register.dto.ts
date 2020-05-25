@@ -1,4 +1,4 @@
-import { IsString, IsMongoId, IsNumberString, Length, MaxLength, MinLength, IsEmail, IsEnum, Matches, IsAlpha } from 'class-validator';
+import { IsString, IsMongoId, IsNumberString, Length, MaxLength, MinLength, IsEmail, IsEnum, IsISO8601 } from 'class-validator';
 
 enum Gender {
     MALE = 'male',
@@ -7,12 +7,13 @@ enum Gender {
 
 export class RegisterDto {
     @IsString()
-    @IsAlpha()
-    @Length(15, 50)
+    @Length(8, 50)
     readonly name: string;
 
     @IsString()
-    @MinLength(6)
+    @MinLength(6, {
+        message: 'Password must be at least 6 chars!'
+    })
     readonly password: string;
 
     @IsNumberString()
@@ -28,6 +29,6 @@ export class RegisterDto {
     @IsMongoId()
     readonly job: string;
 
-    @Matches(/$\d\d\d\d-\d\d-\d\d^/)
+    @IsISO8601()
     readonly birthday: string;
 }
