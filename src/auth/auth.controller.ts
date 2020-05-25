@@ -22,7 +22,7 @@ export class AuthController {
         private readonly teacherService: TeacherService) { }
 
     @Post('register/user')
-    async createUser(@Body() createUserDto: CreateUserDto): Promise<IResponse<IUser>> {
+    async registerUser(@Body() createUserDto: CreateUserDto): Promise<IResponse<IUser>> {
         await this.userService.createUser(createUserDto);
         return new ResponseSuccess("REGISTRATION.USER_REGISTERED_SUCCESSFULLY");
     }
