@@ -1,5 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
-import { ResponseSuccess } from '@/utils/dto/response.dto';
+import { ResponseSuccess } from '@/utils/utils';
 import { IResponse } from '@/utils/interface/response.interface';
 import { AreaService } from './area.service';
 import { CreateAreaDto, UpdateAreaDto } from './dto/create-area.dto';
@@ -37,9 +37,9 @@ export class AreaController {
     }
 
     @Put('id')
-    async updateArea(@Param('id') id: string, @Body() updateAreaDto: UpdateAreaDto): Promise<IResponse<IArea>> {
+    async updateArea(@Param('id') id: string, @Body() updateAreaDto: UpdateAreaDto): Promise<IResponse<number>> {
         const updatedArea = await this.areaService.updateArea(updateAreaDto, id);
-        return new ResponseSuccess("AREA.UPDATE_SUCCESS", updatedArea);
+        return new ResponseSuccess<number>("AREA.UPDATE_SUCCESS", updatedArea);
     }
 
     @Delete('id')
@@ -63,7 +63,7 @@ export class AreaController {
 
     @Put(':id')
     async updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateAreaDto): Promise<IResponse<ICategory>> {
-        const updateCategory = this.areaService.updateCategory(updateCategoryDto, id);
+        const updateCategory = await this.areaService.updateCategory(updateCategoryDto, id);
         return new ResponseSuccess("CATEGORY.UPDATE_SUCCESS", updateCategory);
     }
 

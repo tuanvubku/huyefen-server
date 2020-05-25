@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Post, Put, UseGuards, ConflictException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateTeacherDto } from '@/teacher/dto/create-teacher.dto';
 import { ITeacher } from '@/teacher/interface/teacher.interface';
@@ -6,7 +6,7 @@ import { TeacherService } from '@/teacher/teacher.service';
 import { RegisterDto } from './dto/register.dto';
 import { IUser } from '@/user/interface/user.interface';
 import { UserService } from '@/user/user.service';
-import { Role } from '@/utils/constant';
+import { Role } from '@/config/constants';
 import { Roles } from '@/utils/decorator/roles.decorator';
 import { User } from '@/utils/decorator/user.decorator';
 import { ResponseSuccess } from '@/utils/utils';
@@ -25,8 +25,12 @@ export class AuthController {
 
     @Post('register/user')
     async registerUser(@Body() registerDto: RegisterDto): Promise<IResponse<string>> {
+        const { phone, email } = registerDto;
+        const checkExisted = await this.userService.validateExistedUser({ phone, email });
+        if (checkExisted)
+            throw new ConflictException('REGISTRATION.USER_ALREADY_REGISTERED');
         await this.userService.createUser(registerDto);
-        return new ResponseSuccess<string>("REGISTRATION.USER_REGISTERED_SUCCESSFULLY", '');
+        return new ResponseSuccess<string>('REGISTRATION.USER_REGISTERED_SUCCESSFULLY');
     }
 
     @Post('register/teacher')

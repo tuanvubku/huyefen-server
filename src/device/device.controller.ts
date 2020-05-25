@@ -1,6 +1,6 @@
 import { Controller, Post, Param, Body, HttpStatus, HttpException } from '@nestjs/common';
 import { CreateDeviceDto } from './dto/create-device.dto';
-import { ResponseSuccess } from '@/utils/dto/response.dto';
+import { ResponseSuccess } from '@/utils/utils';
 import { DeviceService } from './device.service';
 import { IDevice } from './interface/device.interface';
 import { NotificationService } from '@/notification/notification.service';

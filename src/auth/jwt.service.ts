@@ -4,7 +4,7 @@ import { ITeacher } from '@/teacher/interface/teacher.interface';
 import { TeacherService } from '@/teacher/teacher.service';
 import { IUser } from '@/user/interface/user.interface';
 import { UserService } from '@/user/user.service';
-import { TOKEN_EXPIRED } from '@/utils/constant';
+import { TOKEN_EXPIRED } from '@/config/constants';
 
 @Injectable()
 export class JWTService {

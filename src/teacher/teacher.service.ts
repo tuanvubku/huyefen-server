@@ -3,7 +3,7 @@ import { ITeacher } from './interface/teacher.interface';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
-import { SALT, Role } from '@/utils/constant';
+import { Role } from '@/config/constants';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
 
@@ -15,7 +15,7 @@ export class TeacherService {
         const teacher = { ...teacherDto };
         const teacherFromDB = await this.teacherModel.findOne({ phone: teacher.phone });
         if (!teacherFromDB) {
-            teacher.password = await bcrypt.hash(teacher.password, SALT);
+            teacher.password = await bcrypt.hash(teacher.password, 10);
             teacher.roles = [Role.Teacher];
             const newTeacher = new this.teacherModel(teacher);
             return await newTeacher.save()

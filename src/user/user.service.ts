@@ -25,21 +25,13 @@ export class UserService {
     }
 
     async createUser(user: RegisterDto): Promise<IUser> {
-        // const phoneRegistered = await this.userModel.findOne({ phone: user.phone });
-        // const emailRegistered = await this.userModel.findOne({ email: user.email });
         const saltRound: number = this.configService.get<number>('SALT_ROUND');
         const hashedPassword: string = await bcrypt.hash(user.password, saltRound);
         const newUser: IUser = new this.userModel({
             ...user,
             password: hashedPassword
         });
-        return await newUser.save()
-        // if (!phoneRegistered && !emailRegistered) {
-            
-        // } else {
-        //     throw new HttpException('REGISTRATION.USER_ALREADY_REGISTERED', HttpStatus.FORBIDDEN);
-        // }
-
+        return await newUser.save();
     }
 
     async findUserByPhone(phone: string) {
