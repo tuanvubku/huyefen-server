@@ -10,11 +10,11 @@ import {
     ParseIntPipe,
     NotFoundException
 } from '@nestjs/common';
-import { AllDto } from './dtos/all.dto';
 import { JobService } from './job.service';
 import { IJob } from './interfaces/job.interface';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ResponseSuccess } from '@/utils/utils';
+import { CreateDto } from './dtos/create.dto';
 
 @Controller('jobs')
 export class JobController {
@@ -29,5 +29,20 @@ export class JobController {
     ): Promise<IResponse<IJob[]>> {
         const jobs: IJob[] = await this.jobService.fetch(page, limit);
         return new ResponseSuccess<IJob[]>('FETCH_JOBS.SUCCESSFULLY', jobs);
+    }
+
+    @Post()
+    async create(@Body() body: CreateDto): Promise<IResponse<IJob>> {
+        const { name } = body;
+        const job: IJob = await this.jobService.create(name);
+        return new ResponseSuccess<IJob>('CREATE_JOB.SUCCESSFULLY', job);
+    }
+
+    @Delete('/:id')
+    async delete(@Param('id') id: string): Promise<IResponse<IJob>> {
+        const deletedJob: IJob = await this.jobService.delete(id);
+        if (deletedJob)
+            return new ResponseSuccess<IJob>('DELETE_JOB_OK', deletedJob);
+        throw new NotFoundException('Job not exist');
     }
 }

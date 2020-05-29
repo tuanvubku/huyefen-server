@@ -18,7 +18,7 @@ export class AuthController {
         private readonly authService: AuthService,
         private readonly userService: UserService,
         private readonly teacherService: TeacherService,
-        private readonly jobService: JobService
+        //private readonly jobService: JobService
     ) {}
 
     @Post('register/user')
@@ -28,9 +28,9 @@ export class AuthController {
         if (countExisted > 0)
             throw new ConflictException('REGISTRATION.USER_ALREADY_REGISTERED');
         const { job: jobId } = registerDto;
-        const job = await this.jobService.findJobById(jobId);
-        if (!job)
-            throw new NotFoundException('REGISTRATION.NOT_FOUND_JOB');
+        // const job = await this.jobService.findJobById(jobId);
+        // if (!job)
+        //     throw new NotFoundException('REGISTRATION.NOT_FOUND_JOB');
         await this.userService.createUser(registerDto);
         return new ResponseSuccess<null>('REGISTRATION.USER_REGISTERED_SUCCESSFULLY');
     }
@@ -42,53 +42,53 @@ export class AuthController {
     }
 
 
-    @Post('login/user')
-    async loginUser(@Body() loginDto: LoginDto): Promise<IResponse<any>> {
-        const { phone, password } = loginDto;
-        const user = await this.authService.validateLoginUser(phone, password);
-        if (user)
-            return new ResponseSuccess<any>("LOGIN.USER_LOGIN_SUCCESSFULLY", user);
-        throw new UnauthorizedException('LOGIN.USER_LOGIN_ERROR');
-    }
+    // @Post('login/user')
+    // async loginUser(@Body() loginDto: LoginDto): Promise<IResponse<any>> {
+    //     const { phone, password } = loginDto;
+    //     const user = await this.authService.validateLoginUser(phone, password);
+    //     if (user)
+    //         return new ResponseSuccess<any>("LOGIN.USER_LOGIN_SUCCESSFULLY", user);
+    //     throw new UnauthorizedException('LOGIN.USER_LOGIN_ERROR');
+    // }
 
-    @Post('login/teacher')
-    async login(@Body() createLoginDto: LoginDto): Promise<IResponse<ITeacher>> {
-        var teacher = await this.authService.validateLoginTeacher(createLoginDto.phone, createLoginDto.password);
-        return new ResponseSuccess("LOGIN.TEACHER_LOGIN_SUCCESSFULLY", teacher);
-    }
+    // @Post('login/teacher')
+    // async login(@Body() createLoginDto: LoginDto): Promise<IResponse<ITeacher>> {
+    //     var teacher = await this.authService.validateLoginTeacher(createLoginDto.phone, createLoginDto.password);
+    //     return new ResponseSuccess("LOGIN.TEACHER_LOGIN_SUCCESSFULLY", teacher);
+    // }
 
-    @Put('change-password')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.User, Role.Teacher)
-    async changePassWord(@Body('currentPassword') currentPassword: string,
-        @Body('newPassword') newPassword: string, @User() user): Promise<IResponse<any>> {
-        const isValidPass = await this.authService.checkCurrentPassword(currentPassword, user.phone);
-        let statusCode = -1;
-        let msg = ""
-        if (isValidPass) {
-            let isPasswordChange = await this.authService.setPassword(user.phone, newPassword);
-            if (isPasswordChange) {
-                statusCode = 0;
-                msg = "USER.CHANGE_PASSWORD_SUCCESS";
-            }
-            else {
-                statusCode = 2
-                msg = "USER.NEW_PASSWORD_NOT_VALID";
-            }
-        } else {
-            statusCode = 1
-            msg = "USER.PASSWORD_NOT_VALID;"
-        }
-        return new ResponseSuccess(msg, statusCode);
-    }
+    // @Put('change-password')
+    // @UseGuards(AuthGuard('jwt'), RolesGuard)
+    // @Roles(Role.User, Role.Teacher)
+    // async changePassWord(@Body('currentPassword') currentPassword: string,
+    //     @Body('newPassword') newPassword: string, @User() user): Promise<IResponse<any>> {
+    //     const isValidPass = await this.authService.checkCurrentPassword(currentPassword, user.phone);
+    //     let statusCode = -1;
+    //     let msg = ""
+    //     if (isValidPass) {
+    //         let isPasswordChange = await this.authService.setPassword(user.phone, newPassword);
+    //         if (isPasswordChange) {
+    //             statusCode = 0;
+    //             msg = "USER.CHANGE_PASSWORD_SUCCESS";
+    //         }
+    //         else {
+    //             statusCode = 2
+    //             msg = "USER.NEW_PASSWORD_NOT_VALID";
+    //         }
+    //     } else {
+    //         statusCode = 1
+    //         msg = "USER.PASSWORD_NOT_VALID;"
+    //     }
+    //     return new ResponseSuccess(msg, statusCode);
+    // }
 
-    @Put('image-url')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.User, Role.Teacher)
-    async saveURL(@Body('base64') base64: string, @User() user): Promise<IResponse<any>> {
-        const res = await this.authService.saveURL(base64, user);
-        return new ResponseSuccess("SUCCESS", res);
-    }
+    // @Put('image-url')
+    // @UseGuards(AuthGuard('jwt'), RolesGuard)
+    // @Roles(Role.User, Role.Teacher)
+    // async saveURL(@Body('base64') base64: string, @User() user): Promise<IResponse<any>> {
+    //     const res = await this.authService.saveURL(base64, user);
+    //     return new ResponseSuccess("SUCCESS", res);
+    // }
 
     
     

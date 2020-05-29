@@ -39,8 +39,7 @@ import { validationPipeConfig } from '@/config/validationPipe.config';
 		CourseModule,
 		NotificationModule,
 		DeviceModule,
-		SearchModule,
-		FoosModule
+		SearchModule
 	],
 	providers: [
 		{

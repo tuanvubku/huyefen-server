@@ -16,4 +16,16 @@ export class JobService {
             .limit(limit);
         return jobs;
     }
+
+    async create(name: string): Promise<IJob> {
+        const job: IJob = new this.jobModel({
+            name
+        });
+        return await job.save();
+    }
+
+    async delete(jobId: string): Promise<IJob> {
+        const deletedJob = await this.jobModel.findByIdAndDelete(jobId);
+        return deletedJob;
+    }
 }
