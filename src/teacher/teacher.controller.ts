@@ -1,14 +1,14 @@
 import { Controller, Put, UseGuards, Body } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from 'src/utils/guard/roles.guard';
-import { Roles } from 'src/utils/decorator/roles.decorator';
-import { Role } from 'src/utils/constant';
+import { RolesGuard } from '@/utils/guard/roles.guard';
+import { Roles } from '@/utils/decorator/roles.decorator';
+import { Role } from '@/config/constants';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
-import { User } from 'src/utils/decorator/user.decorator';
-import { IResponse } from 'src/utils/interface/response.interface';
+import { User } from '@/utils/decorator/user.decorator';
+import { IResponse } from '@/utils/interface/response.interface';
 import { ITeacher } from './interface/teacher.interface';
 import { TeacherService } from './teacher.service';
-import { ResponseSuccess } from 'src/utils/dto/response.dto';
+import { ResponseSuccess } from '@/utils/utils';
 
 @Controller('teachers')
 export class TeacherController {

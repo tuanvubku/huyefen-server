@@ -5,7 +5,6 @@ import { UpdateAreaDto, CreateAreaDto } from './dto/create-area.dto';
 import { UpdateCategoryDto } from './dto/create-category.dto';
 import { IArea } from './interfaces/area.interface';
 import { ICategory } from './interfaces/category.interface';
-import { CreateCourseDto } from 'src/course/dto/create-course.dto';
 
 @Injectable()
 export class AreaService {

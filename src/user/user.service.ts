@@ -1,33 +1,48 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import * as bcrypt from 'bcryptjs';
 import { Model } from 'mongoose';
-import { TeacherService } from 'src/teacher/teacher.service';
-import { Role, SALT } from '../utils/constant';
-import { UpdateUserDto, CreateUserDto } from './dto/create-user.dto';
+import { ConfigService } from '@nestjs/config';
+import * as bcrypt from 'bcryptjs';
+import { RegisterDto } from '@/auth/dto/register.dto';
+import { TeacherService } from '@/teacher/teacher.service';
+import { UpdateUserDto } from './dto/create-user.dto';
 import { IUser } from './interface/user.interface';
+
 @Injectable()
 export class UserService {
 
-    constructor(@InjectModel('User') private readonly userModel: Model<IUser>, private readonly teacherService: TeacherService) { }
+    constructor(
+        @InjectModel('User') private readonly userModel: Model<IUser>,
+        private readonly configService: ConfigService,
+        private readonly teacherService: TeacherService
+    ) {}
 
-    async createUser(userDto: CreateUserDto): Promise<IUser> {
-        const user = {...userDto};
-        const phoneRegistered = await this.userModel.findOne({ phone: user.phone });
-        const emailRegistered = await this.userModel.findOne({ email: user.email });
-        if (!phoneRegistered && !emailRegistered) {
-            user.password = await bcrypt.hash(user.password, SALT);
-            user.roles = [Role.User]
-            const newUser = new this.userModel(user);
-            return await newUser.save()
-        } else {
-            throw new HttpException('REGISTRATION.USER_ALREADY_REGISTERED', HttpStatus.FORBIDDEN);
-        }
-
+    async validateExistedUser(user: { phone: string, email: string }): Promise<boolean> {
+        const checkPhone: IUser = await this.userModel.findOne({ phone: user.phone });
+        if (!checkPhone)
+            return !!await this.userModel.findOne({ email: user.email });
+        return true;
     }
 
-    async findUserByPhone(phone: string) {
-        return await this.userModel.findOne({ phone }).lean().exec();
+    async createUser(user: RegisterDto): Promise<IUser> {
+        const saltRounds: number = parseInt(this.configService.get<string>('SALT_ROUNDS'));
+        const hashedPassword: string = await bcrypt.hash(user.password, saltRounds);
+        const newUser: IUser = new this.userModel({
+            ...user,
+            password: hashedPassword
+        });
+        return await newUser.save();
+    }
+
+    async findUserByPhone(phone: string): Promise<any> {
+        return await this.userModel
+                .findOne({ phone })
+                .select({
+                    notifications: 0,
+                    friendIds: 0,
+                    friendRequestIds: 0,
+                    followIds: 0
+                });
     }
 
     async findUserById(id: string): Promise<IUser> {
@@ -130,7 +145,7 @@ export class UserService {
         const respond = {
             id: userId,
             avatar: userFromDB.avatar,
-            name: userFromDB.userName,
+            name: userFromDB.name,
             status: status
         }
         return respond;

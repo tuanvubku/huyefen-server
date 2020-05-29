@@ -1,30 +1,35 @@
-import { Body, Controller, Post, Put, UseGuards } from '@nestjs/common';
+import { Role } from '@/config/constants';
+import { CreateTeacherDto } from '@/teacher/dto/create-teacher.dto';
+import { ITeacher } from '@/teacher/interface/teacher.interface';
+import { TeacherService } from '@/teacher/teacher.service';
+import { UserService } from '@/user/user.service';
+import { Roles } from '@/utils/decorator/roles.decorator';
+import { User } from '@/utils/decorator/user.decorator';
+import { RolesGuard } from '@/utils/guard/roles.guard';
+import { IResponse } from '@/utils/interface/response.interface';
+import { ResponseSuccess } from '@/utils/utils';
+import { Body, ConflictException, Controller, Post, Put, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { CreateTeacherDto } from 'src/teacher/dto/create-teacher.dto';
-import { ITeacher } from 'src/teacher/interface/teacher.interface';
-import { TeacherService } from 'src/teacher/teacher.service';
-import { CreateUserDto } from 'src/user/dto/create-user.dto';
-import { IUser } from 'src/user/interface/user.interface';
-import { UserService } from 'src/user/user.service';
-import { Role } from 'src/utils/constant';
-import { Roles } from 'src/utils/decorator/roles.decorator';
-import { User } from 'src/utils/decorator/user.decorator';
-import { ResponseSuccess } from 'src/utils/dto/response.dto';
-import { RolesGuard } from 'src/utils/guard/roles.guard';
-import { IResponse } from 'src/utils/interface/response.interface';
 import { AuthService } from './auth.service';
-import { CreateLoginDto } from './dto/create-login.dto';
+import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 
 @Controller('auth')
 export class AuthController {
-    constructor(private readonly authService: AuthService,
+    constructor(
+        private readonly authService: AuthService,
         private readonly userService: UserService,
-        private readonly teacherService: TeacherService) { }
+        private readonly teacherService: TeacherService
+    ) {}
 
     @Post('register/user')
-    async createUser(@Body() createUserDto: CreateUserDto): Promise<IResponse<IUser>> {
-        await this.userService.createUser(createUserDto);
-        return new ResponseSuccess("REGISTRATION.USER_REGISTERED_SUCCESSFULLY");
+    async registerUser(@Body() registerDto: RegisterDto): Promise<IResponse<string>> {
+        const { phone, email } = registerDto;
+        const checkExisted = await this.userService.validateExistedUser({ phone, email });
+        if (checkExisted)
+            throw new ConflictException('REGISTRATION.USER_ALREADY_REGISTERED');
+        await this.userService.createUser(registerDto);
+        return new ResponseSuccess<string>('REGISTRATION.USER_REGISTERED_SUCCESSFULLY');
     }
 
     @Post('register/teacher')
@@ -35,13 +40,16 @@ export class AuthController {
 
 
     @Post('login/user')
-    async loginUser(@Body() createLoginDto: CreateLoginDto): Promise<IResponse<IUser>> {
-        var user = await this.authService.validateLoginUser(createLoginDto.phone, createLoginDto.password);
-        return new ResponseSuccess("LOGIN.USER_LOGIN_SUCCESSFULLY", user);
+    async loginUser(@Body() loginDto: LoginDto): Promise<IResponse<any>> {
+        const { phone, password } = loginDto;
+        const user = await this.authService.validateLoginUser(phone, password);
+        if (user)
+            return new ResponseSuccess<any>("LOGIN.USER_LOGIN_SUCCESSFULLY", user);
+        throw new UnauthorizedException('LOGIN.USER_LOGIN_ERROR');
     }
 
     @Post('login/teacher')
-    async login(@Body() createLoginDto: CreateLoginDto): Promise<IResponse<ITeacher>> {
+    async login(@Body() createLoginDto: LoginDto): Promise<IResponse<ITeacher>> {
         var teacher = await this.authService.validateLoginTeacher(createLoginDto.phone, createLoginDto.password);
         return new ResponseSuccess("LOGIN.TEACHER_LOGIN_SUCCESSFULLY", teacher);
     }

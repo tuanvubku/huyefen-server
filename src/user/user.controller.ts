@@ -1,26 +1,26 @@
 import { Body, Controller, Get, Param, Query, Put, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Roles } from 'src/utils/decorator/roles.decorator';
-import { User } from 'src/utils/decorator/user.decorator';
-import { ResponseSuccess } from 'src/utils/dto/response.dto';
-import { RolesGuard } from 'src/utils/guard/roles.guard';
-import { IResponse } from 'src/utils/interface/response.interface';
-import { Role } from '../utils/constant';
+import { Roles } from '@/utils/decorator/roles.decorator';
+import { User } from '@/utils/decorator/user.decorator';
+import { ResponseSuccess } from '@/utils/utils';
+import { RolesGuard } from '@/utils/guard/roles.guard';
+import { IResponse } from '@/utils/interface/response.interface';
+import { Role } from '@/config/constants';
 import { IUser } from './interface/user.interface';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/create-user.dto';
-import { checkValidObjecID } from 'src/utils/validate/validate';
+import { checkValidObjecID } from '@/utils/validate/validate';
 
 @Controller('users')
 export class UserController {
-    constructor(private readonly userService: UserService) { }
+    constructor(private readonly userService: UserService) {}
 
     @Get()
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
     async findUser(@User() userFromDB: IUser): Promise<IResponse<IUser>> {
         const user = await this.userService.getUser(userFromDB.phone);
-        return new ResponseSuccess("USER.GET_SUCCESS", user);
+        return new ResponseSuccess("USER.GET_SUCCESS", user as IUser);          ///wtf?????
     }
 
     @Get(':phone')
@@ -28,7 +28,7 @@ export class UserController {
     @Roles(Role.User)
     async findUserByPhone(@Param('phone') phone: string): Promise<IResponse<IUser>> {
         const user = await this.userService.getUser(phone);
-        return new ResponseSuccess("USER.GET_BY_ID_SUCCESS", user);
+        return new ResponseSuccess("USER.GET_BY_ID_SUCCESS", user as IUser);    //wtf ???
     }
 
     @Put('concern')

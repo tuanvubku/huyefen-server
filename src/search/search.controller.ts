@@ -1,5 +1,6 @@
+
+import { ResponseSuccess } from '@/utils/utils';
 import { Controller, Get, Query } from '@nestjs/common';
-import { ResponseSuccess } from 'src/utils/dto/response.dto';
 import { SearchService } from './search.service';
 
 @Controller('search')

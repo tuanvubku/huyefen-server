@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import * as jwt from 'jsonwebtoken';
-import { ITeacher } from 'src/teacher/interface/teacher.interface';
-import { TeacherService } from 'src/teacher/teacher.service';
-import { IUser } from 'src/user/interface/user.interface';
-import { UserService } from 'src/user/user.service';
-import { TOKEN_EXPIRED } from '../utils/constant';
+import { ITeacher } from '@/teacher/interface/teacher.interface';
+import { TeacherService } from '@/teacher/teacher.service';
+import { IUser } from '@/user/interface/user.interface';
+import { UserService } from '@/user/user.service';
+import { TOKEN_EXPIRED } from '@/config/constants';
 
 @Injectable()
 export class JWTService {
