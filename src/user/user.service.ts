@@ -17,21 +17,23 @@ export class UserService {
         private readonly teacherService: TeacherService
     ) {}
 
-    async validateExistedUser(user: { phone: string, email: string }): Promise<boolean> {
-        const checkPhone: IUser = await this.userModel.findOne({ phone: user.phone });
-        if (!checkPhone)
-            return !!await this.userModel.findOne({ email: user.email });
-        return true;
+    async countUserByPhoneEmail(user: { phone: string, email: string }): Promise<number> {
+        const { phone, email } = user;
+        const count = await this.userModel
+            .find()
+            .or([{ phone }, { email }])
+            .count();
+        return count;
     }
 
-    async createUser(user: RegisterDto): Promise<IUser> {
+    async createUser(user: RegisterDto): Promise<void> {
         const saltRounds: number = parseInt(this.configService.get<string>('SALT_ROUNDS'));
         const hashedPassword: string = await bcrypt.hash(user.password, saltRounds);
-        const newUser: IUser = new this.userModel({
+        const newUser = new this.userModel({
             ...user,
             password: hashedPassword
         });
-        return await newUser.save();
+        await newUser.save();
     }
 
     async findUserByPhone(phone: string): Promise<any> {

@@ -1,6 +1,7 @@
+import { Document } from 'mongoose';
 import { FriendStatuses } from '@/config/constants';
 
-export interface IUser {
+export interface IUser extends Document{
 	_id: string;
 	name: string;
 	password: string;

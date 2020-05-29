@@ -1,4 +1,4 @@
-import { IsString, IsMongoId, IsNumberString, Length, MaxLength, MinLength, IsEmail, IsEnum, IsISO8601 } from 'class-validator';
+import { IsString, IsMongoId, IsNumberString, Length, MinLength, IsEmail, IsEnum, IsISO8601 } from 'class-validator';
 
 enum Gender {
     MALE = 'male',

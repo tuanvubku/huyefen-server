@@ -14,6 +14,6 @@ import { TeacherSchema } from '@/teacher/schema/teacher.schema';
     {name: 'User', schema: UserSchema},
     {name: 'Teacher', schema: TeacherSchema}]), UserModule, TeacherModule],
     controllers: [AuthController],
-    providers: [ AuthService, JWTService, JwtStrategy]
+    providers: [AuthService, JWTService, JwtStrategy]
 })
 export class AuthModule {}

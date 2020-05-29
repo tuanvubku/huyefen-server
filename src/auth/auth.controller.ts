@@ -1,4 +1,5 @@
-import { Role } from '@/config/constants';
+import { Body, Controller, Post, Put, UseGuards, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { CreateTeacherDto } from '@/teacher/dto/create-teacher.dto';
 import { ITeacher } from '@/teacher/interface/teacher.interface';
 import { TeacherService } from '@/teacher/teacher.service';
@@ -19,17 +20,22 @@ export class AuthController {
     constructor(
         private readonly authService: AuthService,
         private readonly userService: UserService,
-        private readonly teacherService: TeacherService
+        private readonly teacherService: TeacherService,
+        private readonly jobService: JobService
     ) {}
 
     @Post('register/user')
-    async registerUser(@Body() registerDto: RegisterDto): Promise<IResponse<string>> {
+    async registerUser(@Body() registerDto: RegisterDto): Promise<IResponse<null>> {
         const { phone, email } = registerDto;
-        const checkExisted = await this.userService.validateExistedUser({ phone, email });
-        if (checkExisted)
+        const countExisted: number = await this.userService.countUserByPhoneEmail({ phone, email });
+        if (countExisted > 0)
             throw new ConflictException('REGISTRATION.USER_ALREADY_REGISTERED');
+        const { job: jobId } = registerDto;
+        const job = await this.jobService.findJobById(jobId);
+        if (!job)
+            throw new BadRequestException('REGISTRATION.INVALID_JOB');
         await this.userService.createUser(registerDto);
-        return new ResponseSuccess<string>('REGISTRATION.USER_REGISTERED_SUCCESSFULLY');
+        return new ResponseSuccess<null>('REGISTRATION.USER_REGISTERED_SUCCESSFULLY');
     }
 
     @Post('register/teacher')
