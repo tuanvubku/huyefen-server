@@ -25,7 +25,7 @@ import { validationPipeConfig } from '@/config/validationPipe.config';
 			isGlobal: true
 		}),
 		MongooseModule.forRootAsync({
-			useClass: MongooseConfig
+			useClass: MongooseConfig,
 		}), 
 		ServeStaticModule.forRoot({
 			rootPath: join(__dirname, '..', 'public'),

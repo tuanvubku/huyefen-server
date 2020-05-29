@@ -15,7 +15,7 @@ export class AuthService {
 		private readonly configService: ConfigService
 	) {}
 
-	async validateLoginUser(phone: string, password: string) {
+	async validateLoginUser(phone: string, password: string): Promise<any> {
 		const user: IUser = await this.userService.findUserByPhone(phone);
 		if (user && user.password === password) {
 			const { password, ...retUser } = user;

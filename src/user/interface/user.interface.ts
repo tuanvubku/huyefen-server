@@ -14,8 +14,10 @@ export interface IUser extends Document {
 	linkedin: string,
 	notifications?: Notification[],
 	catesOfConcern: string[],
-	// friendRequestIds?: string[],
-	// followIds?: string[]
+	friendRequestIds?: string[],
+  followIds?: string[],
+  friendIds?: string[],
+  
 };
 
 interface Notification {
