@@ -12,12 +12,20 @@ export class CourseController {
 
     @Post()
     async createCourse(@Body() createCourseDto: CreateCourseDto){
-        const course = this.courseService.createCourse(createCourseDto);
+        const course = await this.courseService.createCourse(createCourseDto);
         if(!course) 
             throw new HttpException("COURSE.CREATE_FAIL", HttpStatus.BAD_REQUEST)
-        const res = await this.searchService.insertDocumentToElastic(createCourseDto);
-        return new ResponseSuccess("SUCCESS", res);
+
+        const mongoId = course['_id']
+        const elasticCourse = {
+            ...createCourseDto,
+            mongoId
+        }
+        const res = await this.searchService.insertDocumentToElastic(elasticCourse);
+        return new ResponseSuccess("COURSE.CRESTE_SUCCESS", res);
     }
 
     
 }
+
+

@@ -6,7 +6,7 @@ import { IDevice } from './interface/device.interface';
 import { NotificationService } from 'src/notification/notification.service';
 import { MessageDto } from 'src/notification/dto/message.dto';
 
-@Controller('device')
+@Controller('devices')
 export class DeviceController {
 
     constructor(private readonly deviceService: DeviceService,

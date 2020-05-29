@@ -4,6 +4,7 @@ export const CourseSchema = new mongoose.Schema({
     name: {type: String, required: true},
     summary: {type: String, required: true},
     avatar: {type: String, required: true},
+    authorsName: {type: [String]},
     starRating: {type: Number, required: true, default: 0},
-    author: {type: String, required: true}
+    //author: {type: String, required: true}
 })

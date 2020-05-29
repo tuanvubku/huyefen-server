@@ -20,7 +20,7 @@ export class TeacherController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     async updateInfo(@Body() updateTeacherDto: UpdateTeacherDto, @User() user): Promise<IResponse<ITeacher>> {
-        console.log(user)
+        //console.log(user)
         const updateTeacher = await this.teacherService.updateTeacher(user.phone, updateTeacherDto);
         updateTeacher.password = undefined;
         return new ResponseSuccess("TEACHER.UPDATE_INFO_SUCCESS", updateTeacher);
