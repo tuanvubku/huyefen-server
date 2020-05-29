@@ -1,6 +1,6 @@
-import { Document } from 'mongoose';
+import { FriendStatuses } from '@/config/constants';
 
-export interface IUser extends Document {
+export interface IUser {
 	_id: string;
 	name: string;
 	password: string;
@@ -8,20 +8,25 @@ export interface IUser extends Document {
 	email: string;
 	phone: string;
 	gender: string;
-	birthday: Date;
+	birthday: string;
 	job: string,
 	facebook: string,
 	linkedin: string,
-	notifications?: Notification[],
+	notifications: INotification[],
 	catesOfConcern: string[],
-	// friendRequestIds?: string[],
-	// followIds?: string[]
+	followedTeachers: string[],
+	relationships: [{
+		friend: string,
+		status: FriendStatuses
+	}],
+	conversations: string[]
 };
 
-interface Notification {
+interface INotification {
     _id: string,
     type: number,
-    content: string,
+	content: string,
+	avatar: string,
     user: {
 		_id: string,
 		avatar: string,

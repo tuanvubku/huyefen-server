@@ -100,11 +100,29 @@ export const UserSchema = new Schema({
 	},
 	relationships: {
 		type: [{
-			friendId: Schema.Types.ObjectId,
+			friend: {
+				type: Schema.Types.ObjectId,
+				ref: 'User'
+			},
 			status: {
 				type: Number,
+				enum: [FriendStatuses.NoFriend, FriendStatuses.ReceivedInvitation, FriendStatuses.SentInvitation, FriendStatuses.Friend],
 				default: FriendStatuses.Friend
 			}
+		}],
+		default: []
+	},
+	followedTeachers: {
+		type: [{
+			type: Schema.Types.ObjectId,
+			ref: 'Teacher'
+		}],
+		default: []
+	},
+	conversations: {
+		type: [{
+			type: Schema.Types.ObjectId,
+			ref: 'Conversation'
 		}],
 		default: []
 	}
