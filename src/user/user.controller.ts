@@ -4,7 +4,7 @@ import { Roles } from '@/utils/decorator/roles.decorator';
 import { User } from '@/utils/decorator/user.decorator';
 import { ResponseSuccess } from '@/utils/utils';
 import { RolesGuard } from '@/utils/guard/roles.guard';
-import { IResponse } from '@/utils/interface/response.interface';
+import { IResponse } from '@/utils/interfaces/response.interface';
 import { Role } from '@/config/constants';
 import { IUser } from './interface/user.interface';
 import { UserService } from './user.service';

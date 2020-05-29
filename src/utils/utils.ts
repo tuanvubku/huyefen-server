@@ -1,4 +1,4 @@
-import { IResponse } from "./interface/response.interface";
+import { IResponse } from "./interfaces/response.interface";
 
 export class ResponseSuccess<T> implements IResponse<T> {
 	constructor(

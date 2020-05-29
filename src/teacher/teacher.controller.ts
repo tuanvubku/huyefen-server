@@ -5,7 +5,7 @@ import { Roles } from '@/utils/decorator/roles.decorator';
 import { Role } from '@/config/constants';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { User } from '@/utils/decorator/user.decorator';
-import { IResponse } from '@/utils/interface/response.interface';
+import { IResponse } from '@/utils/interfaces/response.interface';
 import { ITeacher } from './interface/teacher.interface';
 import { TeacherService } from './teacher.service';
 import { ResponseSuccess } from '@/utils/utils';

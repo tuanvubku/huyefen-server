@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Put, UseGuards, ConflictException, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Post, Put, UseGuards, ConflictException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateTeacherDto } from '@/teacher/dto/create-teacher.dto';
 import { ITeacher } from '@/teacher/interface/teacher.interface';
@@ -7,10 +7,7 @@ import { UserService } from '@/user/user.service';
 import { Roles } from '@/utils/decorator/roles.decorator';
 import { User } from '@/utils/decorator/user.decorator';
 import { RolesGuard } from '@/utils/guard/roles.guard';
-import { IResponse } from '@/utils/interface/response.interface';
-import { ResponseSuccess } from '@/utils/utils';
-import { Body, ConflictException, Controller, Post, Put, UnauthorizedException, UseGuards } from '@nestjs/common';
-import { AuthGuard } from '@nestjs/passport';
+import { IResponse } from '@/utils/interfaces/response.interface';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -33,7 +30,7 @@ export class AuthController {
         const { job: jobId } = registerDto;
         const job = await this.jobService.findJobById(jobId);
         if (!job)
-            throw new BadRequestException('REGISTRATION.INVALID_JOB');
+            throw new NotFoundException('REGISTRATION.NOT_FOUND_JOB');
         await this.userService.createUser(registerDto);
         return new ResponseSuccess<null>('REGISTRATION.USER_REGISTERED_SUCCESSFULLY');
     }

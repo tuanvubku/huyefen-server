@@ -1,7 +1,5 @@
-import * as mongoose from 'mongoose';
+import { Schema } from 'mongoose';
 import { FriendStatuses } from '@/config/constants';
-
-const Schema = mongoose.Schema;
 
 const NotificationSchema = new Schema({
 	user: {
