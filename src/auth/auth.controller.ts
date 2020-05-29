@@ -1,9 +1,10 @@
-import { Body, Controller, Post, Put, UseGuards, ConflictException } from '@nestjs/common';
+import { Body, Controller, Post, Put, UseGuards, ConflictException, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CreateTeacherDto } from '@/teacher/dto/create-teacher.dto';
 import { ITeacher } from '@/teacher/interface/teacher.interface';
 import { TeacherService } from '@/teacher/teacher.service';
 import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 import { IUser } from '@/user/interface/user.interface';
 import { UserService } from '@/user/user.service';
 import { Role } from '@/config/constants';
@@ -13,7 +14,6 @@ import { ResponseSuccess } from '@/utils/utils';
 import { RolesGuard } from '@/utils/guard/roles.guard';
 import { IResponse } from '@/utils/interface/response.interface';
 import { AuthService } from './auth.service';
-import { CreateLoginDto } from './dto/create-login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -41,13 +41,16 @@ export class AuthController {
 
 
     @Post('login/user')
-    async loginUser(@Body() createLoginDto: CreateLoginDto): Promise<IResponse<IUser>> {
-        var user = await this.authService.validateLoginUser(createLoginDto.phone, createLoginDto.password);
-        return new ResponseSuccess("LOGIN.USER_LOGIN_SUCCESSFULLY", user);
+    async loginUser(@Body() loginDto: LoginDto): Promise<IResponse<any>> {
+        const { phone, password } = loginDto;
+        const user = await this.authService.validateLoginUser(phone, password);
+        if (user)
+            return new ResponseSuccess<any>("LOGIN.USER_LOGIN_SUCCESSFULLY", user);
+        throw new UnauthorizedException('LOGIN.USER_LOGIN_ERROR');
     }
 
     @Post('login/teacher')
-    async login(@Body() createLoginDto: CreateLoginDto): Promise<IResponse<ITeacher>> {
+    async login(@Body() createLoginDto: LoginDto): Promise<IResponse<ITeacher>> {
         var teacher = await this.authService.validateLoginTeacher(createLoginDto.phone, createLoginDto.password);
         return new ResponseSuccess("LOGIN.TEACHER_LOGIN_SUCCESSFULLY", teacher);
     }

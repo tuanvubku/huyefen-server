@@ -1,31 +1,32 @@
 import { Document } from 'mongoose';
 
 export interface IUser extends Document {
-	id?: string;
+	_id: string;
 	name: string;
 	password: string;
-	avatar?: string,
+	avatar: string,
 	email: string;
 	phone: string;
 	gender: string;
 	birthday: Date;
 	job: string,
-	facebook?: string,
-	linkedin?: string,
-	noOfUsMessage?: number,
-	noOfUsNotification?: number,
+	facebook: string,
+	linkedin: string,
 	notifications?: Notification[],
-	catesOfConcern?: string[],
-	friendIds?: string[],
-	friendRequestIds?: string[],
-	followIds?: string[]
+	catesOfConcern: string[],
+	// friendRequestIds?: string[],
+	// followIds?: string[]
 };
 
 interface Notification {
-    id: string,
+    _id: string,
     type: number,
     content: string,
-    user: string,
+    user: {
+		_id: string,
+		avatar: string,
+		name: string
+	},
     createdAt: Date,
     seen: boolean
 };

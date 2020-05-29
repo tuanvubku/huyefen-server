@@ -2,9 +2,10 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { UserService } from '@/user/user.service';
 import { JWTService } from './jwt.service';
-import { validatePassword } from '../utils/validate/validate'
+import { validatePassword } from '@/utils/validate/validate'
 import { TeacherService } from '@/teacher/teacher.service';
 import { ConfigService } from '@nestjs/config';
+import { IUser } from '@/user/interface/user.interface';
 @Injectable()
 export class AuthService {
 	constructor(
@@ -15,8 +16,12 @@ export class AuthService {
 	) {}
 
 	async validateLoginUser(phone: string, password: string) {
-		var userFromDB = await this.userService.findUserByPhone(phone);
-		return await this.valdiateLogin(phone, password, userFromDB);
+		const user: IUser = await this.userService.findUserByPhone(phone);
+		if (user && user.password === password) {
+			const { password, ...retUser } = user;
+			return retUser;
+		}
+		return null;
 	}
 
 	async validateLoginTeacher(phone: string, password: string) {

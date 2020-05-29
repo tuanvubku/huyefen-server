@@ -1,17 +1,35 @@
 import * as mongoose from 'mongoose';
+import { FriendStatuses } from '@/config/constants';
 
 const Schema = mongoose.Schema;
 
-const Notification = new Schema({
-	user:{
+const NotificationSchema = new Schema({
+	user: {
 		type: Schema.Types.ObjectId,
-		required: true
+		ref: 'User',
+		default: null
+	},
+	avatar: {
+		type: String,
+		default: null,
+		validate: {
+			validator: function(val) {
+				if (!this.user)
+					return val !== null;
+				return true;
+			},
+			message: 'Notifications must have user or avatar field.'
+		}
 	},
 	type: {
 		type: Number,
-		required: true
+		required: true,
 	},
-	content: String,
+	content: {
+		type: String,
+		required: true,
+		default: ''
+	},
 	seen: {
 		type: Boolean,
 		default: false
@@ -36,7 +54,7 @@ export const UserSchema = new Schema({
 	},
 	avatar: {
 		type: String,
-		default: ''
+		default: null
 	},
 	email: {
 		type: String,
@@ -57,31 +75,37 @@ export const UserSchema = new Schema({
 	},
 	birthday: {
 		type: String,
-		required: true
+		required: true,
+		match: /\d\d\d\d-\d\d-\d\d/i
 	},
 	job: {
 		type: Schema.Types.ObjectId,
-		required: true,
-		ref: 'Job'
+		required: true
 	},
-	facebook: String,
-	linkedin: String,
-	noOfUsMessage: {
-		type: Number,
-		default: 0
+	facebook: {
+		type: String,
+		default: null
 	},
-	noOfUsNotification: {
-		type: Number,
-		default: 0
+	linkedin: {
+		type: String,
+		default: null
 	},
-	notifications: [Notification],
-	catesOfConcern: [{
-		type: Schema.Types.ObjectId,
-		ref: 'Category',
+	notifications: {
+		type: [NotificationSchema],
 		default: []
-	}],
-	friendIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-	friendRequestIds: [{ type: Schema.Types.ObjectId, ref: 'User' }],
-	followIds: [{ type: Schema.Types.ObjectId, ref: 'Teacher', default: [] }]
+	},
+	catesOfConcern: {
+		type: [Schema.Types.ObjectId],
+		default: []
+	},
+	relationships: {
+		type: [{
+			friendId: Schema.Types.ObjectId,
+			status: {
+				type: Number,
+				default: FriendStatuses.Friend
+			}
+		}],
+		default: []
+	}
 });
-

@@ -34,8 +34,15 @@ export class UserService {
         return await newUser.save();
     }
 
-    async findUserByPhone(phone: string) {
-        return await this.userModel.findOne({ phone }).lean().exec();
+    async findUserByPhone(phone: string): Promise<any> {
+        return await this.userModel
+                .findOne({ phone })
+                .select({
+                    notifications: 0,
+                    friendIds: 0,
+                    friendRequestIds: 0,
+                    followIds: 0
+                });
     }
 
     async findUserById(id: string): Promise<IUser> {
