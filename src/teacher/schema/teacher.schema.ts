@@ -1,19 +1,65 @@
-import * as mongoose from 'mongoose';
+import { Schema } from 'mongoose';
+import { NotificationSchema } from '@/user/schemas/user.schema';
 
-export const TeacherSchema = new mongoose.Schema({
-    name: {type: String, required: true},
-    phone: {type: String, required: true},
-    password: {type: String, required: true},
-    avatar: {type: String, default: ""},
-    roles: [String],
-    job: String,
-    noOfUsNotification: {type: Number, default: 0},
-    numOfCourses: {type: Number, default: 0},
-    numOfStudents: {type: Number, default: 0},
-    numOfReviews: {type: Number, default: 0},
-    biography: {type: String, default: ""},
-    twitter: {type: String, default: ""},
-    facebook: {type: String, default: "" },
-    youtube: {type: String, default: "" },
-    instagram: {type: String, default: "" }
-})
+export const TeacherSchema = new Schema({
+    name: {
+        type: String,
+        minlength: 8,
+        maxlength: 50,
+        required: true
+    },
+    password: {
+        type: String,
+        minlength: 6,
+        required: true
+    },
+    avatar: {
+        type: String,
+        default: null
+    },
+    biography: {
+        type: String,
+        default: null
+    },
+    headline: {
+        type: String,
+        default: null
+    },
+    phone: {
+        type: String,
+        minlength: 10,
+        maxlength: 10,
+        required: true
+    },
+    email: {
+        type: String,
+        required: true
+    },
+    twitter: {
+        type: String,
+        default: null
+    },
+    youtube: {
+        type: String,
+        default: null
+    },
+    facebook: {
+        type: String,
+        default: null
+    },
+    instagram: {
+        type: String,
+        default: null
+    },
+    notifications: {
+        type: [NotificationSchema],
+        default: []
+    },
+    followingStudents: {
+        type: [{
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        }],
+        default: []
+    }
+});

@@ -6,7 +6,7 @@ import { Role } from '@/config/constants';
 import { UserService } from '@/user/user.service';
 import { TeacherService } from '@/teacher/teacher.service';
 import { ConfigService } from '@nestjs/config';
-import { IUser } from '@/user/interface/user.interface';
+import { IUser } from '@/user/interfaces/user.interface';
 @Injectable()
 export class AuthService {
 	constructor(

@@ -10,7 +10,7 @@ import { ResponseSuccess } from '@/utils/utils';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { Role } from '@/config/constants';
-import { IUser } from './interface/user.interface';
+import { IUser } from './interfaces/user.interface';
 import { UserService } from './user.service';
 import { JobService } from '@/job/job.service';
 import { IJob } from '@/job/interfaces/job.interface';

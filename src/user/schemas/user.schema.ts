@@ -1,7 +1,7 @@
 import { Schema } from 'mongoose';
 import { FriendStatuses } from '@/config/constants';
 
-const NotificationSchema = new Schema({
+export const NotificationSchema = new Schema({
 	user: {
 		type: Schema.Types.ObjectId,
 		ref: 'User',

@@ -7,7 +7,7 @@ import * as bcrypt from 'bcryptjs';
 import { RegisterDto } from '@/auth/dtos/register.dto';
 import { TeacherService } from '@/teacher/teacher.service';
 import { UpdateDto } from './dtos/update.dto';
-import { IUser } from './interface/user.interface';
+import { IUser } from './interfaces/user.interface';
 
 @Injectable()
 export class UserService {
