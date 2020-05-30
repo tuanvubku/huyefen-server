@@ -4,8 +4,8 @@ import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { Role } from '@/config/constants';
 import { UpdateDto } from './dtos/update.dto';
-import { UpdateSocialsDto } from './dtos/updateSocials.dto';
-import { User } from '@/utils/decorators/user.decorator';
+import { UpdateSocialsDto } from './dtos/socials.dto';
+import { UpdateAvatarDto } from './dtos/avatar.dto';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ITeacher } from './interfaces/teacher.interface';
 import { TeacherService } from './teacher.service';
@@ -51,5 +51,16 @@ export class TeacherController {
         if (!teacher)
             throw new NotFoundException('Teacher doesn\'t existed!');
         return new ResponseSuccess('TEACHER.UPDATE_SOCIALS_OK', teacher);
+    }
+
+    @Put('update/avatar')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async updateAvatar(@Req() req, @Body() body: UpdateAvatarDto): Promise<IResponse<any>> {
+        const teacherId: string = req.user._id;
+        const { avatar } = body;
+        const teacher: any = await this.teacherService.updateAvatar(teacherId, avatar);
+        if (!teacher)
+            throw new NotFoundException('Teacher doesn\'t existed!');
+        return new ResponseSuccess('TEACHER.UPDATE_AVATAR_OK', teacher);
     }
 }
