@@ -1,4 +1,4 @@
-import { Controller, Put, UseGuards, Body, Post } from '@nestjs/common';
+import { Controller, Put, UseGuards, Body, Post, Get, Req, NotFoundException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
@@ -21,5 +21,15 @@ export class TeacherController {
     async create(@Body() body): Promise<IResponse<ITeacher>> {
         const teacher: ITeacher = await this.teacherService.create(body);
         return new ResponseSuccess<ITeacher>('TEST_OK', teacher);
+    }
+
+    @Get('/me')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async fetch(@Req() req): Promise<IResponse<any>> {
+        const teacher = await this.teacherService.findTeacherById(req.user._id);
+        if (!teacher)
+            throw new NotFoundException('User doesn\'t existed!');
+        return new ResponseSuccess('USER.FETCH_SUCCESSFULLY', teacher);
+
     }
 }

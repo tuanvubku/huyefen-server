@@ -40,6 +40,24 @@ export class TeacherService {
             noOfUsNotification
         };
     }
+
+    async findTeacherById(teacherId: string): Promise<any> {
+        const teacher: any = await this.teacherModel
+                .findById(teacherId)
+                .select({
+                    followingStudents: 0,
+                    password: 0
+                })
+                .lean()
+                .exec();
+        if (!teacher) return null;
+        const noOfUsNotification: number = _.size(_.filter(teacher.notifications, notification => !notification.seen));
+        return {
+            ..._.omit(teacher, ['notifications']),
+            noOfUsNotification
+        };
+    }
+    
     // async createTeacher(teacherDto: CreateTeacherDto): Promise<ITeacher> {
     //     const teacher = { ...teacherDto };
     //     const teacherFromDB = await this.teacherModel.findOne({ phone: teacher.phone });
