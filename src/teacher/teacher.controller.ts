@@ -1,4 +1,4 @@
-import { Controller, Put, UseGuards, Body } from '@nestjs/common';
+import { Controller, Put, UseGuards, Body, Post } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
@@ -11,37 +11,15 @@ import { TeacherService } from './teacher.service';
 import { ResponseSuccess } from '@/utils/utils';
 
 @Controller('teachers')
+@Roles(Role.Teacher)
 export class TeacherController {
+    constructor (
+        private readonly teacherService: TeacherService
+    ) {}
 
-    constructor(private readonly teacherService: TeacherService) { }
-
-
-    @Put('setting')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.Teacher)
-    async updateInfo(@Body() updateTeacherDto: UpdateTeacherDto, @User() user): Promise<IResponse<ITeacher>> {
-        //console.log(user)
-        const updateTeacher = await this.teacherService.updateTeacher(user.phone, updateTeacherDto);
-        updateTeacher.password = undefined;
-        return new ResponseSuccess("TEACHER.UPDATE_INFO_SUCCESS", updateTeacher);
+    @Post('/test/create')
+    async create(@Body() body): Promise<IResponse<ITeacher>> {
+        const teacher: ITeacher = await this.teacherService.create(body);
+        return new ResponseSuccess<ITeacher>('TEST_OK', teacher);
     }
-
-    // @Put('social')
-    // @UseGuards(AuthGuard('jwt'), RolesGuard)
-    // @Roles(Role.Teacher)
-    // async updateSocial(@Body() updateTeacherDto: UpdateTeacherDto, @User() user): Promise<IResponse<ITeacher>> {
-    //     const updateTeacher = await this.teacherService.updateTeacher(user.phone, updateTeacherDto);
-    //     updateTeacher.password = undefined;
-    //     return new ResponseSuccess("TEACHER.UPDATE_INFO_SUCCESS", updateTeacher);
-    // }
-
-    // @Put('setting')
-    // @UseGuards(AuthGuard('jwt'), RolesGuard)
-    // @Roles(Role.Teacher)
-    // async updateSetting(@Body() updateTeacherDto: UpdateTeacherDto, @User() user): Promise<IResponse<ITeacher>> {
-    //     const updateTeacher = await this.teacherService.updateTeacher(user.phone, updateTeacherDto);
-    //     updateTeacher.password = undefined;
-    //     return new ResponseSuccess("TEACHER.UPDATE_INFO_SUCCESS", updateTeacher);
-    // }
-
 }

@@ -39,11 +39,11 @@ export class AuthController {
         return new ResponseSuccess<null>('REGISTRATION.USER_REGISTERED_SUCCESSFULLY');
     }
 
-    @Post('register/teacher')
-    async createTeacher(@Body() createTeacherDto: CreateTeacherDto): Promise<IResponse<any>> {
-        await this.teacherService.createTeacher(createTeacherDto);
-        return new ResponseSuccess("REGISTRATION.USER_REGISTERED_SUCCESSFULLY");
-    }
+    // @Post('register/teacher')
+    // async createTeacher(@Body() createTeacherDto: CreateTeacherDto): Promise<IResponse<any>> {
+    //     await this.teacherService.createTeacher(createTeacherDto);
+    //     return new ResponseSuccess("REGISTRATION.USER_REGISTERED_SUCCESSFULLY");
+    // }
 
 
     @Post('login/user')
