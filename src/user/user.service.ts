@@ -1,5 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { filter, omit, size } from 'lodash';
+import * as _ from 'lodash';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
@@ -44,11 +44,13 @@ export class UserService {
                     conversations: 0,
                     relationships: 0,
                     followedTeachers: 0
-                });
-        const noOfUsNotification: number = size(filter(user.notifications, notification => !notification.seen));
+                })
+                .lean()
+                .exec();
+        const noOfUsNotification: number = _.size(_.filter(user.notifications, notification => !notification.seen));
         const noOfUsMessage: number = 9;         //temporary;
         return {
-            ...omit(user, ['notifications']),
+            ..._.omit(user, ['notifications']),
             noOfUsNotification,
             noOfUsMessage
         };

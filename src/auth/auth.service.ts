@@ -1,9 +1,9 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import * as _ from 'lodash';
 import * as bcrypt from 'bcryptjs';
+import { Role } from '@/config/constants';
 import { UserService } from '@/user/user.service';
-import { JWTService } from './jwt.service';
-import { validatePassword } from '@/utils/validate/validate'
 import { TeacherService } from '@/teacher/teacher.service';
 import { ConfigService } from '@nestjs/config';
 import { IUser } from '@/user/interface/user.interface';
@@ -11,18 +11,23 @@ import { IUser } from '@/user/interface/user.interface';
 export class AuthService {
 	constructor(
 		private readonly userService: UserService,
-		private readonly jwtService: JWTService,
+		private readonly jwtService: JwtService,
 		private readonly teacherService: TeacherService,
 		private readonly configService: ConfigService
 	) {}
 
-	async validateLoginUser(phone: string, password: string) {
-		const user: any = await this.userService.findUserByPhone(phone);
-		if (user && user.password === password) {
-			const retUser = _.omit(user, ['password']);
-			//retUser.token?
-			
-			return retUser;
+	async validateLoginUser(phone: string, password: string): Promise<any> {
+		let user: any = await this.userService.findUserByPhone(phone);
+		if (user) {
+			const checkPassword = await bcrypt.compare(password, user.password);
+			if (checkPassword) {
+				user = _.omit(user, ['password']);
+				user.token = this.jwtService.sign({
+					_id: user._id,
+					role: Role.User
+				});
+				return user;
+			}
 		}
 		return null;
 	}
