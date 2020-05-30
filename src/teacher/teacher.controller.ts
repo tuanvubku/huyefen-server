@@ -4,6 +4,7 @@ import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { Role } from '@/config/constants';
 import { UpdateDto } from './dtos/update.dto';
+import { UpdateSocialsDto } from './dtos/updateSocials.dto';
 import { User } from '@/utils/decorators/user.decorator';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ITeacher } from './interfaces/teacher.interface';
@@ -40,5 +41,15 @@ export class TeacherController {
         if (!teacher)
             throw new NotFoundException('Teacher doesn\'t existed!');
         return new ResponseSuccess('TEACHER.UPDATE_OK', teacher);
+    }
+
+    @Put('update/socials')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async updateSocials(@Req() req, @Body() body: UpdateSocialsDto): Promise<IResponse<any>> {
+        const teacherId = req.user._id;
+        const teacher: any = await this.teacherService.updateSocials(teacherId, body);
+        if (!teacher)
+            throw new NotFoundException('Teacher doesn\'t existed!');
+        return new ResponseSuccess('TEACHER.UPDATE_SOCIALS_OK', teacher);
     }
 }
