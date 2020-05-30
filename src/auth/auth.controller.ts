@@ -1,7 +1,6 @@
 import { Body, Controller, Post, Put, UseGuards, ConflictException, UnauthorizedException, NotFoundException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { CreateTeacherDto } from '@/teacher/dto/create-teacher.dto';
-import { ITeacher } from '@/teacher/interface/teacher.interface';
+import { ITeacher } from '@/teacher/interfaces/teacher.interface';
 import { TeacherService } from '@/teacher/teacher.service';
 import { UserService } from '@/user/user.service';
 import { Role } from '@/config/constants';

@@ -1,13 +1,12 @@
-import { Injectable, Inject, HttpStatus, HttpException } from '@nestjs/common';
-import * as _ from 'lodash';
+import { Injectable, Inject, HttpStatus, ConflictException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import * as bcrypt from 'bcryptjs';
-import { ITeacher } from './interface/teacher.interface';
-import { Role } from '@/config/constants';
-import { UpdateTeacherDto } from './dto/update-teacher.dto';
-import { CreateTeacherDto } from './dto/create-teacher.dto';
 import { ConfigService } from '@nestjs/config';
+import * as _ from 'lodash';
+import * as bcrypt from 'bcryptjs';
+import { UpdateDto } from './dtos/update.dto'
+import { ITeacher } from './interfaces/teacher.interface';
+import { Role } from '@/config/constants';
 
 @Injectable()
 export class TeacherService {
@@ -57,7 +56,27 @@ export class TeacherService {
             noOfUsNotification
         };
     }
-    
+
+    async update(teacherId: string, params: UpdateDto): Promise<any> {
+        try {
+            const teacher = await this.teacherModel
+                    .findByIdAndUpdate(teacherId, {
+                        ...params
+                    }, {
+                        new: true,
+                        runValidators: true
+                    })
+                    .select('phone name email biography headline');
+            return teacher;
+        }
+        catch (e) {
+            if (e.name === 'MongoError' && e.codeName === 'DuplicateKey')
+                throw new ConflictException(e.errmsg);
+            else if (e.name === 'ValidationError')
+                throw new BadRequestException(e.message);
+            throw e; 
+        }
+    }
     // async createTeacher(teacherDto: CreateTeacherDto): Promise<ITeacher> {
     //     const teacher = { ...teacherDto };
     //     const teacherFromDB = await this.teacherModel.findOne({ phone: teacher.phone });
