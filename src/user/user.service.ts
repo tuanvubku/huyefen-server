@@ -56,6 +56,26 @@ export class UserService {
         };
     }
 
+    async findUserById(userId: string): Promise<any> {
+        const user: any = await this.userModel
+                .findById(userId)
+                .select({
+                    conversations: 0,
+                    relationships: 0,
+                    followedTeachers: 0,
+                    password: 0
+                })
+                .lean()
+                .exec();
+        if (!user) return null;
+        const noOfUsNotification: number = _.size(_.filter(user.notifications, notification => !notification.seen));
+        const noOfUsMessage: number = 9;         //temporary;
+        return {
+            ..._.omit(user, ['notifications']),
+            noOfUsMessage,
+            noOfUsNotification
+        };
+    }
     // async findUserById(id: string): Promise<IUser> {
     //     const user = await this.userModel.findById(id).exec();
     //     return user;

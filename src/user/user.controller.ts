@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Query, Put, UseGuards, HttpException, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Get, Param, Query, Put, UseGuards, HttpException, HttpStatus, Req, NotFoundException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { User } from '@/utils/decorators/user.decorator';
 import { ResponseSuccess } from '@/utils/utils';
@@ -11,9 +12,21 @@ import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/create-user.dto';
 
 @Controller('users')
+@Roles(Role.User)
 export class UserController {
-    constructor(private readonly userService: UserService) {}
+    constructor(
+        private readonly userService: UserService
+    ) {}
 
+    @Get('/me')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async fetch(@Req() req): Promise<any> {
+        const user = await this.userService.findUserById(req.user._id);
+        if (!user)
+            throw new NotFoundException('User doesn\'t existed!');
+        return new ResponseSuccess('USER.FETCH_SUCCESSFULLY', user);
+
+    }
     // @Get()
     // @UseGuards(AuthGuard('jwt'), RolesGuard)
     // @Roles(Role.User)
