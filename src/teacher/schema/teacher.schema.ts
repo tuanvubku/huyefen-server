@@ -1,5 +1,5 @@
 import { Schema } from 'mongoose';
-import { NotificationSchema } from '@/user/schemas/user.schema';
+import { NotificationSchema } from '@/user/schemas/notification.schema';
 
 export const TeacherSchema = new Schema({
     name: {

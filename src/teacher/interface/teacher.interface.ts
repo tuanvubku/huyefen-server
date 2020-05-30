@@ -1,15 +1,20 @@
-import {Document} from 'mongoose'
-export interface ITeacher extends Document{
+import { Document } from 'mongoose';
+import { INotification } from '@/user/interfaces/notification.interface';
+
+
+export interface ITeacher extends Document {
+    _id: string;
     name: string;
+    password: string;
+    avatar: string;
+    biography: string;
+    headline: string;
     phone: string;
-    password:string;
-    roles?: string[]
-    avatar?: string;
-    job?: string;
-    noOfUsNotification?: number;
-    biography?: string;
-    twitter?: string;
-    facebook?: string;
-    youtube?: string;
-    instagram?: string;
-}
+    email: string;
+    twitter: string;
+    facebook: string;
+    youtube: string;
+    instagram: string;
+    followingStudents: string[];
+    notifications: INotification[]
+};

@@ -1,5 +1,6 @@
 import { Document } from 'mongoose';
 import { FriendStatuses } from '@/config/constants';
+import { INotification } from './notification.interface';
 
 export interface IUser extends Document{
 	_id: string;
@@ -21,18 +22,4 @@ export interface IUser extends Document{
 		status: FriendStatuses
 	}],
 	conversations: string[]
-};
-
-interface INotification {
-    _id: string,
-    type: number,
-	content: string,
-	avatar: string,
-    user: {
-		_id: string,
-		avatar: string,
-		name: string
-	},
-    createdAt: Date,
-    seen: boolean
 };
