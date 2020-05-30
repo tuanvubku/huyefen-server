@@ -86,13 +86,32 @@ export class UserService {
                     new: true,
                     runValidators: true
                 })
-                .select('-conversations -notifications -password -followedTeachers -relationships');
+                .select('-conversations -notifications -password -followedTeachers -relationships -catesOfConcern -email');
             return user;
         }
         catch (e) {
             if (e.name === 'MongoError' && e.codeName === 'DuplicateKey')
                 throw new ConflictException(e.errmsg);
             else if (e.name === 'ValidationError')
+                throw new BadRequestException(e.message);
+            throw e;
+        }
+    }
+
+    async updateCatesOfConcern(userId: string, targetKeys: string[]): Promise<any> {
+        try {
+            const user = await this.userModel
+                    .findByIdAndUpdate(userId, {
+                        catesOfConcern: targetKeys
+                    }, {
+                        new: true,
+                        runValidators: true
+                    })
+                    .select('catesOfConcern');
+            return user;
+        }
+        catch (e) {
+            if (e.name === 'CastError')
                 throw new BadRequestException(e.message);
             throw e;
         }

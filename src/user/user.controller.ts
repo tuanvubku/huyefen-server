@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { User } from '@/utils/decorators/user.decorator';
 import { UpdateDto } from './dtos/update.dto';
+import { UpdateCatesDto } from './dtos/updateCates.dto';
 import { ResponseSuccess } from '@/utils/utils';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { IResponse } from '@/utils/interfaces/response.interface';
@@ -30,7 +31,7 @@ export class UserController {
 
     }
 
-    @Put('/update')
+    @Put('/update/info')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     async update(@Req() req, @Body() body: UpdateDto): Promise<any> {
         const userId = req.user._id;
@@ -42,6 +43,17 @@ export class UserController {
         if (!user)
             throw new NotFoundException('User doesn\'t existed!');
         return new ResponseSuccess('USER.UPDATE_SUCCESSFULLY', user);
+    }
+
+    @Put('/update/cates')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async updateCatesOfConcern(@Req() req, @Body() body: UpdateCatesDto): Promise<any> {
+        const { targetKeys } = body;
+        const userId: string = req.user._id;
+        const user = await this.userService.updateCatesOfConcern(userId, targetKeys);
+        if (!user)
+            throw new NotFoundException('User doesn\'t existed!');
+        return new ResponseSuccess('USER.UPDATE_CATES_SUCCESS', user);
     }
     // @Get()
     // @UseGuards(AuthGuard('jwt'), RolesGuard)
