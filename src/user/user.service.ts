@@ -1,4 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
+import { filter, omit, size } from 'lodash';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
@@ -36,16 +37,22 @@ export class UserService {
         await newUser.save();
     }
 
-    // async findUserByPhone(phone: string): Promise<any> {
-    //     return await this.userModel
-    //             .findOne({ phone })
-    //             .select({
-    //                 notifications: 0,
-    //                 friendIds: 0,
-    //                 friendRequestIds: 0,
-    //                 followIds: 0
-    //             });
-    // }
+    async findUserByPhone(phone: string): Promise<any> {
+        const user: any =  await this.userModel
+                .findOne({ phone })
+                .select({
+                    conversations: 0,
+                    relationships: 0,
+                    followedTeachers: 0
+                });
+        const noOfUsNotification: number = size(filter(user.notifications, notification => !notification.seen));
+        const noOfUsMessage: number = 9;         //temporary;
+        return {
+            ...omit(user, ['notifications']),
+            noOfUsNotification,
+            noOfUsMessage
+        };
+    }
 
     // async findUserById(id: string): Promise<IUser> {
     //     const user = await this.userModel.findById(id).exec();

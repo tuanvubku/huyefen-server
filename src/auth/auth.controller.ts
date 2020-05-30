@@ -42,14 +42,14 @@ export class AuthController {
     }
 
 
-    // @Post('login/user')
-    // async loginUser(@Body() loginDto: LoginDto): Promise<IResponse<any>> {
-    //     const { phone, password } = loginDto;
-    //     const user = await this.authService.validateLoginUser(phone, password);
-    //     if (user)
-    //         return new ResponseSuccess<any>("LOGIN.USER_LOGIN_SUCCESSFULLY", user);
-    //     throw new UnauthorizedException('LOGIN.USER_LOGIN_ERROR');
-    // }
+    @Post('login/user')
+    async loginUser(@Body() body: LoginDto): Promise<IResponse<any>> {
+        const { phone, password } = body;
+        const user: any = await this.authService.validateLoginUser(phone, password);
+        if (!user)
+            throw new UnauthorizedException('LOGIN.USER_LOGIN_ERROR');
+        return new ResponseSuccess<any>("LOGIN.USER_LOGIN_SUCCESSFULLY", user);
+    }
 
     // @Post('login/teacher')
     // async login(@Body() createLoginDto: LoginDto): Promise<IResponse<ITeacher>> {

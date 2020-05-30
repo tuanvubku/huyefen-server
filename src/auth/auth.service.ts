@@ -16,7 +16,7 @@ export class AuthService {
 	) {}
 
 	async validateLoginUser(phone: string, password: string) {
-		const user: IUser = await this.userService.findUserByPhone(phone);
+		const user: any = await this.userService.findUserByPhone(phone);
 		if (user && user.password === password) {
 			const { password, ...retUser } = user;
 			return retUser;
