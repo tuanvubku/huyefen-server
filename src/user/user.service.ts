@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
-import { RegisterDto } from '@/auth/dto/register.dto';
+import { RegisterDto } from '@/auth/dtos/register.dto';
 import { TeacherService } from '@/teacher/teacher.service';
 import { UpdateUserDto } from './dto/create-user.dto';
 import { IUser } from './interface/user.interface';

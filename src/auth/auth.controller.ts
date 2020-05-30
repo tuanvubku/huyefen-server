@@ -13,6 +13,8 @@ import { IResponse } from '@/utils/interfaces/response.interface';
 import { AuthService } from './auth.service';
 import { JobService } from '@/job/job.service';
 import { IJob } from '@/job/interfaces/job.interface';
+import { RegisterDto } from './dtos/register.dto';
+import { LoginDto } from './dtos/login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -24,16 +26,16 @@ export class AuthController {
     ) {}
 
     @Post('register/user')
-    async registerUser(@Body() registerDto: RegisterDto): Promise<IResponse<null>> {
-        const { phone, email } = registerDto;
+    async registerUser(@Body() body: RegisterDto): Promise<IResponse<null>> {
+        const { phone, email } = body;
         const countExisted: number = await this.userService.countUserByPhoneEmail({ phone, email });
         if (countExisted > 0)
             throw new ConflictException('REGISTRATION.USER_ALREADY_REGISTERED');
-        const { job: jobId } = registerDto;
+        const { job: jobId } = body;
         const job: IJob = await this.jobService.findJobById(jobId);
         if (!job)
             throw new NotFoundException('REGISTRATION.NOT_FOUND_JOB');
-        await this.userService.createUser(registerDto);
+        await this.userService.createUser(body);
         return new ResponseSuccess<null>('REGISTRATION.USER_REGISTERED_SUCCESSFULLY');
     }
 
