@@ -13,7 +13,7 @@ import { TeacherSchema } from '@/teacher/schema/teacher.schema';
 @Module({
   imports: [MongooseModule.forFeature([
     {name: 'User', schema: UserSchema},
-    {name: 'Teacher', schema: TeacherSchema}]), UserModule, TeacherModule],
+    {name: 'Teacher', schema: TeacherSchema}]), UserModule, TeacherModule, JobModule],
     controllers: [AuthController],
     providers: [AuthService, JWTService, JwtStrategy]
 })

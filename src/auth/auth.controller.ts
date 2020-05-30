@@ -10,6 +10,7 @@ import { RolesGuard } from '@/utils/guard/roles.guard';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { AuthService } from './auth.service';
 import { JobService } from '@/job/job.service';
+import { IJob } from '@/job/interfaces/job.interface';
 
 @Controller('auth')
 export class AuthController {
@@ -27,7 +28,7 @@ export class AuthController {
         if (countExisted > 0)
             throw new ConflictException('REGISTRATION.USER_ALREADY_REGISTERED');
         const { job: jobId } = registerDto;
-        const job = await this.jobService.findJobById(jobId);
+        const job: IJob = await this.jobService.findJobById(jobId);
         if (!job)
             throw new NotFoundException('REGISTRATION.NOT_FOUND_JOB');
         await this.userService.createUser(registerDto);

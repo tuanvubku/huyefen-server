@@ -28,4 +28,9 @@ export class JobService {
         const deletedJob = await this.jobModel.findByIdAndDelete(jobId);
         return deletedJob;
     }
+
+    async findJobById(jobId: string): Promise<IJob> {
+        const job: IJob = await this.jobModel.findById(jobId);
+        return job;
+    }
 }
