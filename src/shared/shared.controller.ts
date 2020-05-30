@@ -1,7 +1,7 @@
 import { Controller, Get, Body, UseGuards } from '@nestjs/common';
 import { SharedService } from './shared.service';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from '@/utils/guard/roles.guard';
+import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorator/roles.decorator';
 import { CreateURLDto } from './dto/create-url.dto';
 import { User } from '@/utils/decorator/user.decorator';

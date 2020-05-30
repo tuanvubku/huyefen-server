@@ -1,6 +1,6 @@
 import { Controller, Put, UseGuards, Body } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from '@/utils/guard/roles.guard';
+import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorator/roles.decorator';
 import { Role } from '@/config/constants';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
