@@ -7,7 +7,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { AreaModule } from './area/area.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
-import { JobModule } from './jobs/job.module';
+import { JobModule } from './job/job.module';
 import { SharedModule } from './shared/shared.module';
 import { TeacherModule } from './teacher/teacher.module';
 import { CourseModule } from './course/course.module';

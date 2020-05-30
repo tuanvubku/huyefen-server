@@ -9,8 +9,7 @@ import { User } from '@/utils/decorator/user.decorator';
 import { RolesGuard } from '@/utils/guard/roles.guard';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
+import { JobService } from '@/job/job.service';
 
 @Controller('auth')
 export class AuthController {
@@ -18,7 +17,7 @@ export class AuthController {
         private readonly authService: AuthService,
         private readonly userService: UserService,
         private readonly teacherService: TeacherService,
-        //private readonly jobService: JobService
+        private readonly jobService: JobService
     ) {}
 
     @Post('register/user')
@@ -28,9 +27,9 @@ export class AuthController {
         if (countExisted > 0)
             throw new ConflictException('REGISTRATION.USER_ALREADY_REGISTERED');
         const { job: jobId } = registerDto;
-        // const job = await this.jobService.findJobById(jobId);
-        // if (!job)
-        //     throw new NotFoundException('REGISTRATION.NOT_FOUND_JOB');
+        const job = await this.jobService.findJobById(jobId);
+        if (!job)
+            throw new NotFoundException('REGISTRATION.NOT_FOUND_JOB');
         await this.userService.createUser(registerDto);
         return new ResponseSuccess<null>('REGISTRATION.USER_REGISTERED_SUCCESSFULLY');
     }

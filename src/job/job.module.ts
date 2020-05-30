@@ -11,6 +11,7 @@ import { JobSchema } from './schemas/job.schema';
         ])
     ],
     providers: [JobService],
-    controllers: [JobController]
+    controllers: [JobController],
+    exports: [JobService]
 })
 export class JobModule {}
