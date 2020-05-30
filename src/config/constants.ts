@@ -14,3 +14,8 @@ export enum FriendStatuses {
     ReceivedInvitation = 3,
     Friend = 4
 };
+
+export enum Gender {
+    MALE = 'male',
+    FEMALE = 'female'
+};

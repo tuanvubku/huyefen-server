@@ -6,7 +6,7 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { RegisterDto } from '@/auth/dtos/register.dto';
 import { TeacherService } from '@/teacher/teacher.service';
-import { UpdateUserDto } from './dto/create-user.dto';
+import { UpdateDto } from './dtos/update.dto';
 import { IUser } from './interface/user.interface';
 
 @Injectable()
@@ -76,6 +76,21 @@ export class UserService {
             noOfUsNotification
         };
     }
+
+    async update(userId: string, params: UpdateDto): Promise<any> {
+        try {
+            const user =  await this.userModel
+                .findByIdAndUpdate(userId, {
+                    ...params
+                }, { new: true })
+                .select('-conversations -notifications -password -followedTeachers -relationships');
+            return user;
+        }
+        catch (e) {
+            throw e;
+        }
+    }
+
     // async findUserById(id: string): Promise<IUser> {
     //     const user = await this.userModel.findById(id).exec();
     //     return user;

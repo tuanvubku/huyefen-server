@@ -1,21 +1,23 @@
 import { Body, Controller, Get, Param, Query, Put, UseGuards, HttpException, HttpStatus, Req, NotFoundException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { User } from '@/utils/decorators/user.decorator';
+import { UpdateDto } from './dtos/update.dto';
 import { ResponseSuccess } from '@/utils/utils';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { Role } from '@/config/constants';
 import { IUser } from './interface/user.interface';
 import { UserService } from './user.service';
-import { UpdateUserDto } from './dto/create-user.dto';
+import { JobService } from '@/job/job.service';
+import { IJob } from '@/job/interfaces/job.interface';
 
 @Controller('users')
 @Roles(Role.User)
 export class UserController {
     constructor(
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        private readonly jobService: JobService
     ) {}
 
     @Get('/me')
@@ -26,6 +28,20 @@ export class UserController {
             throw new NotFoundException('User doesn\'t existed!');
         return new ResponseSuccess('USER.FETCH_SUCCESSFULLY', user);
 
+    }
+
+    @Put('/update')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async update(@Req() req, @Body() body: UpdateDto): Promise<any> {
+        const userId = req.user._id;
+        const { job: jobId } = body;
+        const job: IJob = await this.jobService.findJobById(jobId);
+        if (!job)
+            throw new NotFoundException('Not found job!'); 
+        const user = await this.userService.update(userId, body);
+        if (!user)
+            throw new NotFoundException('User doesn\'t existed!');
+        return new ResponseSuccess('USER.UPDATE_SUCCESSFULLY', user);
     }
     // @Get()
     // @UseGuards(AuthGuard('jwt'), RolesGuard)

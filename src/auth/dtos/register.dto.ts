@@ -1,9 +1,5 @@
 import { IsString, IsMongoId, IsNumberString, Length, MinLength, IsEmail, IsEnum, IsISO8601 } from 'class-validator';
-
-enum Gender {
-    MALE = 'male',
-    FEMALE = 'female'
-};
+import { Gender } from '@/config/constants';
 
 export class RegisterDto {
     @IsString()
