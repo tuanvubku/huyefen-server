@@ -3,8 +3,9 @@ import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { User } from '@/utils/decorators/user.decorator';
 import { UpdateDto } from './dtos/update.dto';
-import { UpdateCatesDto } from './dtos/updateCates.dto';
-import { ChangePasswordDto } from './dtos/changePassword.dto';
+import { UpdateCatesDto } from './dtos/catesOfConcern.dto';
+import { ChangePasswordDto } from './dtos/password.dto';
+import { UpdateAvatarDto } from './dtos/avatar.dto';
 import { ResponseSuccess } from '@/utils/utils';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { IResponse } from '@/utils/interfaces/response.interface';
@@ -60,7 +61,7 @@ export class UserController {
     @Put('/update/password')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     async changePassword(@Req() req, @Body() body: ChangePasswordDto): Promise<IResponse<boolean>> {
-        const userId = req.user._id;
+        const userId: string = req.user._id;
         const { oldPassword, newPassword } = body;
         const status = await this.userService.updatePassword(userId, oldPassword, newPassword);
         if (status === 0)
@@ -69,6 +70,18 @@ export class UserController {
             throw new ConflictException('Password doesn\'t matched!');
         return new ResponseSuccess('USER.CHANGE_PASSWORD_SUCCESS', true);
     }
+
+    @Put('/update/avatar')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async updateAvatar(@Req() req, @Body() body: UpdateAvatarDto): Promise<IResponse<any>> {
+        const userId: string = req.user._id;
+        const { avatar } = body;
+        const user: any = await this.userService.updateAvatar(userId, avatar);
+        if (!user)
+            throw new NotFoundException('User doesn\'t existed!');
+        return new ResponseSuccess('USER.UPDATE_AVATAR_OK', user);
+    }
+
     // @Get()
     // @UseGuards(AuthGuard('jwt'), RolesGuard)
     // @Roles(Role.User)

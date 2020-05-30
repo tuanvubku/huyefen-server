@@ -131,6 +131,16 @@ export class UserService {
         return 0;
     }
 
+    async updateAvatar(userId: string, avatar: string): Promise<any> {
+        return await this.userModel
+                .findByIdAndUpdate(userId, {
+                    avatar
+                }, {
+                    new: true
+                })
+                .select('avatar');
+    }
+
     // async findUserById(id: string): Promise<IUser> {
     //     const user = await this.userModel.findById(id).exec();
     //     return user;
