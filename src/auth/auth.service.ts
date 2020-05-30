@@ -32,10 +32,21 @@ export class AuthService {
 		return null;
 	}
 
-	// async validateLoginTeacher(phone: string, password: string) {
-	// 	var teacherFromDB = await this.teacherService.findTeacherByPhone(phone);
-	// 	return await this.valdiateLogin(phone, password, teacherFromDB);
-	// }
+	async validateLoginTeacher(phone: string, password: string) {
+		let teacher: any = await this.teacherService.findTeacherByPhone(phone);
+		if (teacher) {
+			const checkPassword = await bcrypt.compare(password, teacher.password);
+			if (checkPassword) {
+				teacher = _.omit(teacher, ['password']);
+				teacher.token = this.jwtService.sign({
+					_id: teacher._id,
+					role: Role.Teacher
+				});
+				return teacher;
+			}
+		}
+		return null;
+	}
 
 	// async valdiateLogin(phone: string, password: string, identity: any): Promise<any> {
 	// 	if (!identity) throw new HttpException('LOGIN.NOT_CREATED', HttpStatus.UNAUTHORIZED);

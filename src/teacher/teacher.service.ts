@@ -1,8 +1,9 @@
 import { Injectable, Inject, HttpStatus, HttpException } from '@nestjs/common';
-import { ITeacher } from './interface/teacher.interface';
+import * as _ from 'lodash';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
+import { ITeacher } from './interface/teacher.interface';
 import { Role } from '@/config/constants';
 import { UpdateTeacherDto } from './dto/update-teacher.dto';
 import { CreateTeacherDto } from './dto/create-teacher.dto';
@@ -22,6 +23,22 @@ export class TeacherService {
             ...body
         });
         return await teacher.save();
+    }
+
+    async findTeacherByPhone(phone: string): Promise<any> {
+        const teacher: any =  await this.teacherModel
+                .findOne({ phone })
+                .select({
+                    followingStudents: 0
+                })
+                .lean()
+                .exec();
+        if (!teacher) return null;
+        const noOfUsNotification: number = _.size(_.filter(teacher.notifications, notification => !notification.seen));
+        return {
+            ..._.omit(teacher, ['notifications']),
+            noOfUsNotification
+        };
     }
     // async createTeacher(teacherDto: CreateTeacherDto): Promise<ITeacher> {
     //     const teacher = { ...teacherDto };

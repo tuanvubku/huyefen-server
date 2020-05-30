@@ -47,6 +47,7 @@ export class UserService {
                 })
                 .lean()
                 .exec();
+        if (!user) return null;
         const noOfUsNotification: number = _.size(_.filter(user.notifications, notification => !notification.seen));
         const noOfUsMessage: number = 9;         //temporary;
         return {

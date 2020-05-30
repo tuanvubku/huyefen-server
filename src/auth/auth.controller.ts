@@ -15,6 +15,7 @@ import { JobService } from '@/job/job.service';
 import { IJob } from '@/job/interfaces/job.interface';
 import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
+import { LoginTeacherDto } from './dtos/loginTeacher.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -39,13 +40,6 @@ export class AuthController {
         return new ResponseSuccess<null>('REGISTRATION.USER_REGISTERED_SUCCESSFULLY');
     }
 
-    // @Post('register/teacher')
-    // async createTeacher(@Body() createTeacherDto: CreateTeacherDto): Promise<IResponse<any>> {
-    //     await this.teacherService.createTeacher(createTeacherDto);
-    //     return new ResponseSuccess("REGISTRATION.USER_REGISTERED_SUCCESSFULLY");
-    // }
-
-
     @Post('login/user')
     async loginUser(@Body() body: LoginDto): Promise<IResponse<any>> {
         const { phone, password } = body;
@@ -55,11 +49,14 @@ export class AuthController {
         return new ResponseSuccess<any>("LOGIN.USER_LOGIN_SUCCESSFULLY", user);
     }
 
-    // @Post('login/teacher')
-    // async login(@Body() createLoginDto: LoginDto): Promise<IResponse<ITeacher>> {
-    //     var teacher = await this.authService.validateLoginTeacher(createLoginDto.phone, createLoginDto.password);
-    //     return new ResponseSuccess("LOGIN.TEACHER_LOGIN_SUCCESSFULLY", teacher);
-    // }
+    @Post('login/teacher')
+    async loginTeacher(@Body() body: LoginTeacherDto): Promise<IResponse<any>> {
+        const { phone, password } = body;
+        const teacher: any = await this.authService.validateLoginTeacher(phone, password);
+        if (!teacher)
+            throw new UnauthorizedException('LOGIN.TEACHER_LOGIN_ERR');
+        return new ResponseSuccess<any>('LOGIN.TEACHER_LOGIN_OK', teacher);
+    }
 
     // @Put('change-password')
     // @UseGuards(AuthGuard('jwt'), RolesGuard)
