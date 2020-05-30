@@ -1,9 +1,10 @@
-import { Body, Controller, Get, Param, Query, Put, UseGuards, HttpException, HttpStatus, Req, NotFoundException } from '@nestjs/common';
+import { Body, Controller, Get, Param, Query, Put, UseGuards, HttpException, HttpStatus, Req, NotFoundException, ConflictException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { User } from '@/utils/decorators/user.decorator';
 import { UpdateDto } from './dtos/update.dto';
 import { UpdateCatesDto } from './dtos/updateCates.dto';
+import { ChangePasswordDto } from './dtos/changePassword.dto';
 import { ResponseSuccess } from '@/utils/utils';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { IResponse } from '@/utils/interfaces/response.interface';
@@ -23,7 +24,7 @@ export class UserController {
 
     @Get('/me')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
-    async fetch(@Req() req): Promise<any> {
+    async fetch(@Req() req): Promise<IResponse<any>> {
         const user = await this.userService.findUserById(req.user._id);
         if (!user)
             throw new NotFoundException('User doesn\'t existed!');
@@ -33,7 +34,7 @@ export class UserController {
 
     @Put('/update/info')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
-    async update(@Req() req, @Body() body: UpdateDto): Promise<any> {
+    async update(@Req() req, @Body() body: UpdateDto): Promise<IResponse<any>> {
         const userId = req.user._id;
         const { job: jobId } = body;
         const job: IJob = await this.jobService.findJobById(jobId);
@@ -47,13 +48,26 @@ export class UserController {
 
     @Put('/update/cates')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
-    async updateCatesOfConcern(@Req() req, @Body() body: UpdateCatesDto): Promise<any> {
+    async updateCatesOfConcern(@Req() req, @Body() body: UpdateCatesDto): Promise<IResponse<any>> {
         const { targetKeys } = body;
         const userId: string = req.user._id;
         const user = await this.userService.updateCatesOfConcern(userId, targetKeys);
         if (!user)
             throw new NotFoundException('User doesn\'t existed!');
         return new ResponseSuccess('USER.UPDATE_CATES_SUCCESS', user);
+    }
+
+    @Put('/update/password')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async changePassword(@Req() req, @Body() body: ChangePasswordDto): Promise<IResponse<boolean>> {
+        const userId = req.user._id;
+        const { oldPassword, newPassword } = body;
+        const status = await this.userService.updatePassword(userId, oldPassword, newPassword);
+        if (status === 0)
+            throw new NotFoundException('User doesn\'t existed!');
+        else if (status === -1)
+            throw new ConflictException('Password doesn\'t matched!');
+        return new ResponseSuccess('USER.CHANGE_PASSWORD_SUCCESS', true);
     }
     // @Get()
     // @UseGuards(AuthGuard('jwt'), RolesGuard)

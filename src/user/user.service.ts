@@ -117,6 +117,20 @@ export class UserService {
         }
     }
 
+    async updatePassword(userId: string, oldPassword: string, newPassword: string): Promise<0 | -1 | 1> {
+        const user = await this.userModel.findById(userId);
+        if (user) {
+            const check: boolean = await bcrypt.compare(oldPassword, user.password);
+            if (!check) return -1;
+            const saltRounds: number = parseInt(this.configService.get<string>('SALT_ROUNDS'));
+            const hashedPassword: string = await bcrypt.hash(newPassword, saltRounds);
+            user.password = hashedPassword;
+            await user.save();
+            return 1;
+        }
+        return 0;
+    }
+
     // async findUserById(id: string): Promise<IUser> {
     //     const user = await this.userModel.findById(id).exec();
     //     return user;
