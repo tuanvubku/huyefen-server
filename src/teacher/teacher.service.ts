@@ -99,36 +99,18 @@ export class TeacherService {
                 })
                 .select('avatar');
     }
-    // async createTeacher(teacherDto: CreateTeacherDto): Promise<ITeacher> {
-    //     const teacher = { ...teacherDto };
-    //     const teacherFromDB = await this.teacherModel.findOne({ phone: teacher.phone });
-    //     if (!teacherFromDB) {
-    //         teacher.password = await bcrypt.hash(teacher.password, 10);
-    //         teacher.roles = [Role.Teacher];
-    //         const newTeacher = new this.teacherModel(teacher);
-    //         return await newTeacher.save()
-    //     } else {
-    //         throw new HttpException('REGISTRATION.TEACHER_ALREADY_REGISTERED', HttpStatus.FORBIDDEN);
-    //     }
-    // }
 
-    // async findTeacherByPhone(phone: string): Promise<ITeacher> {
-    //     return await this.teacherModel.findOne({ phone }).lean();
-    // }
-
-    // async findTeacherById(id: string): Promise<ITeacher> {
-    //     return await this.teacherModel.findById(id).lean();
-    // }
-
-    // async updateTeacher(phone: string, updateTacher: UpdateTeacherDto): Promise<ITeacher> {
-    //     const teacherFromDB = await this.teacherModel.findOneAndUpdate({ phone }, updateTacher, { new: true });
-    //     if (!teacherFromDB)
-    //         throw new HttpException("TEACHER.NOT_FOUND", HttpStatus.NOT_FOUND);
-    //     return teacherFromDB;
-    // }
-
-    // async findProfileTeacher(teacherId: string): Promise<any> {
-    //     const teacherFromDB = await this.teacherModel.findById(teacherId).select('_id name avatar numOfCourses numOfStudents numOfReviews biography twitter facebook youtube instagram').lean().exec();
-    //     return teacherFromDB;
-    // }
+    async updatePassword(teacherId: string, oldPassword: string, newPassword: string): Promise<0 | -1 | 1> {
+        const teacher = await this.teacherModel.findById(teacherId);
+        if (teacher) {
+            const check: boolean = await bcrypt.compare(oldPassword, teacher.password);
+            if (!check) return -1;
+            const saltRounds: number = parseInt(this.configService.get<string>('SALT_ROUNDS'));
+            const hashedPassword: string = await bcrypt.hash(newPassword, saltRounds);
+            teacher.password = hashedPassword;
+            await teacher.save();
+            return 1;
+        }
+        return 0;
+    }
 }

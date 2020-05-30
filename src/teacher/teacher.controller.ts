@@ -1,4 +1,4 @@
-import { Controller, Put, UseGuards, Body, Post, Get, Req, NotFoundException } from '@nestjs/common';
+import { Controller, Put, UseGuards, Body, Post, Get, Req, NotFoundException, ConflictException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
@@ -6,6 +6,7 @@ import { Role } from '@/config/constants';
 import { UpdateDto } from './dtos/update.dto';
 import { UpdateSocialsDto } from './dtos/socials.dto';
 import { UpdateAvatarDto } from './dtos/avatar.dto';
+import { ChangePasswordDto } from './dtos/password.dto';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ITeacher } from './interfaces/teacher.interface';
 import { TeacherService } from './teacher.service';
@@ -62,5 +63,18 @@ export class TeacherController {
         if (!teacher)
             throw new NotFoundException('Teacher doesn\'t existed!');
         return new ResponseSuccess('TEACHER.UPDATE_AVATAR_OK', teacher);
+    }
+
+    @Put('/update/password')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async changePassword(@Req() req, @Body() body: ChangePasswordDto): Promise<IResponse<boolean>> {
+        const teacherId: string = req.user._id;
+        const { oldPassword, newPassword } = body;
+        const status = await this.teacherService.updatePassword(teacherId, oldPassword, newPassword);
+        if (status === 0)
+            throw new NotFoundException('Teacher doesn\'t existed!');
+        else if (status === -1)
+            throw new ConflictException('Password doesn\'t matched!');
+        return new ResponseSuccess('TEACHER.CHANGE_PASSWORD_SUCCESS', true);
     }
 }
