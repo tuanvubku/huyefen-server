@@ -19,3 +19,24 @@ export enum Gender {
     MALE = 'male',
     FEMALE = 'female'
 };
+
+export enum Level {
+    AllLevel = 'allLevel',
+    Beginner ='beginner',
+    Intermediate = 'intermediate',
+    Expert = 'expert'
+};
+
+export enum Privacy {
+    Draft = 'draft',
+    Public = 'public',
+    Password = 'password',
+    Private = 'private'
+};
+
+export enum Price {
+    Free = 'free',
+    TierOne = 'tier1',
+    TierTwo = 'tier2',
+    TierThree = 'tier3'
+};

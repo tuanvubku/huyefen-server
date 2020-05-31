@@ -2,7 +2,7 @@ import { Body, Controller, HttpException, HttpStatus, Post } from '@nestjs/commo
 import { SearchService } from '@/search/search.service';
 import { ResponseSuccess } from '@/utils/utils';
 import { CourseService } from './course.service';
-import { CreateCourseDto } from './dto/create-course.dto';
+import { CreateCourseDto } from './dtos/create-course.dto';
 
 @Controller('courses')
 export class CourseController {
