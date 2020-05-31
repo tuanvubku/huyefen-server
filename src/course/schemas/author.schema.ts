@@ -11,6 +11,10 @@ export const AuthorSchema = new Schema({
         ref: 'Teacher',
         required: true
     },
+    isOwner: {
+        type: Boolean,
+        default: false
+    },
     permission: {
         announcement: {
             type: Boolean,
@@ -26,7 +30,7 @@ export const AuthorSchema = new Schema({
         },
         messenger: {
             type: Boolean,
-            default: false
+            default: true
         },
         invite: {
             type: Boolean,

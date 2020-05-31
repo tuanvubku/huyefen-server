@@ -4,6 +4,7 @@ export interface IAuthor extends Document {
     _id: string;
     course: string;
     teacher: string;
+    isOwner: boolean;
     permission: {
         announcement: boolean,
         review: boolean,
