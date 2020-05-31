@@ -16,6 +16,7 @@ export interface ICourse extends Document {
     privacy: Privacy;
     password: string;
     avatar: string;
+    starRating: number;
     price: Price;
     lastUpdated: string;
     messages: {

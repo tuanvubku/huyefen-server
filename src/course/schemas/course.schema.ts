@@ -51,6 +51,12 @@ export const CourseSchema = new Schema({
         default: null,
         minlength: 6
     },
+    starRating: {
+        type: Number,
+        default: 3.5,
+        min: 1,
+        max: 5
+    },
     avatar: {
         type: String,
         default: null

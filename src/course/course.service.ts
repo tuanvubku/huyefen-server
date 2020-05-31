@@ -21,7 +21,7 @@ export class CourseService {
         const author: IAuthor = new this.authorModel({
             teacher: teacherId,
             course: courseId,
-            isOnwer: true,
+            isOwner: true,
             permission: {
                 announcement: true,
                 review: true,
