@@ -17,6 +17,7 @@ import { AuthorSchema } from './schemas/author.schema';
 		ChapterModule
 	],
 	providers: [CourseService],
-	controllers: [CourseController]
+	controllers: [CourseController],
+	exports: [CourseService]
 })
 export class CourseModule {}
