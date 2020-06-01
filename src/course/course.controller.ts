@@ -12,6 +12,7 @@ import { CreateDto } from './dtos/create.dto';
 import { TeacherCoursesSort } from '@/config/constants';
 import { FetchDto } from './dtos/fetch.dto';
 import { FetchInfoDto } from './dtos/fetchInfo.dto';
+import { FetchGoalsDto } from './dtos/fetchGoals.dto';
 
 @Controller('courses')
 export class CourseController {
@@ -48,7 +49,7 @@ export class CourseController {
     @Roles(Role.Teacher)
     async fetchInfo(@Req() req, @Param() params: FetchInfoDto): Promise<IResponse<any>> {
         const { id: courseId } = params;
-        const teacherId = req.user._id;
+        const teacherId: string = req.user._id;
         const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
         if (!check)
             throw new ForbiddenException('Forbidden. You can not access this course');
@@ -58,7 +59,20 @@ export class CourseController {
         return new ResponseSuccess('FETCH_INFO_OK', courseInfo);
     }
 
-
+    @Get('/:id/goals')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchGoals(@Req() req, @Param() params: FetchGoalsDto): Promise<IResponse<any>> {
+        const teacherId: string = req.user._id;
+        const { id: courseId } = params;
+        const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!check)
+            throw new ForbiddenException('Forbidden. You can not access this course');
+        const courseGoals = await this.courseService.fetchGoals(courseId);
+        if (!courseGoals)
+            throw new NotFoundException('The course do not existed!');
+            return new ResponseSuccess('FETCH_INFO_OK', courseGoals);
+    }
     // @Post()
     // async createCourse(@Body() createCourseDto: CreateCourseDto){
     //     const course = await this.courseService.createCourse(createCourseDto);

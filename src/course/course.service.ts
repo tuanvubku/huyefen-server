@@ -126,4 +126,14 @@ export class CourseService {
         }
         return null;
     }
+
+    async fetchGoals(courseId: string): Promise<any> {
+        return await this.courseModel 
+            .findById(courseId)
+            .select({
+                whatLearns: 1,
+                requirements: 1,
+                targetStudents: 1
+            });
+    }
 }
