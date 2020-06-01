@@ -57,6 +57,38 @@ export const CourseSchema = new Schema({
         min: 1,
         max: 5
     },
+    progress: {
+        goals: {
+            type: Number,
+            default: 0,
+            min: 0,
+            max: 100
+        },
+        syllabus: {
+            type: Number,
+            default: 0,
+            min: 0,
+            max: 100
+        },
+        landing: {
+            type: Number,
+            default: 0,
+            min: 0,
+            max: 100
+        },
+        price: {
+            type: Number,
+            default: 0,
+            min: 0,
+            max: 100
+        },
+        messages: {
+            type: Number,
+            default: 0,
+            min: 0,
+            max: 100
+        }
+    },
     avatar: {
         type: String,
         default: null

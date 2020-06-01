@@ -17,6 +17,13 @@ export interface ICourse extends Document {
     password: string;
     avatar: string;
     starRating: number;
+    progress: {
+        goals: number,
+        syllabus: number,
+        landing: number,
+        price: number,
+        messages: number
+    }
     price: Price;
     lastUpdated: string;
     messages: {

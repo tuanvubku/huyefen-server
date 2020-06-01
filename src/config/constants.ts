@@ -40,3 +40,18 @@ export enum Price {
     TierTwo = 'tier2',
     TierThree = 'tier3'
 };
+
+export enum TeacherCoursesSort {
+    Newest =  'newest',
+    Oldest = 'oldest',
+    AtoZ = 'a-z',
+    ZtoA = 'z-a'
+}
+
+export enum ProgressBase {
+    Goals = 1 / 6,
+    Syllabus = 1 / 9,
+    Landing = 5 / 9,
+    Price = 1 / 18,
+    Messages = 1 / 9
+};

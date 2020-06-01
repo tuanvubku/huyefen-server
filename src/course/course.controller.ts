@@ -1,4 +1,4 @@
-import { Body, Controller, HttpException, HttpStatus, Post, UseGuards, Req } from '@nestjs/common';
+import { Body, Controller, Query, Get, Post, UseGuards, Req, ValidationPipe } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { SearchService } from '@/search/search.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -9,6 +9,8 @@ import { ICourse } from './interfaces/course.interface';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ResponseSuccess } from '@/utils/utils';
 import { CreateDto } from './dtos/create.dto';
+import { TeacherCoursesSort } from '@/config/constants';
+import { FetchDto } from './dtos/fetch.dto';
 
 @Controller('courses')
 export class CourseController {
@@ -26,6 +28,21 @@ export class CourseController {
         //areaService -> check area;
         const course: ICourse = await this.courseService.create(teacherId, area, title);
         return new ResponseSuccess<ICourse>('CREATE_COURSE_OK', course);
+    }
+
+    @Get('/my/teacher')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetch(
+        @Req() req,
+        @Query(new ValidationPipe({ transform: true })) query: FetchDto
+    ): Promise<IResponse<any[]>> {
+        const teacherId: string = req.user._id;
+        let { page, limit, sort } = query;
+        page = Number(page);
+        limit = Number(limit);
+        const courses: Array<any> = await this.courseService.fetch(teacherId, sort, page, limit);
+        return new ResponseSuccess('FETCH_OK', courses);
     }
     // @Post()
     // async createCourse(@Body() createCourseDto: CreateCourseDto){
