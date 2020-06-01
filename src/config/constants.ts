@@ -59,4 +59,13 @@ export enum ProgressBase {
 export enum Lecture {
     Article = 'Article',
     Video = 'Video'
-}
+};
+
+export enum HistoryType {
+    Goals = 0,
+    Syllabus = 1,
+    Landing = 2,
+    Price = 3,
+    Messages = 4,
+    Lecture = 5
+};

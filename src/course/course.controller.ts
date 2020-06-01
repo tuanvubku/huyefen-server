@@ -60,6 +60,8 @@ export class CourseController {
             throw new NotFoundException('The course do not existed!');
         return new ResponseSuccess('FETCH_INFO_OK', courseInfo);
     }
+
+    
     // @Post()
     // async createCourse(@Body() createCourseDto: CreateCourseDto){
     //     const course = await this.courseService.createCourse(createCourseDto);

@@ -1,4 +1,15 @@
 import { Module } from '@nestjs/common';
+import { MongooseModule } from '@nestjs/mongoose';
+import { HistoryService } from './history.service';
+import { HistorySchema } from './schemas/history.schema';
 
-@Module({})
+@Module({
+	imports: [
+		MongooseModule.forFeature([
+			{ name: 'History', schema: HistorySchema }
+		])
+	],
+	providers: [HistoryService],
+	exports: [MongooseModule]
+})
 export class HistoryModule {}

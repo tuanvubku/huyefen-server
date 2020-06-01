@@ -115,8 +115,7 @@ export class CourseService {
             return {
                 ...info,
                 completeStatus,
-                chapters,
-                noOfUnseen: 18
+                chapters
             };
         }
         return null;
