@@ -18,6 +18,7 @@ import { CONFIG_ENV_PATH } from '@/config/constants';
 import { MongooseConfig } from '@/config/mongoose.config';
 import { validationPipeConfig } from '@/config/validationPipe.config';
 import { HistoryModule } from './history/history.module';
+import { ChapterModule } from './chapter/chapter.module';
 
 @Module({
 	imports: [
@@ -41,7 +42,8 @@ import { HistoryModule } from './history/history.module';
 		NotificationModule,
 		DeviceModule,
 		SearchModule,
-		HistoryModule
+		HistoryModule,
+		ChapterModule
 	],
 	providers: [
 		{

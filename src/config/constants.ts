@@ -55,3 +55,8 @@ export enum ProgressBase {
     Price = 1 / 18,
     Messages = 1 / 9
 };
+
+export enum Lecture {
+    Article = 'Article',
+    Video = 'Video'
+}
