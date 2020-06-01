@@ -6,6 +6,10 @@ export const ChapterSchema = new Schema({
         type: String,
         required: true
     },
+    course: {
+        type: Schema.Types.ObjectId,
+        ref: 'Course'
+    },
     owner: {
         type: Schema.Types.ObjectId,
         ref: 'Teacher'

@@ -5,12 +5,14 @@ import * as _ from 'lodash';
 import { ICourse } from './interfaces/course.interface';
 import { IAuthor } from './interfaces/author.interface';
 import { TeacherCoursesSort as Sort, ProgressBase } from '@/config/constants';
+import { IChapter } from '@/chapter/interfaces/chapter.interface';
 
 @Injectable()
 export class CourseService {
     constructor(
         @InjectModel('Course') private readonly courseModel: Model<ICourse>,
-        @InjectModel('Author') private readonly authorModel: Model<IAuthor>
+        @InjectModel('Author') private readonly authorModel: Model<IAuthor>,
+        @InjectModel('Chapter') private readonly chapterModel: Model<IChapter>
     ) {}
 
     async create(teacherId: string, area: string, title: string): Promise<ICourse> {
@@ -77,5 +79,44 @@ export class CourseService {
             return course;
         });
         return courses;
+    }
+
+    async validateTeacherCourse(teacherId: string, courseId: string): Promise<boolean> {
+        const author: IAuthor = await this.authorModel
+                .findOne({
+                    teacher: teacherId,
+                    course: courseId
+                });
+        return !!author;
+    }
+
+    async fetchInfo(courseId: string): Promise<any> {
+        let info: any = await this.courseModel
+                .findById(courseId)
+                .select('title privacy progress');
+        if (!info) {
+            let completeStatus = {};
+            _.forEach(_.keys(info.progress), key => {
+                completeStatus = {
+                    ...completeStatus,
+                    [key]: info.progress[key] === 100
+                }
+            });
+            info = _.omit(info, ['progress']);
+            const chapters = await this.chapterModel
+                    .find({ course: courseId })
+                    .select({
+                        title: 1,
+                        'lectures.type': 1,
+                        'lectures.title': 1
+                    });
+            return {
+                ...info,
+                completeStatus,
+                chapters,
+                noOfUnseen: 18
+            };
+        }
+        return null;
     }
 }

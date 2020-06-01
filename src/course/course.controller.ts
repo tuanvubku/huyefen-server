@@ -1,4 +1,4 @@
-import { Body, Controller, Query, Get, Post, UseGuards, Req, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Query, Get, Post, UseGuards, Req, ValidationPipe, Param, ParseUUIDPipe, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { SearchService } from '@/search/search.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -43,6 +43,20 @@ export class CourseController {
         limit = Number(limit);
         const courses: Array<any> = await this.courseService.fetch(teacherId, sort, page, limit);
         return new ResponseSuccess('FETCH_OK', courses);
+    }
+
+    @Get('/:id/info')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchInfo(@Req() req, @Param('id', ParseUUIDPipe) courseId: string): Promise<IResponse<any>> {
+        const teacherId = req.user._id;
+        const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!check)
+            throw new ForbiddenException('Forbidden. You can not access this course');
+        const courseInfo = await this.courseService.fetchInfo(courseId);
+        if (!courseInfo)
+            throw new NotFoundException('The course do not existed!');
+        return new ResponseSuccess('FETCH_INFO_OK', courseInfo);
     }
     // @Post()
     // async createCourse(@Body() createCourseDto: CreateCourseDto){
