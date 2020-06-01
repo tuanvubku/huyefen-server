@@ -69,3 +69,8 @@ export enum HistoryType {
     Messages = 4,
     Lecture = 5
 };
+
+export enum HistorySort {
+    Newest = 'newest',
+    Oldest = 'oldest'
+};

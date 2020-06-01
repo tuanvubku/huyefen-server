@@ -81,6 +81,12 @@ export class CourseService {
         return courses;
     }
 
+    async validateCourse(courseId: string): Promise<boolean> {
+        const course: ICourse = await this.courseModel
+                .findById(courseId);
+        return !!course;
+    }
+
     async validateTeacherCourse(teacherId: string, courseId: string): Promise<boolean> {
         const author: IAuthor = await this.authorModel
                 .findOne({

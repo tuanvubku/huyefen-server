@@ -1,4 +1,4 @@
-import { Body, Controller, Query, Get, Post, UseGuards, Req, ValidationPipe, Param, ParseUUIDPipe, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Body, Controller, Query, Get, Post, UseGuards, Req, ValidationPipe, Param, ParseUUIDPipe, ForbiddenException, NotFoundException, UsePipes } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { SearchService } from '@/search/search.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -36,13 +36,10 @@ export class CourseController {
     @Roles(Role.Teacher)
     async fetch(
         @Req() req,
-        @Query(new ValidationPipe({ transform: true })) query: FetchDto
+        @Query() query: FetchDto
     ): Promise<IResponse<any[]>> {
         const teacherId: string = req.user._id;
-        let { page, limit, sort } = query;
-        page = Number(page);
-        limit = Number(limit);
-        const courses: Array<any> = await this.courseService.fetch(teacherId, sort, page, limit);
+        const courses: Array<any> = await this.courseService.fetch(teacherId, query.sort, Number(query.page), Number(query.limit));
         return new ResponseSuccess('FETCH_OK', courses);
     }
 
@@ -61,7 +58,7 @@ export class CourseController {
         return new ResponseSuccess('FETCH_INFO_OK', courseInfo);
     }
 
-    
+
     // @Post()
     // async createCourse(@Body() createCourseDto: CreateCourseDto){
     //     const course = await this.courseService.createCourse(createCourseDto);
