@@ -93,8 +93,10 @@ export class CourseService {
     async fetchInfo(courseId: string): Promise<any> {
         let info: any = await this.courseModel
                 .findById(courseId)
-                .select('title privacy progress');
-        if (!info) {
+                .select('title privacy progress')
+                .lean()
+                .exec();
+        if (info) {
             let completeStatus = {};
             _.forEach(_.keys(info.progress), key => {
                 completeStatus = {

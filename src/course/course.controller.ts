@@ -11,6 +11,7 @@ import { ResponseSuccess } from '@/utils/utils';
 import { CreateDto } from './dtos/create.dto';
 import { TeacherCoursesSort } from '@/config/constants';
 import { FetchDto } from './dtos/fetch.dto';
+import { FetchInfoDto } from './dtos/fetchInfo.dto';
 
 @Controller('courses')
 export class CourseController {
@@ -48,7 +49,8 @@ export class CourseController {
     @Get('/:id/info')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
-    async fetchInfo(@Req() req, @Param('id', ParseUUIDPipe) courseId: string): Promise<IResponse<any>> {
+    async fetchInfo(@Req() req, @Param() params: FetchInfoDto): Promise<IResponse<any>> {
+        const { id: courseId } = params;
         const teacherId = req.user._id;
         const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
         if (!check)
