@@ -13,11 +13,13 @@ import { FetchDto } from './dtos/fetch.dto';
 import { FetchInfoDto } from './dtos/fetchInfo.dto';
 import { FetchGoalsDto } from './dtos/fetchGoals.dto';
 import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto } from './dtos/syllabus.dto';
+import { FetchHistoriesDto, FetchHistoriesParamDto } from './dtos/histories.dto';
 import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
+import { IHistory } from '@/history/interfaces/history.interface';
 import { ChapterService } from '@/chapter/chapter.service';
 import { HistoryService } from '@/history/history.service';
 
@@ -158,6 +160,29 @@ export class CourseController {
         return new ResponseSuccess('CHANGE_TARGET_STUDENTS_OK', targetStudents);
     }
 
+    @Get('/:id/histories')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchHistories(
+        @Req() req,
+        @Param() params: FetchHistoriesParamDto,
+        @Query() query: FetchHistoriesDto
+    ): Promise<IResponse<IHistory[]>> {
+        const teacherId = req.user._id;
+        const courseId = params.id;
+        let { sort, page, limit } = query;
+        page = Number(page);
+        limit = Number(limit);
+        const checkCourse = await this.courseService.validateCourse(courseId);
+        if (!checkCourse)
+            throw new NotFoundException('Invalid course');
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const histories: IHistory[] = await this.historyService.fetch(courseId, sort, page, limit);
+        return new ResponseSuccess<IHistory[]>('FETCH_HISTORY_OK', histories);
+    }
+
     @Get('/:id/syllabus')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
@@ -230,5 +255,3 @@ export class CourseController {
         return new ResponseSuccess<IChapter>('UPDATE_CHAPTER_OK', chapter);
     }
 }
-
-

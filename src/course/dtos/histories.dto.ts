@@ -1,9 +1,7 @@
 import { IsNumberString, IsMongoId, IsEnum } from 'class-validator';
 import { HistorySort } from '@/config/constants';
 
-export class FetchDto {
-    @IsMongoId()
-    courseId: string;
+export class FetchHistoriesDto {
 
     @IsEnum(HistorySort)
     sort: HistorySort
@@ -13,4 +11,9 @@ export class FetchDto {
 
     @IsNumberString()
     limit: number;
+}
+
+export class FetchHistoriesParamDto {
+    @IsMongoId()
+    id: string;
 }

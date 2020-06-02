@@ -14,7 +14,7 @@ export class HistoryService {
         return await this.historyModel
             .find({ course: courseId })
             .sort({
-                createdAt: sort === HistorySort.Newest ? 1 : -1
+                createdAt: sort === HistorySort.Newest ? -1 : 1
             })
             .skip((page - 1) * limit)
             .limit(limit);

@@ -1,9 +1,7 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { HistoryService } from './history.service';
 import { HistorySchema } from './schemas/history.schema';
-import { HistoryController } from './history.controller';
-import { CourseModule } from '@/course/course.module';
 
 @Module({
 	imports: [
@@ -12,7 +10,6 @@ import { CourseModule } from '@/course/course.module';
 		])
 	],
 	providers: [HistoryService],
-	exports: [HistoryService],
-	controllers: [HistoryController]
+	exports: [HistoryService]
 })
 export class HistoryModule {}
