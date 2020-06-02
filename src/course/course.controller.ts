@@ -1,4 +1,4 @@
-import { Body, Controller, Query, Get, Post, UseGuards, Req, ValidationPipe, Param, ParseUUIDPipe, ForbiddenException, NotFoundException, UsePipes } from '@nestjs/common';
+import { Body, Controller, Query, Get, Put, Post, UseGuards, Req, ValidationPipe, Param, ParseUUIDPipe, ForbiddenException, NotFoundException, UsePipes, Res } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { SearchService } from '@/search/search.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -13,6 +13,8 @@ import { TeacherCoursesSort } from '@/config/constants';
 import { FetchDto } from './dtos/fetch.dto';
 import { FetchInfoDto } from './dtos/fetchInfo.dto';
 import { FetchGoalsDto } from './dtos/fetchGoals.dto';
+import { UpdateWhatLearnsDto, UpdateWhatLearnsParamDto } from './dtos/whatLearns.dto';
+import { IWhatLearn } from './interfaces/whatLearn.interface';
 
 @Controller('courses')
 export class CourseController {
@@ -71,7 +73,26 @@ export class CourseController {
         const courseGoals = await this.courseService.fetchGoals(courseId);
         if (!courseGoals)
             throw new NotFoundException('The course do not existed!');
-            return new ResponseSuccess('FETCH_INFO_OK', courseGoals);
+        return new ResponseSuccess('FETCH_INFO_OK', courseGoals);
+    }
+
+    @Put('update/:id/what-learns')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateWhatLearns(
+        @Req() req,
+        @Param() params: UpdateWhatLearnsParamDto,
+        @Body() body: UpdateWhatLearnsDto
+    ): Promise<IResponse<IWhatLearn[]>> {
+        const teacherId: string = req.user._id;
+        const courseId: string = params.id;
+        const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!check)
+            throw new ForbiddenException('Forbidden. You can not access this course');
+        const whatLearns: IWhatLearn[] = await this.courseService.updateWhatLearns(teacherId, courseId, body);
+        if (!whatLearns)
+            throw new NotFoundException('The course do not existed!');
+        return new ResponseSuccess('CHANGE_WHAT_LEARN_OK', whatLearns);
     }
     // @Post()
     // async createCourse(@Body() createCourseDto: CreateCourseDto){

@@ -30,7 +30,7 @@ export interface ICourse extends Document {
         welcome: string,
         congratulation: string
     },
-    whatLeans: IWhatLearn[],
+    whatLearns: IWhatLearn[],
     requirements: IRequirement[],
     targetStudents: ITargetStudent[],
     createdAt: string;

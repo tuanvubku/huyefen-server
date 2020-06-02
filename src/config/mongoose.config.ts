@@ -9,12 +9,10 @@ export class MongooseConfig implements MongooseOptionsFactory {
     createMongooseOptions(): MongooseModuleOptions {
         return {
 			uri: this.configService.get<string>('MONGO_URI'),
-			options: {
-				useNewUrlParser: true,
-				useUnifiedTopology: true,
-				useCreateIndex: true,
-				useFindAndModify: false
-			}
+			useNewUrlParser: true,
+			useUnifiedTopology: true,
+			useCreateIndex: true,
+			useFindAndModify: false
 		}
     }
 }

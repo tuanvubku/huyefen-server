@@ -6,6 +6,8 @@ import { ICourse } from './interfaces/course.interface';
 import { IAuthor } from './interfaces/author.interface';
 import { TeacherCoursesSort as Sort, ProgressBase } from '@/config/constants';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
+import { UpdateWhatLearnsDto } from './dtos/whatLearns.dto';
+import { IWhatLearn } from './interfaces/whatLearn.interface';
 
 @Injectable()
 export class CourseService {
@@ -135,5 +137,47 @@ export class CourseService {
                 requirements: 1,
                 targetStudents: 1
             });
+    }
+
+    async updateWhatLearns(teacherId: string, courseId: string, change: UpdateWhatLearnsDto): Promise<IWhatLearn[]> {
+        const { add: addArr, delete: deleteArr, update: updateObj } = change;
+        let course: ICourse = await this.courseModel.findById(courseId);
+        if (course) {
+            const addWhatLearns = _.map(addArr, content => ({
+                content: content,
+                owner: teacherId
+            }));
+            course.whatLearns = _.concat(
+                _.map(
+                    _.filter(
+                        course.whatLearns,
+                        (item: IWhatLearn) => _.indexOf(deleteArr, item._id.toString()) === -1
+                    ),
+                    (item: IWhatLearn) => {
+                        if (updateObj[item._id])
+                            item.content = updateObj[item._id];
+                        return item;
+                    }
+                ),
+                addWhatLearns as IWhatLearn[]
+            );
+            course = await course.save();
+            return course.whatLearns;
+        }
+        return null;
+        
+        // const course = await this.courseModel
+        //         .findByIdAndUpdate(courseId, {
+                    
+        //             $push: {
+        //                 whatLearns: {
+        //                     $each: (addWhatLearns as IWhatLearn[])
+        //                 }
+        //             }
+        //         }, {
+        //             new: true,
+        //             runValidators: true
+        //         });
+        // return course ? course.whatLearns : null;
     }
 }
