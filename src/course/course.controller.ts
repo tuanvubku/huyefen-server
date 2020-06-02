@@ -113,10 +113,10 @@ export class CourseController {
         const requirements: IRequirement[] = await this.courseService.updateRequirements(teacherId, courseId, body);
         if (!requirements)
             throw new NotFoundException('The course do not existed!');
-        return new ResponseSuccess('CHANGE_WHAT_LEARN_OK', requirements);
+        return new ResponseSuccess('CHANGE_REQUIREMENTS_OK', requirements);
     }
 
-    @Put('update/:id/target')
+    @Put('update/:id/target-students')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     async updateTargetStudents(
@@ -132,7 +132,7 @@ export class CourseController {
         const targetStudents: ITargetStudent[] = await this.courseService.updateTargetStudents(teacherId, courseId, body);
         if (!targetStudents)
             throw new NotFoundException('The course do not existed!');
-        return new ResponseSuccess('CHANGE_WHAT_LEARN_OK', targetStudents);
+        return new ResponseSuccess('CHANGE_TARGET_STUDENTS_OK', targetStudents);
     }
 }
 
