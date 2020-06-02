@@ -6,8 +6,9 @@ import { ICourse } from './interfaces/course.interface';
 import { IAuthor } from './interfaces/author.interface';
 import { TeacherCoursesSort as Sort, ProgressBase } from '@/config/constants';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
-import { UpdateWhatLearnsDto } from './dtos/whatLearns.dto';
+import { UpdateGoalsDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
+import { IRequirement } from './interfaces/requirement.interface';
 
 @Injectable()
 export class CourseService {
@@ -139,7 +140,7 @@ export class CourseService {
             });
     }
 
-    async updateWhatLearns(teacherId: string, courseId: string, change: UpdateWhatLearnsDto): Promise<IWhatLearn[]> {
+    async updateWhatLearns(teacherId: string, courseId: string, change: UpdateGoalsDto): Promise<IWhatLearn[]> {
         const { add: addArr, delete: deleteArr, update: updateObj } = change;
         let course: ICourse = await this.courseModel.findById(courseId);
         if (course) {
@@ -179,5 +180,33 @@ export class CourseService {
         //             runValidators: true
         //         });
         // return course ? course.whatLearns : null;
+    }
+
+    async updateRequirements(teacherId: string, courseId: string, change: UpdateGoalsDto): Promise<IRequirement[]> {
+        const { add: addArr, delete: deleteArr, update: updateObj } = change;
+        let course: ICourse = await this.courseModel.findById(courseId);
+        if (course) {
+            const addRequirements = _.map(addArr, content => ({
+                content: content,
+                owner: teacherId
+            }));
+            course.requirements = _.concat(
+                _.map(
+                    _.filter(
+                        course.requirements,
+                        (item: IRequirement) => _.indexOf(deleteArr, item._id.toString()) === -1
+                    ),
+                    (item: IRequirement) => {
+                        if (updateObj[item._id])
+                            item.content = updateObj[item._id];
+                        return item;
+                    }
+                ),
+                addRequirements as IRequirement[]
+            );
+            course = await course.save();
+            return course.requirements;
+        }
+        return null;
     }
 }

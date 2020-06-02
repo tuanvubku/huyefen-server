@@ -13,8 +13,9 @@ import { TeacherCoursesSort } from '@/config/constants';
 import { FetchDto } from './dtos/fetch.dto';
 import { FetchInfoDto } from './dtos/fetchInfo.dto';
 import { FetchGoalsDto } from './dtos/fetchGoals.dto';
-import { UpdateWhatLearnsDto, UpdateWhatLearnsParamDto } from './dtos/whatLearns.dto';
+import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
+import { IRequirement } from './interfaces/requirement.interface';
 
 @Controller('courses')
 export class CourseController {
@@ -81,8 +82,8 @@ export class CourseController {
     @Roles(Role.Teacher)
     async updateWhatLearns(
         @Req() req,
-        @Param() params: UpdateWhatLearnsParamDto,
-        @Body() body: UpdateWhatLearnsDto
+        @Param() params: UpdateGoalsParamDto,
+        @Body() body: UpdateGoalsDto
     ): Promise<IResponse<IWhatLearn[]>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
@@ -94,22 +95,25 @@ export class CourseController {
             throw new NotFoundException('The course do not existed!');
         return new ResponseSuccess('CHANGE_WHAT_LEARN_OK', whatLearns);
     }
-    // @Post()
-    // async createCourse(@Body() createCourseDto: CreateCourseDto){
-    //     const course = await this.courseService.createCourse(createCourseDto);
-    //     if(!course) 
-    //         throw new HttpException("COURSE.CREATE_FAIL", HttpStatus.BAD_REQUEST)
-
-    //     const mongoId = course['_id']
-    //     const elasticCourse = {
-    //         ...createCourseDto,
-    //         mongoId
-    //     }
-    //     const res = await this.searchService.insertDocumentToElastic(elasticCourse);
-    //     return new ResponseSuccess("COURSE.CRESTE_SUCCESS", res);
-    // }
-
     
+    @Put('update/:id/requirements')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateRequirements(
+        @Req() req,
+        @Param() params: UpdateGoalsParamDto,
+        @Body() body: UpdateGoalsDto
+    ): Promise<IResponse<IRequirement[]>> {
+        const teacherId: string = req.user._id;
+        const courseId: string = params.id;
+        const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!check)
+            throw new ForbiddenException('Forbidden. You can not access this course');
+        const requirements: IRequirement[] = await this.courseService.updateRequirements(teacherId, courseId, body);
+        if (!requirements)
+            throw new NotFoundException('The course do not existed!');
+        return new ResponseSuccess('CHANGE_WHAT_LEARN_OK', requirements);
+    }
 }
 
 

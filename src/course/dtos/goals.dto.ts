@@ -1,11 +1,11 @@
 import { IsMongoId, IsArray, IsObject } from 'class-validator';
 
-export class UpdateWhatLearnsParamDto {
+export class UpdateGoalsParamDto {
     @IsMongoId()
     id: string;
 }
 
-export class UpdateWhatLearnsDto {
+export class UpdateGoalsDto {
     @IsArray()          //Array of string
     add: Array<string>;
 
