@@ -15,7 +15,7 @@ import { HistoryModule } from '@/history/history.module';
 			{ name: 'Author', schema: AuthorSchema }
 		]),
 		SearchModule,
-		forwardRef(() => HistoryModule),
+		HistoryModule,
 		ChapterModule
 	],
 	providers: [CourseService],

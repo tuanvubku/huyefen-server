@@ -5,11 +5,12 @@ import * as _ from 'lodash';
 import { ICourse } from './interfaces/course.interface';
 import { IAuthor } from './interfaces/author.interface';
 import { TeacherCoursesSort as Sort, ProgressBase } from '@/config/constants';
-import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { UpdateGoalsDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
+import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
+import { ChapterService } from '@/chapter/chapter.service';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -20,7 +21,7 @@ export class CourseService {
     constructor(
         @InjectModel('Course') private readonly courseModel: Model<ICourse>,
         @InjectModel('Author') private readonly authorModel: Model<IAuthor>,
-        @InjectModel('Chapter') private readonly chapterModel: Model<IChapter>
+        private readonly chapterService: ChapterService
     ) {}
 
     async create(teacherId: string, area: string, title: string): Promise<ICourse> {
@@ -123,13 +124,7 @@ export class CourseService {
                 }
             });
             info = _.omit(info, ['progress']);
-            const chapters = await this.chapterModel
-                    .find({ course: courseId })
-                    .select({
-                        title: 1,
-                        'lectures.type': 1,
-                        'lectures.title': 1
-                    });
+            const chapters = await this.chapterService.fetchChapters(courseId);
             return {
                 ...info,
                 completeStatus,
@@ -260,19 +255,6 @@ export class CourseService {
         return null;
     }
 
-    async fetchSyllabus(courseId: string): Promise<IChapter[]> {
-        const syllabus: IChapter[] = await this.chapterModel
-            .find({ course: courseId })
-            .populate('owner', 'name avatar')
-            .populate('lectures.owner', 'name avatar')
-            .select({
-                course: 0,
-                'lecture.content': 0,
-                'lecture.isPreviewed': 0
-            });
-        return syllabus;
-    }
-
     async saveSyllabusProgress(courseId: string, progress: number): Promise<void> {
         await this.courseModel
             .updateOne({ _id: courseId }, {
@@ -280,5 +262,11 @@ export class CourseService {
                     'progress.syllabus': progress
                 }
             });
+    }
+
+    async createChapter(teacherId: string, courseId: string, title: string, description: string): Promise<{ progress: number, data: IChapter}> {
+        const data: { progress: number, data: IChapter } = await this.chapterService.create(teacherId, courseId, title, description);
+        await this.saveSyllabusProgress(courseId, data.progress);
+        return data;
     }
 }

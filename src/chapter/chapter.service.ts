@@ -2,15 +2,36 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IChapter } from './interfaces/chapter.interface';
-import { CourseService } from '@/course/course.service';
 import * as _ from 'lodash';
 
 @Injectable()
 export class ChapterService {
     constructor (
         @InjectModel('Chapter') private readonly chapterModel: Model<IChapter>,
-        private readonly courseService: CourseService
     ) {}
+
+    async fetchSyllabus(courseId: string): Promise<IChapter[]> {
+        const syllabus: IChapter[] = await this.chapterModel
+            .find({ course: courseId })
+            .populate('owner', 'name avatar')
+            .populate('lectures.owner', 'name avatar')
+            .select({
+                course: 0,
+                'lecture.content': 0,
+                'lecture.isPreviewed': 0
+            });
+        return syllabus;
+    }
+
+    async fetchChapters(courseId: string): Promise<any[]> {
+        return await this.chapterModel
+            .find({ course: courseId })
+            .select({
+                title: 1,
+                'lectures.type': 1,
+                'lectures.title': 1
+            });
+    }
 
     async create(teacherId: string, courseId: string, title: string, description: string): Promise<{ progress: number, data: IChapter}> {
         let chapter: IChapter = new this.chapterModel({
@@ -31,19 +52,17 @@ export class ChapterService {
                 });
         if (_.some(_.map(anotherChapters, chapter => _.size(chapter.lectures) > 0)))
             progress = 100;
-        await this.courseService.saveSyllabusProgress(courseId, progress);
         return {
             progress,
             data: chapter
         };
     }
 
-    async validateChapter(chapterId: string): Promise<{ status: boolean, courseId: string}> {
+    async validateChapter(courseId: string, chapterId: string): Promise<0 | -1 | 1> {
         const chapter = await this.chapterModel
             .findById(chapterId);
-        if (!chapter)
-            return { status: false, courseId: null };
-        return { status: true, courseId: chapter.course };
+        if (!chapter) return 0;
+        return chapter.course.toString() === courseId ? 1 : -1;
     }
 
     async update(teacherId: string, chapterId: string, title: string, description: string): Promise<IChapter> {

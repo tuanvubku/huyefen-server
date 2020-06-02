@@ -9,8 +9,7 @@ import { CourseModule } from '@/course/course.module';
 	imports: [
 		MongooseModule.forFeature([
 			{ name: 'History', schema: HistorySchema }
-		]),
-		forwardRef(() => CourseModule)
+		])
 	],
 	providers: [HistoryService],
 	exports: [HistoryService],

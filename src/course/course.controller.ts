@@ -1,4 +1,4 @@
-import { Body, Controller, Query, Get, Put, Post, UseGuards, Req, ValidationPipe, Param, ParseUUIDPipe, ForbiddenException, NotFoundException, UsePipes, Res } from '@nestjs/common';
+import { Body, Controller, Query, Get, Put, Post, UseGuards, Req, ValidationPipe, Param, ParseUUIDPipe, ForbiddenException, NotFoundException, UsePipes, Res, BadRequestException } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { SearchService } from '@/search/search.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -12,17 +12,19 @@ import { CreateDto } from './dtos/create.dto';
 import { FetchDto } from './dtos/fetch.dto';
 import { FetchInfoDto } from './dtos/fetchInfo.dto';
 import { FetchGoalsDto } from './dtos/fetchGoals.dto';
-import { SyllabusDto } from './dtos/syllabus.dto';
+import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto } from './dtos/syllabus.dto';
 import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
+import { ChapterService } from '@/chapter/chapter.service';
 
 @Controller('courses')
 export class CourseController {
     constructor (
         private readonly courseService: CourseService,
+        private readonly chapterService: ChapterService,
         private readonly searchService: SearchService
     ) {}
 
@@ -148,8 +150,52 @@ export class CourseController {
         const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
-        const syllabus: IChapter[] = await this.courseService.fetchSyllabus(courseId);
+        const syllabus: IChapter[] = await this.chapterService.fetchSyllabus(courseId);
         return new ResponseSuccess<IChapter[]>('FETCH_SYLLABUS_OK', syllabus);
+    }
+
+    @Post('/:id/chapters')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async createChapter(
+        @Req() req,
+        @Param() params: CreateChapterParamDto,
+        @Body() body: CreateChapterDto
+    ): Promise<IResponse<{ progress: number, data: IChapter }>> {
+        const teacherId: string = req.user._id;
+        const courseId: string = params.id;
+        const { title, description } = body;
+        const checkCourse = await this.courseService.validateCourse(courseId);
+        if (!checkCourse)
+            throw new NotFoundException('Invalid course');
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const chapter: { progress: number, data: IChapter } = await this.courseService.createChapter(teacherId, courseId, title, description);
+        return new ResponseSuccess('CREATE_CHAPTER_OK', chapter);
+    }
+
+    @Put('/:courseId/chapters/:chapterId')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateChapter(
+        @Req() req,
+        @Param() params: UpdateChapterParamDto,
+        @Body() body: UpdateChapterDto
+    ): Promise<IResponse<IChapter>> {
+        const teacherId: string = req.user._id;
+        const { courseId, chapterId } = params;
+        const { title, description } = body;
+        const checkChapter = await this.chapterService.validateChapter(courseId, chapterId);
+        if (checkChapter === 0)
+            throw new NotFoundException('Invalid chapter');
+        else if (checkChapter === -1)
+            throw new BadRequestException('Chapter doesn\'t belong to course');
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const chapter: IChapter = await this.chapterService.update(teacherId, chapterId, title, description);
+        return new ResponseSuccess<IChapter>('UPDATE_CHAPTER_OK', chapter);
     }
 }
 
