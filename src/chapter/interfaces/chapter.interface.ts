@@ -6,7 +6,7 @@ export interface IChapter extends Document {
     title: string;
     course?: string;
     owner: string;
-    updatedAt: string;
+    updatedAt: number;
     description: string;
     lectures: ILecture[]
 };

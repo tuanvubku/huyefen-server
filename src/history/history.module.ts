@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { HistoryService } from './history.service';
 import { HistorySchema } from './schemas/history.schema';
@@ -10,10 +10,10 @@ import { CourseModule } from '@/course/course.module';
 		MongooseModule.forFeature([
 			{ name: 'History', schema: HistorySchema }
 		]),
-		CourseModule
+		forwardRef(() => CourseModule)
 	],
 	providers: [HistoryService],
-	exports: [MongooseModule],
+	exports: [HistoryService],
 	controllers: [HistoryController]
 })
 export class HistoryModule {}

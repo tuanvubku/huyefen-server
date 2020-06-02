@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IChapter } from './interfaces/chapter.interface';
@@ -36,5 +36,36 @@ export class ChapterService {
             progress,
             data: chapter
         };
+    }
+
+    async validateChapter(chapterId: string): Promise<{ status: boolean, courseId: string}> {
+        const chapter = await this.chapterModel
+            .findById(chapterId);
+        if (!chapter)
+            return { status: false, courseId: null };
+        return { status: true, courseId: chapter.course };
+    }
+
+    async update(teacherId: string, chapterId: string, title: string, description: string): Promise<IChapter> {
+        try {
+            const chapter: IChapter =  await this.chapterModel
+                .findByIdAndUpdate(chapterId, {
+                    title,
+                    description,
+                    owner: teacherId,
+                    updatedAt: Date.now()
+                }, {
+                    new: true,
+                    runValidators: true
+                })
+                .populate('owner', 'name avatar');
+            
+            return chapter;
+        }
+        catch (e) {
+            if (e.name === 'ValidationrError')
+                throw new BadRequestException();
+            throw e;
+        }
     }
 }
