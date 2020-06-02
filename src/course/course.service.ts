@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as _ from 'lodash';
@@ -56,7 +56,9 @@ export class CourseService {
                 })
                 .skip((page - 1) * limit)
                 .limit(limit)
-                .populate('course', 'title lastUpdated privacy progress');
+                .populate('course', 'title lastUpdated privacy progress')
+                .lean()
+                .exec();
         }
         else {
             authors = await this.authorModel
@@ -64,7 +66,9 @@ export class CourseService {
                 .populate({
                     path: 'course', 
                     select: 'title lastUpdated privacy progress',
-                });
+                })
+                .lean()
+                .exec();
             authors = _.slice(
                 _.orderBy(
                     authors,
@@ -267,5 +271,14 @@ export class CourseService {
                 'lecture.isPreviewed': 0
             });
         return syllabus;
+    }
+
+    async saveSyllabusProgress(courseId: string, progress: number): Promise<void> {
+        await this.courseModel
+            .updateOne({ _id: courseId }, {
+                $set: {
+                    'progress.syllabus': progress
+                }
+            });
     }
 }
