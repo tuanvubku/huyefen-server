@@ -9,6 +9,7 @@ import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { UpdateGoalsDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { IRequirement } from './interfaces/requirement.interface';
+import { ITargetStudent } from './interfaces/targetStudent.interface';
 
 @Injectable()
 export class CourseService {
@@ -206,6 +207,34 @@ export class CourseService {
             );
             course = await course.save();
             return course.requirements;
+        }
+        return null;
+    }
+
+    async updateTargetStudents(teacherId: string, courseId: string, change: UpdateGoalsDto): Promise<ITargetStudent[]> {
+        const { add: addArr, delete: deleteArr, update: updateObj } = change;
+        let course: ICourse = await this.courseModel.findById(courseId);
+        if (course) {
+            const addTargetStudents = _.map(addArr, content => ({
+                content: content,
+                owner: teacherId
+            }));
+            course.targetStudents = _.concat(
+                _.map(
+                    _.filter(
+                        course.targetStudents,
+                        (item: ITargetStudent) => _.indexOf(deleteArr, item._id.toString()) === -1
+                    ),
+                    (item: ITargetStudent) => {
+                        if (updateObj[item._id])
+                            item.content = updateObj[item._id];
+                        return item;
+                    }
+                ),
+                addTargetStudents as ITargetStudent[]
+            );
+            course = await course.save();
+            return course.targetStudents;
         }
         return null;
     }

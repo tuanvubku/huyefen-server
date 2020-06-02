@@ -16,6 +16,7 @@ import { FetchGoalsDto } from './dtos/fetchGoals.dto';
 import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { IRequirement } from './interfaces/requirement.interface';
+import { ITargetStudent } from './interfaces/targetStudent.interface';
 
 @Controller('courses')
 export class CourseController {
@@ -113,6 +114,25 @@ export class CourseController {
         if (!requirements)
             throw new NotFoundException('The course do not existed!');
         return new ResponseSuccess('CHANGE_WHAT_LEARN_OK', requirements);
+    }
+
+    @Put('update/:id/target')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateTargetStudents(
+        @Req() req,
+        @Param() params: UpdateGoalsParamDto,
+        @Body() body: UpdateGoalsDto
+    ): Promise<IResponse<ITargetStudent[]>> {
+        const teacherId: string = req.user._id;
+        const courseId: string = params.id;
+        const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!check)
+            throw new ForbiddenException('Forbidden. You can not access this course');
+        const targetStudents: ITargetStudent[] = await this.courseService.updateTargetStudents(teacherId, courseId, body);
+        if (!targetStudents)
+            throw new NotFoundException('The course do not existed!');
+        return new ResponseSuccess('CHANGE_WHAT_LEARN_OK', targetStudents);
     }
 }
 
