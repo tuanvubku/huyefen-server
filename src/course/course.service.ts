@@ -11,6 +11,10 @@ import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 
+type IGoals = IWhatLearn | IRequirement | ITargetStudent;
+type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
+
+
 @Injectable()
 export class CourseService {
     constructor(
@@ -141,7 +145,20 @@ export class CourseService {
             });
     }
 
-    async updateWhatLearns(teacherId: string, courseId: string, change: UpdateGoalsDto): Promise<IWhatLearn[]> {
+    async finalGoals(course: ICourse, field: GoalFields): Promise<{ progress: number, data: IGoals[] }> {
+        let count: number = 0;
+        if (!_.isEmpty(course.whatLearns)) count++;
+        if (!_.isEmpty(course.requirements)) count++;
+        if (!_.isEmpty(course.targetStudents)) count++;
+        course.progress.goals = (count * 100) / 3;
+        await course.save();
+        return {
+            progress: (count * 100) / 3,
+            data: course[field]
+        };
+    }
+
+    async updateWhatLearns(teacherId: string, courseId: string, change: UpdateGoalsDto): Promise<{ progress: number, data: IWhatLearn[] }> {
         const { add: addArr, delete: deleteArr, update: updateObj } = change;
         let course: ICourse = await this.courseModel.findById(courseId);
         if (course) {
@@ -164,7 +181,7 @@ export class CourseService {
                 addWhatLearns as IWhatLearn[]
             );
             course = await course.save();
-            return course.whatLearns;
+            return await this.finalGoals(course, 'whatLearns');
         }
         return null;
         
@@ -183,7 +200,7 @@ export class CourseService {
         // return course ? course.whatLearns : null;
     }
 
-    async updateRequirements(teacherId: string, courseId: string, change: UpdateGoalsDto): Promise<IRequirement[]> {
+    async updateRequirements(teacherId: string, courseId: string, change: UpdateGoalsDto): Promise<{ progress: number, data: IRequirement[] }> {
         const { add: addArr, delete: deleteArr, update: updateObj } = change;
         let course: ICourse = await this.courseModel.findById(courseId);
         if (course) {
@@ -206,12 +223,12 @@ export class CourseService {
                 addRequirements as IRequirement[]
             );
             course = await course.save();
-            return course.requirements;
+            return await this.finalGoals(course, 'requirements');
         }
         return null;
     }
 
-    async updateTargetStudents(teacherId: string, courseId: string, change: UpdateGoalsDto): Promise<ITargetStudent[]> {
+    async updateTargetStudents(teacherId: string, courseId: string, change: UpdateGoalsDto): Promise<{ progress: number, data: ITargetStudent[] }> {
         const { add: addArr, delete: deleteArr, update: updateObj } = change;
         let course: ICourse = await this.courseModel.findById(courseId);
         if (course) {
@@ -234,8 +251,21 @@ export class CourseService {
                 addTargetStudents as ITargetStudent[]
             );
             course = await course.save();
-            return course.targetStudents;
+            return await this.finalGoals(course, 'targetStudents');
         }
         return null;
+    }
+
+    async fetchSyllabus(courseId: string): Promise<IChapter[]> {
+        const syllabus: IChapter[] = await this.chapterModel
+            .find({ course: courseId })
+            .populate('owner', 'name avatar')
+            .populate('lectures.owner', 'name avatar')
+            .select({
+                course: 0,
+                'lecture.content': 0,
+                'lecture.isPreviewed': 0
+            });
+        return syllabus;
     }
 }

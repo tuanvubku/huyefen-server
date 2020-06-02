@@ -7,6 +7,6 @@ export interface ILecture extends Document {
     owner: string;
     type: Lecture,
     updatedAt: string;
-    content: string;
-    isPreviewed: boolean;
+    content?: string;
+    isPreviewed?: boolean;
 };

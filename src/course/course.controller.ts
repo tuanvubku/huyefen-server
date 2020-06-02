@@ -9,14 +9,15 @@ import { ICourse } from './interfaces/course.interface';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ResponseSuccess } from '@/utils/utils';
 import { CreateDto } from './dtos/create.dto';
-import { TeacherCoursesSort } from '@/config/constants';
 import { FetchDto } from './dtos/fetch.dto';
 import { FetchInfoDto } from './dtos/fetchInfo.dto';
 import { FetchGoalsDto } from './dtos/fetchGoals.dto';
+import { SyllabusDto } from './dtos/syllabus.dto';
 import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
+import { IChapter } from '@/chapter/interfaces/chapter.interface';
 
 @Controller('courses')
 export class CourseController {
@@ -85,13 +86,13 @@ export class CourseController {
         @Req() req,
         @Param() params: UpdateGoalsParamDto,
         @Body() body: UpdateGoalsDto
-    ): Promise<IResponse<IWhatLearn[]>> {
+    ): Promise<IResponse<{ progress: number, data: IWhatLearn[] }>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
         const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
         if (!check)
             throw new ForbiddenException('Forbidden. You can not access this course');
-        const whatLearns: IWhatLearn[] = await this.courseService.updateWhatLearns(teacherId, courseId, body);
+        const whatLearns: { progress: number, data: IWhatLearn[] } = await this.courseService.updateWhatLearns(teacherId, courseId, body);
         if (!whatLearns)
             throw new NotFoundException('The course do not existed!');
         return new ResponseSuccess('CHANGE_WHAT_LEARN_OK', whatLearns);
@@ -104,13 +105,13 @@ export class CourseController {
         @Req() req,
         @Param() params: UpdateGoalsParamDto,
         @Body() body: UpdateGoalsDto
-    ): Promise<IResponse<IRequirement[]>> {
+    ): Promise<IResponse<{ progress: number, data: IRequirement[] }>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
         const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
         if (!check)
             throw new ForbiddenException('Forbidden. You can not access this course');
-        const requirements: IRequirement[] = await this.courseService.updateRequirements(teacherId, courseId, body);
+        const requirements: { progress: number, data: IRequirement[] } = await this.courseService.updateRequirements(teacherId, courseId, body);
         if (!requirements)
             throw new NotFoundException('The course do not existed!');
         return new ResponseSuccess('CHANGE_REQUIREMENTS_OK', requirements);
@@ -123,16 +124,32 @@ export class CourseController {
         @Req() req,
         @Param() params: UpdateGoalsParamDto,
         @Body() body: UpdateGoalsDto
-    ): Promise<IResponse<ITargetStudent[]>> {
+    ): Promise<IResponse<{ progress: number, data: ITargetStudent[] }>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
         const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
         if (!check)
             throw new ForbiddenException('Forbidden. You can not access this course');
-        const targetStudents: ITargetStudent[] = await this.courseService.updateTargetStudents(teacherId, courseId, body);
+        const targetStudents: { progress: number, data: ITargetStudent[] } = await this.courseService.updateTargetStudents(teacherId, courseId, body);
         if (!targetStudents)
             throw new NotFoundException('The course do not existed!');
         return new ResponseSuccess('CHANGE_TARGET_STUDENTS_OK', targetStudents);
+    }
+
+    @Get('/:id/syllabus')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchSyllabus(@Req() req, @Param() params: SyllabusDto): Promise<IResponse<IChapter[]>> {
+        const teacherId: string = req.user._id;
+        const courseId: string = params.id;
+        const checkCourse = await this.courseService.validateCourse(courseId);
+        if (!checkCourse)
+            throw new NotFoundException('Invalid course');
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const syllabus: IChapter[] = await this.courseService.fetchSyllabus(courseId);
+        return new ResponseSuccess<IChapter[]>('FETCH_SYLLABUS_OK', syllabus);
     }
 }
 
