@@ -7,7 +7,7 @@ import * as _ from 'lodash';
 @Injectable()
 export class ChapterService {
     constructor (
-        @InjectModel('Chapter') private readonly chapterModel: Model<IChapter>,
+        @InjectModel('Chapter') private readonly chapterModel: Model<IChapter>
     ) {}
 
     async fetchSyllabus(courseId: string): Promise<IChapter[]> {
@@ -82,7 +82,7 @@ export class ChapterService {
             return chapter;
         }
         catch (e) {
-            if (e.name === 'ValidationrError')
+            if (e.name === 'ValidationError')
                 throw new BadRequestException();
             throw e;
         }

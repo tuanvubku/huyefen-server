@@ -4,7 +4,7 @@ import { SearchService } from '@/search/search.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
-import { Role } from '@/config/constants';
+import { Role, HistoryType } from '@/config/constants';
 import { ICourse } from './interfaces/course.interface';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ResponseSuccess } from '@/utils/utils';
@@ -19,12 +19,14 @@ import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { ChapterService } from '@/chapter/chapter.service';
+import { HistoryService } from '@/history/history.service';
 
 @Controller('courses')
 export class CourseController {
     constructor (
         private readonly courseService: CourseService,
         private readonly chapterService: ChapterService,
+        private readonly historyService: HistoryService,
         private readonly searchService: SearchService
     ) {}
 
@@ -97,6 +99,12 @@ export class CourseController {
         const whatLearns: { progress: number, data: IWhatLearn[] } = await this.courseService.updateWhatLearns(teacherId, courseId, body);
         if (!whatLearns)
             throw new NotFoundException('The course do not existed!');
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Update course's item what will learns`,
+            HistoryType.Syllabus
+        );
         return new ResponseSuccess('CHANGE_WHAT_LEARN_OK', whatLearns);
     }
     
@@ -116,6 +124,12 @@ export class CourseController {
         const requirements: { progress: number, data: IRequirement[] } = await this.courseService.updateRequirements(teacherId, courseId, body);
         if (!requirements)
             throw new NotFoundException('The course do not existed!');
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Update course's requirements`,
+            HistoryType.Syllabus
+        );
         return new ResponseSuccess('CHANGE_REQUIREMENTS_OK', requirements);
     }
 
@@ -135,6 +149,12 @@ export class CourseController {
         const targetStudents: { progress: number, data: ITargetStudent[] } = await this.courseService.updateTargetStudents(teacherId, courseId, body);
         if (!targetStudents)
             throw new NotFoundException('The course do not existed!');
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Update course's target students`,
+            HistoryType.Goals
+        );
         return new ResponseSuccess('CHANGE_TARGET_STUDENTS_OK', targetStudents);
     }
 
@@ -172,6 +192,12 @@ export class CourseController {
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const chapter: { progress: number, data: IChapter } = await this.courseService.createChapter(teacherId, courseId, title, description);
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Create new chapter: ${title}`,
+            HistoryType.Syllabus
+        );
         return new ResponseSuccess('CREATE_CHAPTER_OK', chapter);
     }
 
@@ -195,6 +221,12 @@ export class CourseController {
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const chapter: IChapter = await this.chapterService.update(teacherId, chapterId, title, description);
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Update chapter ${title}, description: ${description}`,
+            HistoryType.Syllabus
+        );
         return new ResponseSuccess<IChapter>('UPDATE_CHAPTER_OK', chapter);
     }
 }

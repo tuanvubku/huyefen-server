@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IHistory } from './interfaces/history.interface';
-import { HistorySort } from '@/config/constants';
+import { HistorySort, HistoryType } from '@/config/constants';
 
 @Injectable()
 export class HistoryService {
@@ -20,5 +20,14 @@ export class HistoryService {
             .limit(limit);
     }
 
-    
+    async push(courseId: string, teacherId: string, content: string, type: HistoryType, url?: string): Promise<void> {
+        const history: IHistory = new this.historyModel({
+            course: courseId,
+            type,
+            content,
+            user: teacherId,
+            ...(url ? { url }: {})
+        });
+        await history.save();
+    }
 }
