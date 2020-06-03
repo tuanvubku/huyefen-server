@@ -269,4 +269,17 @@ export class CourseService {
         await this.saveSyllabusProgress(courseId, data.progress);
         return data;
     }
+
+    async deleteChapter(courseId: string, chapterId: string): Promise<{ status: boolean, data: { progress: number, data: string } }> {
+        const data: { status: boolean, progress: number } = await this.chapterService.delete(courseId, chapterId);
+        if (!data.status) return { status: false, data: null };
+        await this.saveSyllabusProgress(courseId, data.progress);
+        return {
+            status: true,
+            data: {
+                progress: data.progress,
+                data: 'OK'
+            }
+        }
+    }
 }

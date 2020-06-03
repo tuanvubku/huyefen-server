@@ -37,3 +37,11 @@ export class UpdateChapterParamDto {
     @IsMongoId()
     chapterId: string;
 }
+
+export class DeleteChapterParamDto {
+    @IsMongoId()
+    courseId: string;
+
+    @IsMongoId()
+    chapterId: string;
+}

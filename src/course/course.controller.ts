@@ -1,4 +1,4 @@
-import { Body, Controller, Query, Get, Put, Post, UseGuards, Req, ValidationPipe, Param, ParseUUIDPipe, ForbiddenException, NotFoundException, UsePipes, Res, BadRequestException } from '@nestjs/common';
+import { Body, Controller, Query, Get, Put, Post, UseGuards, Req, ValidationPipe, Param, ParseUUIDPipe, ForbiddenException, NotFoundException, UsePipes, Res, BadRequestException, Delete } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { SearchService } from '@/search/search.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -12,7 +12,7 @@ import { CreateDto } from './dtos/create.dto';
 import { FetchDto } from './dtos/fetch.dto';
 import { FetchInfoDto } from './dtos/fetchInfo.dto';
 import { FetchGoalsDto } from './dtos/fetchGoals.dto';
-import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto } from './dtos/syllabus.dto';
+import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto, DeleteChapterParamDto } from './dtos/syllabus.dto';
 import { FetchHistoriesDto, FetchHistoriesParamDto } from './dtos/histories.dto';
 import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
@@ -253,5 +253,29 @@ export class CourseController {
             HistoryType.Syllabus
         );
         return new ResponseSuccess<IChapter>('UPDATE_CHAPTER_OK', chapter);
+    }
+
+    @Delete('/:courseId/chapters/:chapterId')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async deleteChapter(
+        @Req() req,
+        @Param() params: DeleteChapterParamDto
+    ): Promise<IResponse<{ progress: number, data: string }>> {
+        const teacherId: string = req.user._id;
+        const { courseId, chapterId } = params;
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const deleteResult = await this.courseService.deleteChapter(courseId, chapterId);
+        if (!deleteResult.status)
+            throw new NotFoundException('Not founded chapter!');
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Delete one chapter of course`,
+            HistoryType.Syllabus
+        );
+        return new ResponseSuccess('DELETE_CHAPTER_OK', deleteResult.data);
     }
 }

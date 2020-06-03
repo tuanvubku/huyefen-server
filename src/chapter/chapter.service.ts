@@ -87,4 +87,23 @@ export class ChapterService {
             throw e;
         }
     }
+
+    async delete(courseId: string, chapterId: string): Promise<{ status: boolean, progress: number }> {
+        const { deletedCount } = await this.chapterModel
+            .deleteOne({
+                _id: chapterId,
+                course: courseId
+            });
+        if (deletedCount === 0)
+            return { status: false, progress: null };
+        const chapters: IChapter[] = await this.chapterModel
+            .find({ course: courseId });
+        let progress: number = _.isEmpty(chapters) ? 0 : 50;
+        if (!_.isEmpty(chapters) && _.some(_.map(chapters, chapter => _.size(chapter.lectures) > 0)))
+            progress = 100;
+        return {
+            status: true,
+            progress
+        };
+    }
 }
