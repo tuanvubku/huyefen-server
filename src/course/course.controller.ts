@@ -12,13 +12,14 @@ import { CreateDto } from './dtos/create.dto';
 import { FetchDto } from './dtos/fetch.dto';
 import { FetchInfoDto } from './dtos/fetchInfo.dto';
 import { FetchGoalsDto } from './dtos/fetchGoals.dto';
-import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto, DeleteChapterParamDto } from './dtos/syllabus.dto';
+import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto, DeleteChapterParamDto, CreateLectureDto, CreateLectureParamDto } from './dtos/syllabus.dto';
 import { FetchHistoriesDto, FetchHistoriesParamDto } from './dtos/histories.dto';
 import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
+import { ILecture } from '@/chapter/interfaces/lecture.interface';
 import { IHistory } from '@/history/interfaces/history.interface';
 import { ChapterService } from '@/chapter/chapter.service';
 import { HistoryService } from '@/history/history.service';
@@ -277,5 +278,31 @@ export class CourseController {
             HistoryType.Syllabus
         );
         return new ResponseSuccess('DELETE_CHAPTER_OK', deleteResult.data);
+    }
+
+    @Post('/:courseId/chapters/:chapterId/lectures')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async createLecture(
+        @Req() req,
+        @Param() params: CreateLectureParamDto,
+        @Body() body: CreateLectureDto
+    ): Promise<IResponse<{ progress: number, data: ILecture }>> {
+        const teacherId: string = req.user._id;
+        const { courseId, chapterId } = params;
+        const { title, type } = body;
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const { status, data } = await this.courseService.createLecture(teacherId, courseId, chapterId, title, type);
+        if (!status)
+            throw new NotFoundException('Not founded chapter!');
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Create new lecture: ${title}`,
+            HistoryType.Syllabus
+        );
+        return new ResponseSuccess('CREATE_LECTURE_OK', { progress: 100, data });
     }
 }

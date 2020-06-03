@@ -4,13 +4,14 @@ import { Model } from 'mongoose';
 import * as _ from 'lodash';
 import { ICourse } from './interfaces/course.interface';
 import { IAuthor } from './interfaces/author.interface';
-import { TeacherCoursesSort as Sort, ProgressBase } from '@/config/constants';
+import { TeacherCoursesSort as Sort, ProgressBase, Lecture } from '@/config/constants';
 import { UpdateGoalsDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { ChapterService } from '@/chapter/chapter.service';
+import { ILecture } from '@/chapter/interfaces/lecture.interface';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -281,5 +282,20 @@ export class CourseService {
                 data: 'OK'
             }
         }
+    }
+
+    async createLecture (
+        teacherId: string,
+        courseId: string,
+        chapterId: string,
+        title: string,
+        type: Lecture
+    ): Promise<{ status: boolean, data: ILecture }> {
+        const data: {
+            status: boolean,
+            data: ILecture
+        } = await this.chapterService.createLecture(teacherId, courseId, chapterId, title, type);
+        if (data.status) await this.saveSyllabusProgress(courseId, 100);
+        return data;
     }
 }

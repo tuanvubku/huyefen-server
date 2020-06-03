@@ -1,4 +1,5 @@
-import { IsMongoId, IsString, MaxLength } from 'class-validator';
+import { IsMongoId, IsString, MaxLength, IsEnum } from 'class-validator';
+import { Lecture } from '@/config/constants';
 
 export class SyllabusDto {
     @IsMongoId()
@@ -44,4 +45,21 @@ export class DeleteChapterParamDto {
 
     @IsMongoId()
     chapterId: string;
+}
+
+export class CreateLectureParamDto {
+    @IsMongoId()
+    courseId: string;
+
+    @IsMongoId()
+    chapterId: string;
+}
+
+export class CreateLectureDto {
+    @IsString()
+    @MaxLength(80)
+    title: string;
+
+    @IsEnum(Lecture)
+    type: Lecture
 }

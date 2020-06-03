@@ -3,6 +3,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IChapter } from './interfaces/chapter.interface';
 import * as _ from 'lodash';
+import { Lecture } from '@/config/constants';
+import { ILecture } from './interfaces/lecture.interface';
 
 @Injectable()
 export class ChapterService {
@@ -104,6 +106,36 @@ export class ChapterService {
         return {
             status: true,
             progress
+        };
+    }
+    
+    async createLecture (
+        teacherId: string,
+        courseId: string,
+        chapterId: string,
+        title: string,
+        type: Lecture
+    ): Promise<{ status: boolean, data: ILecture }> {
+        let chapter: IChapter = await this.chapterModel.findById(chapterId);
+        if (!chapter || chapter.course.toString() !== courseId) return { status: false, data: null };
+        chapter.lectures.push({
+            title,
+            type,
+            owner: teacherId,
+            content: null
+        } as ILecture);
+        chapter = await chapter.save();
+        chapter = await this.chapterModel
+            .findById(chapterId, {
+                lectures: {
+                    $slice: -1
+                }
+            })
+            .populate('lectures.owner', 'name avatar')
+            .select('-lectures.content -lectures.isPreviewed');
+        return {
+            status: true,
+            data: chapter.lectures[0]
         };
     }
 }
