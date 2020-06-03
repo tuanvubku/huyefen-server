@@ -83,3 +83,14 @@ export class UpdateLectureDto {
     @IsEnum(Lecture)
     type: Lecture
 }
+
+export class DeleteLectureParamDto {
+    @IsMongoId()
+    courseId: string;
+
+    @IsMongoId()
+    chapterId: string;
+
+    @IsMongoId()
+    lectureId: string;
+}

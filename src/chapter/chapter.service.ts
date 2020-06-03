@@ -188,4 +188,42 @@ export class ChapterService {
             data: chapter.lectures[0]
         }
     }
+
+    async deleteLecture (
+        courseId: string,
+        chapterId: string,
+        lectureId: string
+    ): Promise<{ status: boolean, progress: number }> {
+        const chapter = await this.chapterModel
+            .findOneAndUpdate({
+                _id: chapterId,
+                course: courseId,
+                lectures: {
+                    $elemMatch: {
+                        _id: lectureId
+                    }
+                }
+            }, {
+                $pull: {
+                    lectures: {
+                        _id: lectureId
+                    }
+                }
+            })
+        if (!chapter) return { status: false, progress: null };
+        const lecture = _.find(chapter.lectures, lec => lec._id.toString() === lectureId);
+        const contentId: string = lecture.content;
+        const contentType: Lecture = lecture.type;
+        //delete content with id and type.
+        //delete video in folders.
+        const chapters: IChapter[] = await this.chapterModel
+            .find({ course: courseId });
+        let progress: number = _.isEmpty(chapters) ? 0 : 50;
+        if (!_.isEmpty(chapters) && _.some(_.map(chapters, chapter => _.size(chapter.lectures) > 0)))
+            progress = 100;
+        return {
+            status: true,
+            progress
+        }
+    }
 }

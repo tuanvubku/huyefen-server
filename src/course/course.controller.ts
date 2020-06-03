@@ -12,7 +12,7 @@ import { CreateDto } from './dtos/create.dto';
 import { FetchDto } from './dtos/fetch.dto';
 import { FetchInfoDto } from './dtos/fetchInfo.dto';
 import { FetchGoalsDto } from './dtos/fetchGoals.dto';
-import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto, DeleteChapterParamDto, CreateLectureDto, CreateLectureParamDto, UpdateLectureDto, UpdateLectureParamDto } from './dtos/syllabus.dto';
+import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto, DeleteChapterParamDto, CreateLectureDto, CreateLectureParamDto, UpdateLectureDto, UpdateLectureParamDto, DeleteLectureParamDto } from './dtos/syllabus.dto';
 import { FetchHistoriesDto, FetchHistoriesParamDto } from './dtos/histories.dto';
 import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
@@ -322,7 +322,7 @@ export class CourseController {
             throw new ForbiddenException('Forbidden to access this course');
         const { status, data: lecture } = await this.chapterService.updateLecture(teacherId, courseId, chapterId, lectureId, title, type);
         if (status === 0)
-            throw new NotFoundException('Not founded chapter!');
+            throw new NotFoundException('Not founded lecture!');
         else if (status === -1)
             throw new MethodNotAllowedException('You can not change type of existed lecture');
         await this.historyService.push(
@@ -334,4 +334,27 @@ export class CourseController {
         return new ResponseSuccess<ILecture>('UPDATE_LECTURE_OK', lecture)
     }
 
+    @Delete('/:courseId/chapters/:chapterId/lectures/:lectureId')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async deleteLecture (
+        @Req() req,
+        @Param() params: DeleteLectureParamDto
+    ): Promise<IResponse<{ progress: number, data: string }>> {
+        const teacherId: string = req.user._id;
+        const { courseId, chapterId, lectureId } = params;
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const { status, data } = await this.courseService.deleteLecture(courseId, chapterId, lectureId);
+        if (!status)
+            throw new NotFoundException('Not founded lecture!');
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Delete one lecture in this course`,
+            HistoryType.Syllabus
+        );
+        return new ResponseSuccess('DELETE_LECTURE_OK', data);
+    }
 }
