@@ -116,15 +116,23 @@ export class ChapterService {
         title: string,
         type: Lecture
     ): Promise<{ status: boolean, data: ILecture }> {
-        let chapter: IChapter = await this.chapterModel.findById(chapterId);
-        if (!chapter || chapter.course.toString() !== courseId) return { status: false, data: null };
-        chapter.lectures.push({
-            title,
-            type,
-            owner: teacherId,
-            content: null
-        } as ILecture);
-        chapter = await chapter.save();
+        let chapter: IChapter = await this.chapterModel
+            .findOneAndUpdate({
+                _id: chapterId,
+                course: courseId
+            }, {
+                $push: {
+                    lectures: {
+                        title,
+                        type,
+                        owner: teacherId,
+                        content: null
+                    } as ILecture
+                }
+            }, {
+                runValidators: true
+            });
+        if (!chapter) return { status: false, data: null };
         chapter = await this.chapterModel
             .findById(chapterId, {
                 lectures: {
@@ -132,10 +140,52 @@ export class ChapterService {
                 }
             })
             .populate('lectures.owner', 'name avatar')
-            .select('-lectures.content -lectures.isPreviewed');
+            .select('-lectures.content -lectures.isPreviewed')
         return {
             status: true,
             data: chapter.lectures[0]
         };
+    }
+
+    async updateLecture(
+        teacherId: string,
+        courseId: string,
+        chapterId: string,
+        lectureId: string,
+        title: string,
+        type: Lecture
+    ): Promise<{ status: 0 | -1 | 1, data: ILecture }> {
+        let chapter: IChapter = await this.chapterModel
+            .findOne({
+                _id: chapterId,
+                course: courseId,
+                lectures: {
+                    $elemMatch: {
+                        _id: lectureId
+                    }
+                }
+            }, {
+                lectures: {
+                    $elemMatch: { _id: lectureId }
+                }
+            });
+        if (!chapter) return { status: 0, data: null };
+        if (chapter.lectures[0].content && type !== chapter.lectures[0].type) return { status: -1, data: null };
+        chapter.lectures[0].owner = teacherId;
+        chapter.lectures[0].title = title;
+        chapter.lectures[0].type = type;
+        await chapter.save();
+        chapter = await this.chapterModel
+            .findById(chapterId, {
+                lectures: {
+                    $elemMatch: { _id: lectureId }
+                }
+            })
+            .populate('lectures.owner', 'name avatar')
+            .select('-lectures.content -lectures.isPreviewed');
+        return {
+            status: 1,
+            data: chapter.lectures[0]
+        }
     }
 }

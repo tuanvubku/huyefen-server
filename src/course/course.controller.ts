@@ -1,4 +1,4 @@
-import { Body, Controller, Query, Get, Put, Post, UseGuards, Req, ValidationPipe, Param, ParseUUIDPipe, ForbiddenException, NotFoundException, UsePipes, Res, BadRequestException, Delete } from '@nestjs/common';
+import { Body, Controller, Query, Get, Put, Post, UseGuards, Req, ValidationPipe, Param, ParseUUIDPipe, ForbiddenException, NotFoundException, UsePipes, Res, BadRequestException, Delete, MethodNotAllowedException } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { SearchService } from '@/search/search.service';
 import { AuthGuard } from '@nestjs/passport';
@@ -12,7 +12,7 @@ import { CreateDto } from './dtos/create.dto';
 import { FetchDto } from './dtos/fetch.dto';
 import { FetchInfoDto } from './dtos/fetchInfo.dto';
 import { FetchGoalsDto } from './dtos/fetchGoals.dto';
-import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto, DeleteChapterParamDto, CreateLectureDto, CreateLectureParamDto } from './dtos/syllabus.dto';
+import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto, DeleteChapterParamDto, CreateLectureDto, CreateLectureParamDto, UpdateLectureDto, UpdateLectureParamDto } from './dtos/syllabus.dto';
 import { FetchHistoriesDto, FetchHistoriesParamDto } from './dtos/histories.dto';
 import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
@@ -294,7 +294,7 @@ export class CourseController {
         const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
-        const { status, data } = await this.courseService.createLecture(teacherId, courseId, chapterId, title, type);
+        const { status, data: lecture } = await this.courseService.createLecture(teacherId, courseId, chapterId, title, type);
         if (!status)
             throw new NotFoundException('Not founded chapter!');
         await this.historyService.push(
@@ -303,6 +303,35 @@ export class CourseController {
             `Create new lecture: ${title}`,
             HistoryType.Syllabus
         );
-        return new ResponseSuccess('CREATE_LECTURE_OK', { progress: 100, data });
+        return new ResponseSuccess('CREATE_LECTURE_OK', { progress: 100, data: lecture });
     }
+
+    @Put('/:courseId/chapters/:chapterId/lectures/:lectureId')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateLecture(
+        @Req() req,
+        @Param() params: UpdateLectureParamDto,
+        @Body() body: UpdateLectureDto
+    ): Promise<IResponse<ILecture>> {
+        const teacherId: string = req.user._id;
+        const { courseId, chapterId, lectureId } = params;
+        const { title, type } = body;
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const { status, data: lecture } = await this.chapterService.updateLecture(teacherId, courseId, chapterId, lectureId, title, type);
+        if (status === 0)
+            throw new NotFoundException('Not founded chapter!');
+        else if (status === -1)
+            throw new MethodNotAllowedException('You can not change type of existed lecture');
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Update lecture with title ${title} and type ${type}`,
+            HistoryType.Syllabus
+        );
+        return new ResponseSuccess<ILecture>('UPDATE_LECTURE_OK', lecture)
+    }
+
 }

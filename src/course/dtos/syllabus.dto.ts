@@ -63,3 +63,23 @@ export class CreateLectureDto {
     @IsEnum(Lecture)
     type: Lecture
 }
+
+export class UpdateLectureParamDto {
+    @IsMongoId()
+    courseId: string;
+
+    @IsMongoId()
+    chapterId: string;
+
+    @IsMongoId()
+    lectureId: string;
+}
+
+export class UpdateLectureDto {
+    @IsString()
+    @MaxLength(80)
+    title: string;
+
+    @IsEnum(Lecture)
+    type: Lecture
+}
