@@ -51,6 +51,11 @@ export const CourseSchema = new Schema({
         default: null,
         minlength: 6
     },
+    primaryTopic: {
+        type: Schema.Types.ObjectId,
+        ref: 'Topic',
+        default: null
+    },
     starRating: {
         type: Number,
         default: 3.5,

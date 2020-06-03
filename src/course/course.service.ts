@@ -315,4 +315,26 @@ export class CourseService {
             }
         };
     }
+
+    async fetchLanding(courseId: string): Promise<any> {
+        const landing = await this.courseModel
+            .findById(courseId)
+            .select({
+                title: 1,
+                subTitle: 1,
+                description: 1,
+                language: 1,
+                level: 1,
+                area: 1,
+                category: 1,
+                primaryTopic: 1,
+                avatar: 1
+            })
+            .lean()
+            .exec();
+        if (landing) {
+            //find topic for courseId
+        }
+        return landing;
+    }
 }

@@ -15,6 +15,7 @@ export interface ICourse extends Document {
     category: string;
     privacy: Privacy;
     password: string;
+    primaryTopic: string;
     avatar: string;
     starRating: number;
     progress: {

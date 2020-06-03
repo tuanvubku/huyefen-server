@@ -15,6 +15,7 @@ import { FetchGoalsDto } from './dtos/fetchGoals.dto';
 import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto, DeleteChapterParamDto, CreateLectureDto, CreateLectureParamDto, UpdateLectureDto, UpdateLectureParamDto, DeleteLectureParamDto } from './dtos/syllabus.dto';
 import { FetchHistoriesDto, FetchHistoriesParamDto } from './dtos/histories.dto';
 import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
+import { FetchLandingDto } from './dtos/landing.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
@@ -356,5 +357,20 @@ export class CourseController {
             HistoryType.Syllabus
         );
         return new ResponseSuccess('DELETE_LECTURE_OK', data);
+    }
+
+    @Get('/:id/landing')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchLanding(@Req() req, @Param() params: FetchLandingDto): Promise<IResponse<any>> {
+        const teacherId: string = req.user._id;
+        const courseId: string = params.id;
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const landing = await this.courseService.fetchLanding(courseId);
+        if (!landing)
+            throw new NotFoundException('Invalid course!');
+        return new ResponseSuccess('FETCH_LANDING_OK', landing);
     }
 }
