@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, NotFoundException } from '@nestjs/common';
 import { ResponseSuccess } from '@/utils/utils';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { AreaService } from './area.service';
@@ -9,6 +9,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { Role } from '@/config/constants';
+import { UpdateParamDto, UpdateDto } from './dtos/update.dto';
 
 @Controller('areas')
 export class AreaController {
@@ -31,7 +32,18 @@ export class AreaController {
         return new ResponseSuccess<IArea>('CREATE_AREA_OK', area);
     }
 
-
+    @Put('/:id')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async update(@Param() params: UpdateParamDto, @Body() body: UpdateDto): Promise<IResponse<IArea>> {
+        const areaId: string = params.id;
+        const title: string = body.title;
+        const area: IArea = await this.areaService.update(areaId, title);
+        if (!area)
+            throw new NotFoundException('Invalid area');
+        return new ResponseSuccess<IArea>('UPDATE_AREA_OK', area);
+    }
+    
     @Get('categories')
     async fetchCategories(): Promise<IResponse<ICategory[]>> {
         const categories: ICategory[] = await this.areaService.fetchCategories();

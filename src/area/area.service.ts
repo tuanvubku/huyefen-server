@@ -16,12 +16,14 @@ export class AreaService {
         return await this.areaModel.find().select('-categories.description');
     }
 
-    async findOne(id: string): Promise<IArea> {
-        return this.areaModel.findOne({ _id: id });
-    }
+    // async findOne(id: string): Promise<IArea> {
+    //     return this.areaModel.findOne({ _id: id });
+    // }
 
-    async update(id: string, area: IArea): Promise<IArea> {
-        return await this.areaModel.findByIdAndUpdate(id, area, { new: true });
+    async update(areaId: string, title: string): Promise<IArea> {
+        return await this.areaModel.findByIdAndUpdate(areaId, {
+            title
+        });
     }
 
     async create(title: string): Promise<IArea> {
