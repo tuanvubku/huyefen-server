@@ -19,6 +19,7 @@ import { MongooseConfig } from '@/config/mongoose.config';
 import { validationPipeConfig } from '@/config/validationPipe.config';
 import { HistoryModule } from './history/history.module';
 import { ChapterModule } from './chapter/chapter.module';
+import { TopicModule } from './topic/topic.module';
 
 @Module({
 	imports: [
@@ -43,7 +44,8 @@ import { ChapterModule } from './chapter/chapter.module';
 		DeviceModule,
 		SearchModule,
 		HistoryModule,
-		ChapterModule
+		ChapterModule,
+		TopicModule
 	],
 	providers: [
 		{
