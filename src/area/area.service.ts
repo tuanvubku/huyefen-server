@@ -1,6 +1,7 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import * as _ from 'lodash';
 import { UpdateAreaDto, CreateAreaDto } from './dto/create-area.dto';
 import { UpdateCategoryDto } from './dto/create-category.dto';
 import { IArea } from './interfaces/area.interface';
@@ -14,7 +15,7 @@ export class AreaService {
     ) {}
 
     async fetch(): Promise<IArea[]> {
-        return await this.areaModel.find();
+        return await this.areaModel.find().select('-categories.description');
     }
 
     async findOne(id: string): Promise<IArea> {
@@ -30,20 +31,21 @@ export class AreaService {
         return await newArea.save();
     }
 
-    async findAllCategories(): Promise<ICategory[]> {
-        return await this.categoryModel.find();
+    async fetchCategories(): Promise<ICategory[]> {
+        const areas: IArea[] = await this.areaModel.find();
+        return _.flatMap(areas, area => area.categories);
     }
+    
+    // async findCategoryById(id: string): Promise<ICategory> {
+    //     return await this.categoryModel
+    //         .findOne({ _id: id })
+    //         .populate('areaId').exec();
+    // }
 
-    async findCategoryById(id: string): Promise<ICategory> {
-        return await this.categoryModel
-            .findOne({ _id: id })
-            .populate('areaId').exec();
-    }
-
-    async createCategory(category: CreateAreaDto): Promise<ICategory> {
-        const newCategory = new this.categoryModel(category);
-        return await newCategory.save();
-    }
+    // async createCategory(category: CreateAreaDto): Promise<ICategory> {
+    //     const newCategory = new this.categoryModel(category);
+    //     return await newCategory.save();
+    // }
 
     async updateArea(area: UpdateAreaDto, id: string) {
         const updateArea = this.areaModel.findOne({ _id: id });

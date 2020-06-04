@@ -20,9 +20,9 @@ export class AreaController {
     }
 
     @Get('categories')
-    async findAllCategory(): Promise<IResponse<ICategory[]>> {
-        const categories = await this.areaService.findAllCategories();
-        return new ResponseSuccess("CATEGORY.GET_SUCCESSS", categories);
+    async fetchCategories(): Promise<IResponse<ICategory[]>> {
+        const categories: ICategory[] = await this.areaService.fetchCategories();
+        return new ResponseSuccess('CATEGORIES_FETCH_OK', categories);
     }
 
     @Get(':id')
