@@ -374,4 +374,18 @@ export class CourseService {
         if (!course) return { status: false, data: null };
         return await this.finalLanding(course, ['title', 'subTitle', 'description', 'language', 'level', 'area', 'category', 'topics', 'primaryTopic']);
     }
+
+    async updateAvatar(courseId: string, url: string): Promise<{ status: boolean, data: { progress: number, data: any } }> {
+        const course: ICourse = await this.courseModel
+            .findByIdAndUpdate(courseId, {
+                $set: {
+                    avatar: url
+                }
+            }, {
+                new: true,
+                runValidators: true
+            });
+        if (!course) return { status: false, data: null };
+        return await this.finalLanding(course, ['avatar']);
+    }
 }

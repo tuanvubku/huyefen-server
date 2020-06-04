@@ -15,7 +15,7 @@ import { FetchGoalsDto } from './dtos/fetchGoals.dto';
 import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto, DeleteChapterParamDto, CreateLectureDto, CreateLectureParamDto, UpdateLectureDto, UpdateLectureParamDto, DeleteLectureParamDto } from './dtos/syllabus.dto';
 import { FetchHistoriesDto, FetchHistoriesParamDto } from './dtos/histories.dto';
 import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
-import { FetchLandingDto, UpdateLandingDto, UpdateLandingParamDto } from './dtos/landing.dto';
+import { FetchLandingDto, UpdateLandingDto, UpdateLandingParamDto, UpdateAvatarDto, UpdateAvatarParamDto } from './dtos/landing.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
@@ -378,7 +378,6 @@ export class CourseController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     async updateLanding(@Req() req, @Param() params: UpdateLandingParamDto, @Body() body: UpdateLandingDto): Promise<IResponse<any>> {
-        console.log('WTF');
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
         const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
@@ -393,5 +392,26 @@ export class CourseController {
             HistoryType.Landing
         );
         return new ResponseSuccess('UPDATE_LANDING_OK', data);
+    }
+
+    @Put('/:id/avatar')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateAvatar(@Req() req, @Param() params: UpdateAvatarParamDto, @Body() body: UpdateAvatarDto): Promise<IResponse<any>> {
+        const teacherId: string = req.user._id;
+        const courseId: string = params.id;
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const url: string = body.url;
+        const { status, data } = await this.courseService.updateAvatar(courseId, url);
+        if (!status) throw new NotFoundException('Invalid course!');
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Change avatar of course`,
+            HistoryType.Landing
+        );
+        return new ResponseSuccess('UPDATE_AVATAR_OK', data);
     }
 }

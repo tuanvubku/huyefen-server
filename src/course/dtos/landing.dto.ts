@@ -1,4 +1,4 @@
-import { IsMongoId, IsString, MaxLength, IsEnum, IsOptional, IsArray } from 'class-validator';
+import { IsMongoId, IsString, MaxLength, IsEnum, IsOptional, IsArray, IsUrl } from 'class-validator';
 import { Level } from '@/config/constants';
 
 export class FetchLandingDto {
@@ -49,4 +49,15 @@ export class UpdateLandingDto {
     @IsOptional()
     @IsMongoId()
     primaryTopic: string;
+}
+
+export class UpdateAvatarParamDto {
+    @IsMongoId()
+    id: string;
+}
+
+export class UpdateAvatarDto {
+    @IsUrl()
+    @IsOptional()
+    url: string;
 }
