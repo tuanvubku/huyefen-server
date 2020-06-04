@@ -23,6 +23,9 @@ export class AreaService {
     async update(areaId: string, title: string): Promise<IArea> {
         return await this.areaModel.findByIdAndUpdate(areaId, {
             title
+        }, {
+            new: true,
+            runValidators: true
         });
     }
 
@@ -39,7 +42,7 @@ export class AreaService {
     }
 
     async createCategory(areaId: string, title: string, description: string): Promise<ICategory> {
-        const area: IArea = await this.areaModel
+        const area = await this.areaModel
             .findByIdAndUpdate(areaId, {
                 $push: {
                     categories: {
@@ -51,6 +54,6 @@ export class AreaService {
                 new: true,
                 runValidators: true
             });
-        return area ? area.categories[-1] : null;
+        return area ? _.last(area.categories) : null;
     }
 }
