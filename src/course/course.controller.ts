@@ -24,7 +24,7 @@ import { ILecture } from '@/chapter/interfaces/lecture.interface';
 import { IHistory } from '@/history/interfaces/history.interface';
 import { ChapterService } from '@/chapter/chapter.service';
 import { HistoryService } from '@/history/history.service';
-import { FetchPriceDto } from './dtos/price.dto';
+import { FetchPriceDto, UpdatePriceDto, UpdatePriceParamDto } from './dtos/price.dto';
 
 @Controller('courses')
 export class CourseController {
@@ -428,5 +428,30 @@ export class CourseController {
         const price: Price = await this.courseService.fetchPrice(courseId);
         if (!price) throw new NotFoundException('Invalid course!!');
         return new ResponseSuccess<Price>('FETCH_PRICE_OK', price);
+    }
+
+    @Put('/:id/price')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updatePrice(
+        @Req() req,
+        @Param() params: UpdatePriceParamDto,
+        @Body() body: UpdatePriceDto
+    ): Promise<IResponse<{ progress: number, data: Price }>> {
+        const teacherId: string = req.user._id;
+        const courseId: string = params.id;
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const price: Price = body.price;
+        const { status, data } = await this.courseService.updatePrice(courseId, price);
+        if (!status) throw new NotFoundException('Invalid course!!');
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Change price of course`,
+            HistoryType.Price
+        )
+        return new ResponseSuccess('UPDATE_PRICE_OK', data);
     }
 }

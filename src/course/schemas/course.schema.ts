@@ -107,8 +107,8 @@ export const CourseSchema = new Schema({
     },
     price: {
         type: String,
-        default: 'free',
-        enum: [Price.Free, Price.TierOne, Price.TierTwo, Price.TierThree]
+        default: null,
+        enum: [Price.Free, Price.TierOne, Price.TierTwo, Price.TierThree, null]
     },
     lastUpdated: {
         type: Date,

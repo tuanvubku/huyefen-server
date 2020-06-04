@@ -394,4 +394,25 @@ export class CourseService {
             .findById(courseId);
         return course ? course.price : null;
     }
+
+    async updatePrice(courseId: string, price: Price): Promise<{ status: boolean, data: { progress: number, data: Price } }> {
+        const course: ICourse = await this.courseModel
+            .findByIdAndUpdate(courseId, {
+                price
+            }, {
+                new: true,
+                runValidators: true
+            });
+        if (!course) return { status: false, data: null };
+        const progress: number = course.price ? 100 : 0;
+        course.progress.price = progress;
+        await course.save();
+        return {
+            status: true,
+            data: {
+                progress,
+                data: course.price
+            }
+        }
+    }
 }
