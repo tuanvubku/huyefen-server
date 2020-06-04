@@ -25,7 +25,7 @@ import { IHistory } from '@/history/interfaces/history.interface';
 import { ChapterService } from '@/chapter/chapter.service';
 import { HistoryService } from '@/history/history.service';
 import { FetchPriceDto, UpdatePriceDto, UpdatePriceParamDto } from './dtos/price.dto';
-import { FetchMessagesParamDto } from './dtos/messages.dto';
+import { FetchMessagesParamDto, UpdateMessagesParamDto, UpdateMessagesDto } from './dtos/messages.dto';
 
 @Controller('courses')
 export class CourseController {
@@ -459,7 +459,7 @@ export class CourseController {
     @Get('/:id/messages')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
-    async fetchMessages(@Req() req, @Param() params: FetchMessagesParamDto): Promise<IResponse<any> {
+    async fetchMessages(@Req() req, @Param() params: FetchMessagesParamDto): Promise<IResponse<any>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
         const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
@@ -468,5 +468,30 @@ export class CourseController {
         const messages = await this.courseService.fetchMessages(courseId);
         if (!messages) throw new NotFoundException('Invalid course!!!!');
         return new ResponseSuccess('FETCH_MESS_OK', messages);
+    }
+
+    @Put('/:id/messages')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateMessages (
+        @Req() req,
+        @Param() params: UpdateMessagesParamDto,
+        @Body() body: UpdateMessagesDto
+    ): Promise<IResponse<{ progress: number, data: any }>> {
+        const teacherId: string = req.user._id;
+        const courseId: string = params.id;
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const { welcome, congratulation } = body;
+        const { status, data } = await this.courseService.updateMessages(courseId, welcome, congratulation);
+        if (!status) throw new NotFoundException('Invalid course!!');
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Change messages of course`,
+            HistoryType.Price
+        )
+        return new ResponseSuccess('UPDATE_PRICE_OK', data);
     }
 }

@@ -421,4 +421,32 @@ export class CourseService {
             .findById(courseId);
         return course ? course.messages : null;
     }
+
+    async updateMessages(courseId: string, welcome: string, congratulation: string): Promise<{ status: boolean, data: { progress: number, data: any } }> {
+        const course: ICourse = await this.courseModel
+            .findByIdAndUpdate(courseId, {
+                $set: {
+                    messages: {
+                        welcome,
+                        congratulation
+                    }
+                }
+            }, {
+                new: true,
+                runValidators: true
+            });
+        if (!course) return { status: false, data: null };
+        let count: number = 0;
+        if (course.messages.welcome) count++;
+        if (course.messages.congratulation) count++;
+        course.progress.messages = (count * 100) / 2;
+        await course.save();
+        return {
+            status: true,
+            data: {
+                progress: (count * 100) / 2,
+                data: course.messages
+            }
+        }
+    }
 }
