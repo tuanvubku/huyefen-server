@@ -10,6 +10,7 @@ import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { Role } from '@/config/constants';
 import { UpdateParamDto, UpdateDto } from './dtos/update.dto';
+import { FetchDto } from './dtos/fetch.dto';
 
 @Controller('areas')
 export class AreaController {
@@ -43,7 +44,16 @@ export class AreaController {
             throw new NotFoundException('Invalid area');
         return new ResponseSuccess<IArea>('UPDATE_AREA_OK', area);
     }
-    
+
+    @Get('/:id/info')
+    async fetchInfo(@Param() params: FetchDto): Promise<IResponse<IArea>> {
+        const areaId: string = params.id;
+        const area: IArea = await this.areaService.fetchInfo(areaId);
+        if (!area)
+            throw new NotFoundException('Invalid area');
+        return new ResponseSuccess<IArea>('FETCH_INFO_OK', area);
+    }
+
     @Get('categories')
     async fetchCategories(): Promise<IResponse<ICategory[]>> {
         const categories: ICategory[] = await this.areaService.fetchCategories();
@@ -54,13 +64,6 @@ export class AreaController {
     async findAreaById(@Param('id') id: string): Promise<IResponse<IArea>> {
         const area = await this.areaService.findOne(id);
         return new ResponseSuccess("AREA.GET_BY_ID_SUCCESSS", area);
-    }
-
-
-    @Post()
-    async createArea(@Body() createAreaDto: CreateAreaDto): Promise<IResponse<IArea>> {
-        const area = await this.areaService.create(createAreaDto);
-        return new ResponseSuccess("AREA.CREATE_SUCCESSS", area);
     }
 
     @Put('id')

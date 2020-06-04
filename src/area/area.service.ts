@@ -16,9 +16,9 @@ export class AreaService {
         return await this.areaModel.find().select('-categories.description');
     }
 
-    // async findOne(id: string): Promise<IArea> {
-    //     return this.areaModel.findOne({ _id: id });
-    // }
+    async fetchInfo(areaId: string): Promise<IArea> {
+        return await this.areaModel.findById(areaId).select('-categories');
+    }
 
     async update(areaId: string, title: string): Promise<IArea> {
         return await this.areaModel.findByIdAndUpdate(areaId, {
