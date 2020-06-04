@@ -2,8 +2,6 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as _ from 'lodash';
-import { UpdateAreaDto, CreateAreaDto } from './dto/create-area.dto';
-import { UpdateCategoryDto } from './dto/create-category.dto';
 import { IArea } from './interfaces/area.interface';
 import { ICategory } from './interfaces/category.interface';
 
@@ -26,16 +24,18 @@ export class AreaService {
         return await this.areaModel.findByIdAndUpdate(id, area, { new: true });
     }
 
-    async create(area: CreateAreaDto): Promise<IArea> {
-        const newArea = new this.areaModel(area);
-        return await newArea.save();
+    async create(title: string): Promise<IArea> {
+        const area: IArea = new this.areaModel({
+            title: title
+        });
+        return await area.save();
     }
 
     async fetchCategories(): Promise<ICategory[]> {
         const areas: IArea[] = await this.areaModel.find();
         return _.flatMap(areas, area => area.categories);
     }
-    
+
     // async findCategoryById(id: string): Promise<ICategory> {
     //     return await this.categoryModel
     //         .findOne({ _id: id })

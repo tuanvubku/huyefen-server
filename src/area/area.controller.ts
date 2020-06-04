@@ -1,11 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ResponseSuccess } from '@/utils/utils';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { AreaService } from './area.service';
-import { CreateAreaDto, UpdateAreaDto } from './dto/create-area.dto';
-import { CreateCategoryDto } from './dto/create-category.dto';
+import { CreateDto } from './dtos/create.dto';
 import { IArea } from './interfaces/area.interface';
 import { ICategory } from './interfaces/category.interface';
+import { AuthGuard } from '@nestjs/passport';
+import { RolesGuard } from '@/utils/guards/roles.guard';
+import { Roles } from '@/utils/decorators/roles.decorator';
+import { Role } from '@/config/constants';
 
 @Controller('areas')
 export class AreaController {
@@ -18,6 +21,16 @@ export class AreaController {
         const areas: IArea[] = await this.areaService.fetch()
         return new ResponseSuccess<IArea[]>('AREA_FETCH_OK', areas);
     }
+
+    @Post()
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)            //Role.admin
+    async create(@Body() body: CreateDto): Promise<IResponse<IArea>> {
+        const title: string = body.title;
+        const area: IArea = await this.areaService.create(title);
+        return new ResponseSuccess<IArea>('CREATE_AREA_OK', area);
+    }
+
 
     @Get('categories')
     async fetchCategories(): Promise<IResponse<ICategory[]>> {
