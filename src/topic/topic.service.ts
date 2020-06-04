@@ -14,4 +14,11 @@ export class TopicService {
     async fetch(): Promise<ITopic[]> {
         return await this.topicModel.find();
     }
+
+    async create(title: string): Promise<ITopic> {
+        const topic: ITopic = new this.topicModel({
+            title
+        });
+        return await topic.save();
+    }
 }
