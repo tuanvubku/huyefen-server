@@ -1,6 +1,6 @@
 import { Schema } from 'mongoose';
 
-export const TopicSchema = new Schema({
+export const CourseTopicSchema = new Schema({
     topicId: {
         type: Schema.Types.ObjectId,
         ref: 'Topic',
