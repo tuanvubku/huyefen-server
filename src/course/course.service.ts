@@ -415,4 +415,10 @@ export class CourseService {
             }
         }
     }
+
+    async fetchMessages(courseId: string): Promise<any> {
+        const course: ICourse = await this.courseModel
+            .findById(courseId);
+        return course ? course.messages : null;
+    }
 }

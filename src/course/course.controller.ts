@@ -25,6 +25,7 @@ import { IHistory } from '@/history/interfaces/history.interface';
 import { ChapterService } from '@/chapter/chapter.service';
 import { HistoryService } from '@/history/history.service';
 import { FetchPriceDto, UpdatePriceDto, UpdatePriceParamDto } from './dtos/price.dto';
+import { FetchMessagesParamDto } from './dtos/messages.dto';
 
 @Controller('courses')
 export class CourseController {
@@ -453,5 +454,19 @@ export class CourseController {
             HistoryType.Price
         )
         return new ResponseSuccess('UPDATE_PRICE_OK', data);
+    }
+
+    @Get('/:id/messages')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchMessages(@Req() req, @Param() params: FetchMessagesParamDto): Promise<IResponse<any> {
+        const teacherId: string = req.user._id;
+        const courseId: string = params.id;
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const messages = await this.courseService.fetchMessages(courseId);
+        if (!messages) throw new NotFoundException('Invalid course!!!!');
+        return new ResponseSuccess('FETCH_MESS_OK', messages);
     }
 }
