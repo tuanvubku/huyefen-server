@@ -56,4 +56,32 @@ export class AreaService {
             });
         return area ? _.last(area.categories) : null;
     }
+
+    async updateCategory(areaId: string, categoryId: string, title: string, description: string) {
+        const area: IArea = await this.areaModel
+            .findOneAndUpdate({
+                _id: areaId,
+                categories: {
+                    $elemMatch: {
+                        _id: categoryId
+                    }
+                }
+            }, {
+                $set: {
+                    'categories.$[element].title': title,
+                    'categories.$[element].description': description
+                }
+            }, {
+                new: true,
+                runValidators: true,
+                arrayFilters: [{
+                    'element._id': categoryId
+                }]
+            });
+        if (area) {
+            const category: ICategory = _.find(area.categories, cate => cate._id.toString() === categoryId);
+            return category;
+        }
+        return null;
+    }
 }

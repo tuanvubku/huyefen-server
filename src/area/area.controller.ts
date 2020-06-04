@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, NotFoundException } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, NotFoundException, Res } from '@nestjs/common';
 import { ResponseSuccess } from '@/utils/utils';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { AreaService } from './area.service';
@@ -11,6 +11,7 @@ import { Roles } from '@/utils/decorators/roles.decorator';
 import { Role } from '@/config/constants';
 import { UpdateParamDto, UpdateDto } from './dtos/update.dto';
 import { CreateCategoryDto, CreateCategoryParamDto } from './dtos/createCategory.dto';
+import { UpdateCategoryDto, UpdateCategoryParamDto } from './dtos/updateCategory.dto';
 import { FetchDto } from './dtos/fetch.dto';
 
 @Controller('areas')
@@ -71,6 +72,18 @@ export class AreaController {
         if (!category)
             throw new NotFoundException('Invalid area');
         return new ResponseSuccess<ICategory>('CREATE_CATE_OK', category);
+    }
+
+    @Put(':areaId/categories/:categoryId')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateCategory(@Param() params: UpdateCategoryParamDto, @Body() body: UpdateCategoryDto): Promise<IResponse<ICategory>> {
+        const { areaId, categoryId } = params;
+        const { title, description } = body;
+        const category: ICategory = await this.areaService.updateCategory(areaId, categoryId, title, description);
+        if (!category)
+            throw new NotFoundException('Invalid information about category');
+        return new ResponseSuccess<ICategory>('UPDATE_CATE_OK', category);
     }
 }
 
