@@ -12,6 +12,7 @@ import { Role } from '@/config/constants';
 import { UpdateParamDto, UpdateDto } from './dtos/update.dto';
 import { CreateCategoryDto, CreateCategoryParamDto } from './dtos/createCategory.dto';
 import { UpdateCategoryDto, UpdateCategoryParamDto } from './dtos/updateCategory.dto';
+import { FetchCategoryParamDto } from './dtos/fetchCategory.dto';
 import { FetchDto } from './dtos/fetch.dto';
 
 @Controller('areas')
@@ -84,6 +85,15 @@ export class AreaController {
         if (!category)
             throw new NotFoundException('Invalid information about category');
         return new ResponseSuccess<ICategory>('UPDATE_CATE_OK', category);
+    }
+
+    @Get(':areaId/categories/:categoryId')
+    async fetchCategoryInfo(@Param() params: FetchCategoryParamDto): Promise<IResponse<ICategory>> {
+        const { areaId, categoryId } = params;
+        const category: ICategory = await this.areaService.fetchCategory(areaId, categoryId);
+        if (!category)
+            throw new NotFoundException('Invalid information about category');
+        return new ResponseSuccess<ICategory>('FETCH_CATE_INFO_OK', category);
     }
 }
 

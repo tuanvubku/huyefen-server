@@ -84,4 +84,22 @@ export class AreaService {
         }
         return null;
     }
+
+    async fetchCategory(areaId: string, categoryId: string): Promise<ICategory> {
+        const area: IArea = await this.areaModel
+            .findOne({
+                _id: areaId,
+                categories: {
+                    $elemMatch: {
+                        _id: categoryId
+                    }
+                }
+            }, {
+                categories: {
+                    $elemMatch: { _id: categoryId }
+                }
+            })
+            .select('-categories.description');
+        return area ? _.head(area.categories) : null;
+    }
 }
