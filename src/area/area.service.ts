@@ -38,45 +38,19 @@ export class AreaService {
         return _.flatMap(areas, area => area.categories);
     }
 
-    // async findCategoryById(id: string): Promise<ICategory> {
-    //     return await this.categoryModel
-    //         .findOne({ _id: id })
-    //         .populate('areaId').exec();
-    // }
-
-    // async createCategory(category: CreateAreaDto): Promise<ICategory> {
-    //     const newCategory = new this.categoryModel(category);
-    //     return await newCategory.save();
-    // }
-
-    async updateArea(area: UpdateAreaDto, id: string) {
-        const updateArea = this.areaModel.findOne({ _id: id });
-        if (!updateArea)
-            throw new HttpException('AREA.NOT_FOUND', HttpStatus.BAD_REQUEST);
-        return await updateArea.update(area);
-    }
-
-    async deleteArea(id: string): Promise<IArea> {
-        const deleteArea = await this.areaModel.findByIdAndRemove(id);
-        if (!deleteArea)
-            throw new HttpException("AREA.NOT_FOUND", HttpStatus.BAD_REQUEST);
-        else
-            return deleteArea;
-    }
-
-    async updateCategory(category: UpdateCategoryDto, id: string): Promise<ICategory> {
-        const updateCategory = await this.categoryModel.findByIdAndUpdate(id, category, { new: true });
-        if (!updateCategory)
-            throw new HttpException("CATEGORT.NOT_FOUND", HttpStatus.BAD_REQUEST);
-        else
-            return updateCategory;
-    }
-
-    async deleteCategory(id: string): Promise<ICategory> {
-        const deleteCategory = await this.categoryModel.findByIdAndRemove(id);
-        if (!deleteCategory)
-            throw new HttpException("CATEGORY.NOT_FOUND", HttpStatus.BAD_REQUEST);
-        else
-            return deleteCategory;
+    async createCategory(areaId: string, title: string, description: string): Promise<ICategory> {
+        const area: IArea = await this.areaModel
+            .findByIdAndUpdate(areaId, {
+                $push: {
+                    categories: {
+                        title,
+                        description
+                    } as ICategory
+                }
+            }, {
+                new: true,
+                runValidators: true
+            });
+        return area ? area.categories[-1] : null;
     }
 }

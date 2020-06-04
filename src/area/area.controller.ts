@@ -10,6 +10,7 @@ import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { Role } from '@/config/constants';
 import { UpdateParamDto, UpdateDto } from './dtos/update.dto';
+import { CreateCategoryDto, CreateCategoryParamDto } from './dtos/createCategory.dto';
 import { FetchDto } from './dtos/fetch.dto';
 
 @Controller('areas')
@@ -54,53 +55,22 @@ export class AreaController {
         return new ResponseSuccess<IArea>('FETCH_INFO_OK', area);
     }
 
-    @Get('categories')
+    @Get('/categories')
     async fetchCategories(): Promise<IResponse<ICategory[]>> {
         const categories: ICategory[] = await this.areaService.fetchCategories();
         return new ResponseSuccess('CATEGORIES_FETCH_OK', categories);
     }
 
-    @Get(':id')
-    async findAreaById(@Param('id') id: string): Promise<IResponse<IArea>> {
-        const area = await this.areaService.findOne(id);
-        return new ResponseSuccess("AREA.GET_BY_ID_SUCCESSS", area);
-    }
-
-    @Put('id')
-    async updateArea(@Param('id') id: string, @Body() updateAreaDto: UpdateAreaDto): Promise<IResponse<number>> {
-        const updatedArea = await this.areaService.updateArea(updateAreaDto, id);
-        return new ResponseSuccess<number>("AREA.UPDATE_SUCCESS", updatedArea);
-    }
-
-    @Delete('id')
-    async deleteArea(@Param('id') id: string): Promise<IResponse<IArea>> {
-        const deletedArea = await this.areaService.deleteArea(id);
-        return new ResponseSuccess("AREA.DELET_SUCCESS", deletedArea);
-    }
-
-
-    @Post('categories')
-    async createCategory(@Body() createCategoryDto: CreateCategoryDto): Promise<IResponse<ICategory>> {
-        const newCategory = await this.areaService.createCategory(createCategoryDto);
-        return new ResponseSuccess("CATEGORY.CREATE_SUCCESSS", newCategory);
-    }
-
-    @Get('categories/:id')
-    async findCategoryById(@Param('id') id: string): Promise<IResponse<ICategory>> {
-        const category = await this.areaService.findCategoryById(id);
-        return new ResponseSuccess("CATEGORY.GET_BY_ID_SUCCESSS", category);
-    }
-
-    @Put(':id')
-    async updateCategory(@Param('id') id: string, @Body() updateCategoryDto: UpdateAreaDto): Promise<IResponse<ICategory>> {
-        const updateCategory = await this.areaService.updateCategory(updateCategoryDto, id);
-        return new ResponseSuccess("CATEGORY.UPDATE_SUCCESS", updateCategory);
-    }
-
-    @Delete('id')
-    async deleteCategory(@Param('id') id: string) {
-        const deleteCategory = this.areaService.deleteCategory(id);
-        return new ResponseSuccess("CATEGORY.DELETE_SUCCESS", deleteCategory);
+    @Post(':id/categories')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async createCategory(@Param() params: CreateCategoryParamDto, @Body() body: CreateCategoryDto): Promise<IResponse<ICategory>> {
+        const areaId: string = params.id;
+        const { title, description } = body;
+        const category: ICategory = await this.areaService.createCategory(areaId, title, description);
+        if (!category)
+            throw new NotFoundException('Invalid area');
+        return new ResponseSuccess<ICategory>('CREATE_CATE_OK', category);
     }
 }
 
