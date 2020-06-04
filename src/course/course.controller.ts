@@ -384,8 +384,14 @@ export class CourseController {
         const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
-        const landing = await this.courseService.updateLanding(courseId, body);
-        if (!landing) throw new NotFoundException('Invalid course!');
-        return new ResponseSuccess('UPDATE_LANDING_OK', landing);
+        const { status, data } = await this.courseService.updateLanding(courseId, body);
+        if (!status) throw new NotFoundException('Invalid course!');
+        await this.historyService.push(
+            courseId,
+            teacherId,
+            `Update basic information of course`,
+            HistoryType.Landing
+        );
+        return new ResponseSuccess('UPDATE_LANDING_OK', data);
     }
 }

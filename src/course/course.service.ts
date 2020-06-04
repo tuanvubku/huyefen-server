@@ -339,7 +339,30 @@ export class CourseService {
         return landing;
     }
 
-    async updateLanding(courseId: string, params: UpdateLandingDto): Promise<any> {
+    async finalLanding(course: ICourse, fields: Array<string>): Promise<{ status: boolean, data: { progress: number, data: any } }> {
+        let count: number = 0;
+        if (course.title) count++;
+        if (course.subTitle) count++;
+        if (course.description) count++;
+        if (course.language) count++;
+        if (course.level) count++;
+        if (course.area) count++;
+        if (course.category) count++;
+        if (!_.isEmpty(course.topics)) count++;
+        if (course.primaryTopic) count++;
+        if (course.avatar) count++;
+        course.progress.landing = count * 10;
+        const final = await course.save();
+        return {
+            status: true,
+            data: {
+                progress: count * 10,
+                data: _.pick(final, fields)
+            }
+        }
+    }
+
+    async updateLanding(courseId: string, params: UpdateLandingDto): Promise<{ status: boolean, data: { progress: number, data: any } }> {
         const course: ICourse = await this.courseModel
             .findByIdAndUpdate(courseId, {
                 $set: params as ICourse
@@ -347,18 +370,8 @@ export class CourseService {
                 new: true,
                 runValidators: true
             })
-            .populate('topics')
-            .select({
-                title: 1,
-                subTitle: 1,
-                description: 1,
-                language: 1,
-                level: 1,
-                area: 1,
-                category: 1,
-                primaryTopic: 1,
-                topics: 1
-            })
-        return course;
+            .populate('topics');
+        if (!course) return { status: false, data: null };
+        return await this.finalLanding(course, ['title', 'subTitle', 'description', 'language', 'level', 'area', 'category', 'topics', 'primaryTopic']);
     }
 }
