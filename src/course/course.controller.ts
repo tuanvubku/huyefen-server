@@ -4,7 +4,7 @@ import { SearchService } from '@/search/search.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
-import { Role, HistoryType } from '@/config/constants';
+import { Role, HistoryType, Price } from '@/config/constants';
 import { ICourse } from './interfaces/course.interface';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ResponseSuccess } from '@/utils/utils';
@@ -24,6 +24,7 @@ import { ILecture } from '@/chapter/interfaces/lecture.interface';
 import { IHistory } from '@/history/interfaces/history.interface';
 import { ChapterService } from '@/chapter/chapter.service';
 import { HistoryService } from '@/history/history.service';
+import { FetchPriceDto } from './dtos/price.dto';
 
 @Controller('courses')
 export class CourseController {
@@ -413,5 +414,19 @@ export class CourseController {
             HistoryType.Landing
         );
         return new ResponseSuccess('UPDATE_AVATAR_OK', data);
+    }
+
+    @Get('/:id/price')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchPrice(@Req() req, @Param() params: FetchPriceDto): Promise<IResponse<Price>> {
+        const teacherId: string = req.user._id;
+        const courseId: string = params.id;
+        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        if (!checkAuthor)
+            throw new ForbiddenException('Forbidden to access this course');
+        const price: Price = await this.courseService.fetchPrice(courseId);
+        if (!price) throw new NotFoundException('Invalid course!!');
+        return new ResponseSuccess<Price>('FETCH_PRICE_OK', price);
     }
 }

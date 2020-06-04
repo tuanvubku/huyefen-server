@@ -4,7 +4,7 @@ import { Model } from 'mongoose';
 import * as _ from 'lodash';
 import { ICourse } from './interfaces/course.interface';
 import { IAuthor } from './interfaces/author.interface';
-import { TeacherCoursesSort as Sort, ProgressBase, Lecture } from '@/config/constants';
+import { TeacherCoursesSort as Sort, ProgressBase, Lecture, Price } from '@/config/constants';
 import { UpdateGoalsDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
@@ -387,5 +387,11 @@ export class CourseService {
             });
         if (!course) return { status: false, data: null };
         return await this.finalLanding(course, ['avatar']);
+    }
+
+    async fetchPrice(courseId: string): Promise<Price> {
+        const course: ICourse = await this.courseModel
+            .findById(courseId);
+        return course ? course.price : null;
     }
 }
