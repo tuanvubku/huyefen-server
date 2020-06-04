@@ -1,6 +1,8 @@
-import * as mongoose from 'mongoose';
+import { Schema } from 'mongoose';
 
-export const CategorySchema = new mongoose.Schema({
-  name: {type: String, required: true},
-  areaId: {type: mongoose.Schema.Types.ObjectId, ref: "Area", required: true}
+export const CategorySchema = new Schema({
+	title: {
+		type: String,
+		required: true
+	}
 });

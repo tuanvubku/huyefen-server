@@ -1,5 +1,13 @@
-import * as mongoose from 'mongoose';
+import { Schema } from 'mongoose';
+import { CategorySchema } from './category.schema';
 
-export const AreaSchema = new mongoose.Schema({
-  name: {type: String, required: true}
+export const AreaSchema = new Schema({
+	title: {
+		type: String,
+		required: true
+	},
+	categories: {
+		type: [CategorySchema],
+		default: []
+	}
 });

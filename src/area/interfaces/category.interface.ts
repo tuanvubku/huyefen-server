@@ -1,6 +1,6 @@
 import { Document } from 'mongoose';
 
 export interface ICategory extends Document {
-    name: string;
-    areaId: string;
-}
+    _id: string;
+    title: string;
+};
