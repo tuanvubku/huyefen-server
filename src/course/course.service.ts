@@ -12,6 +12,7 @@ import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { ChapterService } from '@/chapter/chapter.service';
 import { ILecture } from '@/chapter/interfaces/lecture.interface';
+import { UpdateLandingDto } from './dtos/landing.dto';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -328,13 +329,36 @@ export class CourseService {
                 area: 1,
                 category: 1,
                 primaryTopic: 1,
+                topics: 1,
                 avatar: 1
             })
-            .lean()
-            .exec();
+            .populate('topics');
         if (landing) {
             //find topic for courseId
         }
         return landing;
+    }
+
+    async updateLanding(courseId: string, params: UpdateLandingDto): Promise<any> {
+        const course: ICourse = await this.courseModel
+            .findByIdAndUpdate(courseId, {
+                $set: params as ICourse
+            }, {
+                new: true,
+                runValidators: true
+            })
+            .populate('topics')
+            .select({
+                title: 1,
+                subTitle: 1,
+                description: 1,
+                language: 1,
+                level: 1,
+                area: 1,
+                category: 1,
+                primaryTopic: 1,
+                topics: 1
+            })
+        return course;
     }
 }

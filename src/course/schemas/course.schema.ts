@@ -51,6 +51,13 @@ export const CourseSchema = new Schema({
         default: null,
         minlength: 6
     },
+    topics: {
+        type: [{
+            type: Schema.Types.ObjectId,
+            ref: 'Topic'
+        }],
+        default: []
+    },
     primaryTopic: {
         type: Schema.Types.ObjectId,
         ref: 'Topic',

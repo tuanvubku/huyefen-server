@@ -31,7 +31,7 @@ export class TopicController {
         return new ResponseSuccess<ITopic>('CREATE_OK', topic);
     }
 
-    @Delete(':/id')
+    @Delete('/:id')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     async delete(@Param() params: DeleteParamDto): Promise<IResponse<string>> {

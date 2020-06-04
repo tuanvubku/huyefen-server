@@ -2,13 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { ITopic } from './interfaces/topic.interface';
-import { ICourseTopic } from './interfaces/courseTopic.interface';
 
 @Injectable()
 export class TopicService {
     constructor (
-        @InjectModel('Topic') private readonly topicModel: Model<ITopic>,
-        @InjectModel('Course_topic') private readonly courseTopicModel: Model<ICourseTopic>
+        @InjectModel('Topic') private readonly topicModel: Model<ITopic>
     ) {}
 
     async fetch(): Promise<ITopic[]> {
@@ -25,8 +23,6 @@ export class TopicService {
     async delete(topicId: string): Promise<boolean> {
         const { deletedCount } = await this.topicModel
             .deleteOne({ _id: topicId });
-        if (!deletedCount) return false;
-        await this.courseTopicModel.deleteMany({ topicId });
-        return true;
+        return !!deletedCount;
     }
 }
