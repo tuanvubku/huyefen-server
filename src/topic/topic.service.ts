@@ -21,4 +21,12 @@ export class TopicService {
         });
         return await topic.save();
     }
+
+    async delete(topicId: string): Promise<boolean> {
+        const { deletedCount } = await this.topicModel
+            .deleteOne({ _id: topicId });
+        if (!deletedCount) return false;
+        await this.courseTopicModel.deleteMany({ topicId });
+        return true;
+    }
 }

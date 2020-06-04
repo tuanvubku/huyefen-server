@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Body } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Body, Delete, Param, NotFoundException } from '@nestjs/common';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ITopic } from './interfaces/topic.interface';
 import { TopicService } from './topic.service';
@@ -8,6 +8,7 @@ import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { Role } from '@/config/constants';
 import { CreateDto } from './dtos/create.dto';
+import { DeleteParamDto } from './dtos/delete.dto';
 
 @Controller('topics')
 export class TopicController {
@@ -28,5 +29,16 @@ export class TopicController {
         const title: string = body.title;
         const topic: ITopic = await this.topicService.create(title);
         return new ResponseSuccess<ITopic>('CREATE_OK', topic);
+    }
+
+    @Delete(':/id')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async delete(@Param() params: DeleteParamDto): Promise<IResponse<string>> {
+        const topicId: string = params.id;
+        const status: boolean = await this.topicService.delete(topicId);
+        if (!status)
+            throw new NotFoundException('Invalid topic');
+        return new ResponseSuccess<string>('DELETE_OK', 'ok');
     }
 }
