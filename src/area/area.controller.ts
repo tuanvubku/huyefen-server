@@ -9,12 +9,14 @@ import { ICategory } from './interfaces/category.interface';
 
 @Controller('areas')
 export class AreaController {
-    constructor(private readonly areaService: AreaService) { }
+    constructor (
+        private readonly areaService: AreaService
+    ) {}
 
     @Get()
-    async findAllArea(): Promise<IResponse<IArea[]>> {
-        const areas = await this.areaService.findAll()
-        return new ResponseSuccess("AREA.GET_SUCCESSS", areas);
+    async fetch(): Promise<IResponse<IArea[]>> {
+        const areas: IArea[] = await this.areaService.fetch()
+        return new ResponseSuccess<IArea[]>('AREA_FETCH_OK', areas);
     }
 
     @Get('categories')

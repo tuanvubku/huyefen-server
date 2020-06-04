@@ -9,10 +9,11 @@ import { ICategory } from './interfaces/category.interface';
 @Injectable()
 export class AreaService {
 
-    constructor(@InjectModel('Area') private readonly areaModel: Model<IArea>,
-        @InjectModel('Category') private readonly categoryModel: Model<ICategory>) { }
+    constructor (
+        @InjectModel('Area') private readonly areaModel: Model<IArea>
+    ) {}
 
-    async findAll(): Promise<IArea[]> {
+    async fetch(): Promise<IArea[]> {
         return await this.areaModel.find();
     }
 
