@@ -304,4 +304,37 @@ export class UserService {
             }
         };
     }
+
+    async addFriend(userId: string, friendId: string): Promise<0 | 1 | -1> {
+        try {
+            const friend = await this.userModel
+            .findByIdAndUpdate(friendId, {
+                $push: {
+                    relationships: {
+                        friend: userId,
+                        status: FriendStatuses.ReceivedInvitation
+                    }
+                }
+            }, {
+                new: true,
+                runValidators: true
+            });
+            if (!friend) return 0;
+            await this.userModel.updateOne({
+                _id: userId
+            }, {
+                $push: {
+                    relationships: {
+                        friend: friendId,
+                        status: FriendStatuses.SentInvitation
+                    }
+                }
+            });
+            //firebase notification.
+            return 1;
+        }
+        catch (e) {
+            return -1;
+        }
+    }
 }

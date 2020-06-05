@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, Query, ParseIntPipe, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Put, UseGuards, Req, Query, ParseIntPipe, Param, NotFoundException } from '@nestjs/common';
 import { UserService } from '@/user/user.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
@@ -83,5 +83,19 @@ export class FriendController {
         const { status, data } = await this.userService.allFriendsOfFriend(userId, friendId, existed);
         if (!status) throw new NotFoundException('Invalid friend');
         return new ResponseSuccess('ALL_FRIENDS_OK', data);
+    }
+
+    @Put('/:id/add')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async addFriend(
+        @Req() req,
+        @Param() params: FetchFriendParamDto
+    ): Promise<IResponse<null>> {
+        const userId: string = req.user._id;
+        const friendId: string = params.id;
+        const status: 0 | 1 | -1 = await this.userService.addFriend(userId, friendId);
+        if (status === 0) throw new NotFoundException('Invalid friend');
+        return new ResponseSuccess<null>('ADD_FRIEND', null, 1 ? 0 : 1);
     }
 }
