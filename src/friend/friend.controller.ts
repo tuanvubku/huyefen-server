@@ -69,4 +69,19 @@ export class FriendController {
         if (!status) throw new NotFoundException('Invalid friend');
         return new ResponseSuccess('FETCH_OK', data);
     }
+
+    @Get('/:id/friends/all')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async allFriendsOfFriend(
+        @Req() req,
+        @Param() params: FetchFriendParamDto,
+        @Query('existed', ParseIntPipe) existed: number
+    ): Promise<IResponse<{ hasMore: boolean, list: IFriend[] }>> {
+        const userId: string = req.user._id;
+        const friendId: string = params.id;
+        const { status, data } = await this.userService.allFriendsOfFriend(userId, friendId, existed);
+        if (!status) throw new NotFoundException('Invalid friend');
+        return new ResponseSuccess('ALL_FRIENDS_OK', data);
+    }
 }

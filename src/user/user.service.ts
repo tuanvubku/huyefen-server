@@ -265,4 +265,43 @@ export class UserService {
             }
         }
     }
+
+    async allFriendsOfFriend(userId: string, friendId: string, existed: number): Promise<{ status: boolean, data: { hasMore: boolean, list: IFriend[] } }> {
+        const friend: IUser = await this.userModel
+            .findById(friendId)
+            .populate('relationships.friend', 'avatar name relationships')
+            .select('relationships');
+        if (!friend) return { status: false, data: null };
+        const allFriends = _.filter(
+            friend.relationships,
+            ['status', FriendStatuses.Friend]
+        );
+        const hasMore: boolean = existed < _.size(allFriends);
+        const friends: IFriend[] = _.map(
+            _.slice(allFriends, existed),
+            relationship => {
+                const friend = relationship.friend as any;
+                const numOfFriends: number = _.size(_.filter(friend.relationships, ['status', 4]));
+                const yourRel = _.find(friend.relationships, rel => rel.friend._id === userId);
+                let status: FriendStatuses = FriendStatuses.NoFriend;
+                if (yourRel) {
+                    if (yourRel.status === FriendStatuses.Friend) status = FriendStatuses.Friend;
+                    else if (yourRel.status === FriendStatuses.SentInvitation) status = FriendStatuses.ReceivedInvitation;
+                    else status = FriendStatuses.SentInvitation;
+                }
+                return {
+                    ..._.omit(friend, ['relationships']),
+                    numOfFriends,
+                    status
+                } as IFriend;
+            }
+        );
+        return {
+            status: true,
+            data: {
+                hasMore,
+                list: friends
+            }
+        };
+    }
 }
