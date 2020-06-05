@@ -4,7 +4,7 @@ import { SearchService } from '@/search/search.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
-import { Role, HistoryType, Price } from '@/config/constants';
+import { Role, HistoryType, Price, ValidateStatus } from '@/config/constants';
 import { ICourse } from './interfaces/course.interface';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ResponseSuccess } from '@/utils/utils';
@@ -26,6 +26,7 @@ import { ChapterService } from '@/chapter/chapter.service';
 import { HistoryService } from '@/history/history.service';
 import { FetchPriceDto, UpdatePriceDto, UpdatePriceParamDto } from './dtos/price.dto';
 import { FetchMessagesParamDto, UpdateMessagesParamDto, UpdateMessagesDto } from './dtos/messages.dto';
+import { ValidateParamDto } from './dtos/validate.dto';
 
 @Controller('courses')
 export class CourseController {
@@ -493,5 +494,25 @@ export class CourseController {
             HistoryType.Price
         )
         return new ResponseSuccess('UPDATE_PRICE_OK', data);
+    }
+
+    @Get('/:id/validate')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async validate(
+        @Req() req,
+        @Param() params: ValidateParamDto
+    ): Promise<IResponse<ValidateStatus>> {
+        const teacherId: string = req.user._id;
+        const courseId: string = params.id;
+        let status: ValidateStatus = ValidateStatus.OK;
+        const checkCourse = await this.courseService.validateCourse(courseId);
+        if (!checkCourse)
+            status = ValidateStatus.InvalidCourse;
+        else {
+            const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+            if (!checkAuthor) status = ValidateStatus.InvalidTeacher;
+        }
+        return new ResponseSuccess<ValidateStatus>('VALIDATE_OK', status);
     }
 }

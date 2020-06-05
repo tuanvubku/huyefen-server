@@ -74,3 +74,9 @@ export enum HistorySort {
     Newest = 'newest',
     Oldest = 'oldest'
 };
+
+export enum ValidateStatus {
+    OK = 0,
+    InvalidCourse = 1,
+    InvalidTeacher = 2
+};
