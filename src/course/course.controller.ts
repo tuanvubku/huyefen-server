@@ -28,7 +28,7 @@ import { FetchPriceDto, UpdatePriceDto, UpdatePriceParamDto } from './dtos/price
 import { FetchMessagesParamDto, UpdateMessagesParamDto, UpdateMessagesDto } from './dtos/messages.dto';
 import { ValidateParamDto } from './dtos/validate.dto';
 
-@Controller('courses')
+@Controller('api/courses')
 export class CourseController {
     constructor (
         private readonly courseService: CourseService,

@@ -15,7 +15,7 @@ import { UserService } from './user.service';
 import { JobService } from '@/job/job.service';
 import { IJob } from '@/job/interfaces/job.interface';
 
-@Controller('users')
+@Controller('api/users')
 @Roles(Role.User)
 export class UserController {
     constructor(

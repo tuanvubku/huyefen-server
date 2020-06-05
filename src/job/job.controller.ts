@@ -16,7 +16,7 @@ import { IResponse } from '@/utils/interfaces/response.interface';
 import { ResponseSuccess } from '@/utils/utils';
 import { CreateDto } from './dtos/create.dto';
 
-@Controller('jobs')
+@Controller('api/jobs')
 export class JobController {
     constructor(
         private readonly jobService: JobService

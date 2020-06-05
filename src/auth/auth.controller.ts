@@ -16,7 +16,7 @@ import { RegisterDto } from './dtos/register.dto';
 import { LoginDto } from './dtos/login.dto';
 import { LoginTeacherDto } from './dtos/loginTeacher.dto';
 
-@Controller('auth')
+@Controller('api/auth')
 export class AuthController {
     constructor(
         private readonly authService: AuthService,

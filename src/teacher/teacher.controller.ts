@@ -12,7 +12,7 @@ import { ITeacher } from './interfaces/teacher.interface';
 import { TeacherService } from './teacher.service';
 import { ResponseSuccess } from '@/utils/utils';
 
-@Controller('teachers')
+@Controller('api/teachers')
 @Roles(Role.Teacher)
 export class TeacherController {
     constructor (

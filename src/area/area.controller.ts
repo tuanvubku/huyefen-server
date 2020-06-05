@@ -15,7 +15,7 @@ import { UpdateCategoryDto, UpdateCategoryParamDto } from './dtos/updateCategory
 import { FetchCategoryParamDto } from './dtos/fetchCategory.dto';
 import { FetchDto } from './dtos/fetch.dto';
 
-@Controller('areas')
+@Controller('api/areas')
 export class AreaController {
     constructor (
         private readonly areaService: AreaService

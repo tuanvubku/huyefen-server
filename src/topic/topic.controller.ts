@@ -10,7 +10,7 @@ import { Role } from '@/config/constants';
 import { CreateDto } from './dtos/create.dto';
 import { DeleteParamDto } from './dtos/delete.dto';
 
-@Controller('topics')
+@Controller('api/topics')
 export class TopicController {
     constructor (
         private readonly topicService: TopicService
