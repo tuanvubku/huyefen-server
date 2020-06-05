@@ -54,10 +54,10 @@ export class CourseController {
     async fetch(
         @Req() req,
         @Query() query: FetchDto
-    ): Promise<IResponse<any[]>> {
+    ): Promise<IResponse<any>> {
         const teacherId: string = req.user._id;
-        const courses: Array<any> = await this.courseService.fetch(teacherId, query.sort, Number(query.page), Number(query.limit));
-        return new ResponseSuccess('FETCH_OK', courses);
+        const coursesData = await this.courseService.fetch(teacherId, query.sort, Number(query.page), Number(query.limit));
+        return new ResponseSuccess('FETCH_OK', coursesData);
     }
 
     @Get('/:id/info')
@@ -172,7 +172,7 @@ export class CourseController {
         @Req() req,
         @Param() params: FetchHistoriesParamDto,
         @Query() query: FetchHistoriesDto
-    ): Promise<IResponse<IHistory[]>> {
+    ): Promise<IResponse<{ hasMore: boolean, list: IHistory[] }>> {
         const teacherId = req.user._id;
         const courseId = params.id;
         let { sort, page, limit } = query;
@@ -184,8 +184,8 @@ export class CourseController {
         const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
-        const histories: IHistory[] = await this.historyService.fetch(courseId, sort, page, limit);
-        return new ResponseSuccess<IHistory[]>('FETCH_HISTORY_OK', histories);
+        const historyDatas = await this.historyService.fetch(courseId, sort, page, limit);
+        return new ResponseSuccess('FETCH_HISTORY_OK', historyDatas);
     }
 
     @Get('/:id/syllabus')

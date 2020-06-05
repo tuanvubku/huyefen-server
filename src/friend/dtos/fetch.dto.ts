@@ -7,3 +7,8 @@ export class FetchFriendsDto {
     @IsNumberString()
     limit: number;
 }
+
+export class FetchAllFriendsDto {
+    @IsNumberString()
+    existed: number;
+}

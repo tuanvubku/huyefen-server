@@ -49,7 +49,7 @@ export class CourseService {
         return course;
     }
 
-    async fetch(teacherId: string, sort: Sort, page: number, limit: number): Promise<Array<any>> {
+    async fetch(teacherId: string, sort: Sort, page: number, limit: number): Promise<{ total: number, list: Array<any> }> {
         let authors: Array<any>;
         if (sort === Sort.Newest || sort === Sort.Oldest) {
             authors = await this.authorModel
@@ -57,11 +57,10 @@ export class CourseService {
                 .sort({
                     createdAt: (sort === Sort.Newest) ? -1 : 1
                 })
-                .skip((page - 1) * limit)
-                .limit(limit)
                 .populate('course', 'title lastUpdated privacy progress')
                 .lean()
                 .exec();
+            
         }
         else {
             authors = await this.authorModel
@@ -72,16 +71,18 @@ export class CourseService {
                 })
                 .lean()
                 .exec();
-            authors = _.slice(
-                _.orderBy(
-                    authors,
-                    ['course.title', 'createdAt'],
-                    [(sort === Sort.AtoZ) ? 'asc' : 'desc', 'desc']
-                ),
-                (page - 1) * limit,
-                page * limit
+            authors = _.orderBy(
+                authors,
+                ['course.title', 'createdAt'],
+                [(sort === Sort.AtoZ) ? 'asc' : 'desc', 'desc']
             );
         }
+        const total: number = _.size(authors);
+        authors = _.slice(
+            authors,
+            (page - 1) * limit,
+            page * limit
+        );
         const courses = _.map(authors, item => {
             const course = item.course;
             const progress: number = 
@@ -93,7 +94,10 @@ export class CourseService {
             course.progress = progress;
             return course;
         });
-        return courses;
+        return {
+            total,
+            list: courses
+        };
     }
 
     async validateCourse(courseId: string): Promise<boolean> {

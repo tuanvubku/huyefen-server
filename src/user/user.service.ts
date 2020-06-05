@@ -155,7 +155,7 @@ export class UserService {
         );
         const hasMore: boolean = page * limit < allFriends.length;
         const friends: IFriend[] = _.map(
-            _.slice(allFriends, (page - 1) * limit, limit),
+            _.slice(allFriends, (page - 1) * limit, page * limit),
             relationship => {
                 const friend = relationship.friend as any;
                 const numOfFriends: number = _.size(_.filter(friend.relationships, ['status', 4]));
@@ -167,6 +167,36 @@ export class UserService {
         );
         return {
             hasMore,
+            list: friends
+        };
+    }
+
+    async allFriends(userId: string, existed: number): Promise<{ hasMore: boolean, list: IFriend[] }> {
+        const user: IUser = await this.userModel
+            .findById(userId)
+            .populate('relationships.friend', 'name avatar relationships')
+            .select('relationships');
+        const allFriends = _.filter(
+            user.relationships,
+            ['status', FriendStatuses.Friend]
+        );
+        const remainCount: number = allFriends.length - existed;
+        let friends: IFriend[] = [];
+        if (remainCount > 0) {
+            friends = _.map(
+                _.slice(allFriends, existed),
+                relationship => {
+                    const friend = relationship.friend as any;
+                    const numOfFriends: number = _.size(_.filter(friend.relationships, ['status', 4]));
+                    return {
+                        ..._.omit(friend, ['relationships']),
+                        numOfFriends
+                    } as IFriend;
+                }
+            );
+        }
+        return {
+            hasMore: false,
             list: friends
         };
     }
