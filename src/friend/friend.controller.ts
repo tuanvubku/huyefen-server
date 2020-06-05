@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, UseGuards, Req, Query, ParseIntPipe, Param, NotFoundException } from '@nestjs/common';
 import { UserService } from '@/user/user.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
@@ -7,6 +7,7 @@ import { Role } from '@/config/constants';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { IFriend } from './interfaces/friend.interface';
 import { ResponseSuccess } from '@/utils/utils';
+import { FetchFriendParamDto } from './dtos/fetch.dto';
 
 @Controller('api/friends')
 export class FriendController {
@@ -37,5 +38,19 @@ export class FriendController {
         const userId: string = req.user._id;
         const friendsData = await this.userService.allFriends(userId, existed);
         return new ResponseSuccess('ALL_FRIENDS_OK', friendsData);
+    }
+
+    @Get('/:id')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchFriend(
+        @Req() req,
+        @Param() params: FetchFriendParamDto
+    ): Promise<IResponse<IFriend>> {
+        const userId: string = req.user._id;
+        const friendId: string = params.id;
+        const friend: IFriend = await this.userService.fetchFriend(userId, friendId);
+        if (!friend) throw new NotFoundException('Invalid friend');
+        return new ResponseSuccess<IFriend>('FETCH_FRIEND_OK', friend);
     }
 }
