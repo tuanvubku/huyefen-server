@@ -187,7 +187,7 @@ export class UserService {
                 _.slice(allFriends, existed),
                 relationship => {
                     const friend = relationship.friend as any;
-                    const numOfFriends: number = _.size(_.filter(friend.relationships, ['status', 4]));
+                    const numOfFriends: number = _.size(_.filter(friend.relationships, ['status', FriendStatuses.Friend]));
                     return {
                         ..._.omit(friend, ['relationships']),
                         numOfFriends
@@ -222,8 +222,47 @@ export class UserService {
             return {
                 ..._.omit(friend, ['relationships']),
                 status
-            }
+            };
         }
         return null;
+    }
+
+    async fetchFriendsOfFriend(userId: string, friendId: string, page: number, limit: number): Promise<{ status: boolean, data: { hasMore: boolean, list: IFriend[] } }> {
+        const friend: IUser = await this.userModel
+            .findById(friendId)
+            .populate('relationships.friend', 'avatar name relationships')
+            .select('relationships');
+        if (!friend) return { status: false, data: null };
+        const allFriends = _.filter(
+            friend.relationships,
+            ['status', FriendStatuses.Friend]
+        );
+        const hasMore: boolean = page * limit < _.size(allFriends);
+        const friends: IFriend[] = _.map(
+            _.slice(allFriends, (page - 1) * limit, page * limit),
+            relationship => {
+                const friend = relationship.friend as any;
+                const numOfFriends: number = _.size(_.filter(friend.relationships, ['status', 4]));
+                const yourRel = _.find(friend.relationships, rel => rel.friend._id === userId);
+                let status: FriendStatuses = FriendStatuses.NoFriend;
+                if (yourRel) {
+                    if (yourRel.status === FriendStatuses.Friend) status = FriendStatuses.Friend;
+                    else if (yourRel.status === FriendStatuses.SentInvitation) status = FriendStatuses.ReceivedInvitation;
+                    else status = FriendStatuses.SentInvitation;
+                }
+                return {
+                    ..._.omit(friend, ['relationships']),
+                    numOfFriends,
+                    status
+                } as IFriend;
+            }
+        );
+        return {
+            status: true,
+            data: {
+                hasMore,
+                list: friends
+            }
+        }
     }
 }

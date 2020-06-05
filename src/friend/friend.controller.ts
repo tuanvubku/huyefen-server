@@ -53,4 +53,20 @@ export class FriendController {
         if (!friend) throw new NotFoundException('Invalid friend');
         return new ResponseSuccess<IFriend>('FETCH_FRIEND_OK', friend);
     }
+
+    @Get('/:id/friends')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchFriendOfFriends(
+        @Req() req,
+        @Param() params: FetchFriendParamDto,
+        @Query('page', ParseIntPipe) page: number,
+        @Query('limit', ParseIntPipe) limit: number
+    ): Promise<IResponse<{ hasMore: boolean, list: IFriend[] }>> {
+        const userId: string = req.user._id;
+        const friendId: string = params.id;
+        const { status, data } = await this.userService.fetchFriendsOfFriend(userId, friendId, page, limit);
+        if (!status) throw new NotFoundException('Invalid friend');
+        return new ResponseSuccess('FETCH_OK', data);
+    }
 }
