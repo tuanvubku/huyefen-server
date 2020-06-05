@@ -8,6 +8,8 @@ import { RegisterDto } from '@/auth/dtos/register.dto';
 import { TeacherService } from '@/teacher/teacher.service';
 import { UpdateDto } from './dtos/update.dto';
 import { IUser } from './interfaces/user.interface';
+import { IFriend } from '@/friend/interfaces/friend.interface';
+import { FriendStatuses } from '@/config/constants';
 
 @Injectable()
 export class UserService {
@@ -140,5 +142,32 @@ export class UserService {
                     new: true
                 })
                 .select('avatar');
+    }
+
+    async fetchFriends(userId: string, page: number, limit: number): Promise<{ hasMore: boolean, list: IFriend[] }> {
+        const user: IUser = await this.userModel
+            .findById(userId)
+            .populate('relationships.friend', 'name avatar relationships')
+            .select('relationships');
+        const allFriends = _.filter(
+            user.relationships,
+            ['status', FriendStatuses.Friend]
+        );
+        const hasMore: boolean = page * limit < allFriends.length;
+        const friends: IFriend[] = _.map(
+            _.slice(allFriends, (page - 1) * limit, limit),
+            relationship => {
+                const friend = relationship.friend as any;
+                const numOfFriends: number = _.size(_.filter(friend.relationships, ['status', 4]));
+                return {
+                    ..._.omit(friend, ['relationships']),
+                    numOfFriends
+                } as IFriend;
+            }
+        );
+        return {
+            hasMore,
+            list: friends
+        };
     }
 }

@@ -20,6 +20,7 @@ import { validationPipeConfig } from '@/config/validationPipe.config';
 import { HistoryModule } from './history/history.module';
 import { ChapterModule } from './chapter/chapter.module';
 import { TopicModule } from './topic/topic.module';
+import { FriendModule } from './friend/friend.module';
 
 @Module({
 	imports: [
@@ -45,7 +46,8 @@ import { TopicModule } from './topic/topic.module';
 		SearchModule,
 		HistoryModule,
 		ChapterModule,
-		TopicModule
+		TopicModule,
+		FriendModule
 	],
 	providers: [
 		{
