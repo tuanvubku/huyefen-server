@@ -8,13 +8,13 @@ import { UpdateDto } from './dtos/update.dto'
 import { ITeacher } from './interfaces/teacher.interface';
 import { Role } from '@/config/constants';
 import { UpdateSocialsDto } from './dtos/socials.dto';
-import { CourseService } from '@/course/course.service';
+import { AuthorService } from '@/author/author.service';
 
 @Injectable()
 export class TeacherService {
     constructor (
         @InjectModel('Teacher') private readonly teacherModel: Model<ITeacher>,
-        private readonly courseService: CourseService,
+        private readonly authorService: AuthorService,
         private readonly configService: ConfigService
     ) {}
 
@@ -129,7 +129,9 @@ export class TeacherService {
         if (teacher) {
             const isFollowed: boolean = !_.isEmpty(teacher.followingStudents);
             //count numOfStudents, numOfCourses, numOfReviews.
-            const numOfCourses: number = await this.courseService.countCoursesOfTeacher(teacherId);
+            const teacherCourses: string[] = await this.authorService.fetchCoursesOfTeacher(teacherId);
+            const numOfCourses: number = _.size(teacherCourses);
+            //use teacherCourses to find numOfStudents.
             return {
                 ..._.omit(teacher, ['followingStudents']),
                 isFollowed,

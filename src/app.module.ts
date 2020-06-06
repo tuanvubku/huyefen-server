@@ -21,6 +21,7 @@ import { HistoryModule } from './history/history.module';
 import { ChapterModule } from './chapter/chapter.module';
 import { TopicModule } from './topic/topic.module';
 import { FriendModule } from './friend/friend.module';
+import { AuthorModule } from './author/author.module';
 
 @Module({
 	imports: [
@@ -47,7 +48,8 @@ import { FriendModule } from './friend/friend.module';
 		HistoryModule,
 		ChapterModule,
 		TopicModule,
-		FriendModule
+		FriendModule,
+		AuthorModule
 	],
 	providers: [
 		{

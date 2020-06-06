@@ -27,6 +27,7 @@ import { HistoryService } from '@/history/history.service';
 import { FetchPriceDto, UpdatePriceDto, UpdatePriceParamDto } from './dtos/price.dto';
 import { FetchMessagesParamDto, UpdateMessagesParamDto, UpdateMessagesDto } from './dtos/messages.dto';
 import { ValidateParamDto } from './dtos/validate.dto';
+import { AuthorService } from '@/author/author.service';
 
 @Controller('api/courses')
 export class CourseController {
@@ -34,6 +35,7 @@ export class CourseController {
         private readonly courseService: CourseService,
         private readonly chapterService: ChapterService,
         private readonly historyService: HistoryService,
+        private readonly authorService: AuthorService,
         private readonly searchService: SearchService
     ) {}
 
@@ -66,7 +68,7 @@ export class CourseController {
     async fetchInfo(@Req() req, @Param() params: FetchInfoDto): Promise<IResponse<any>> {
         const { id: courseId } = params;
         const teacherId: string = req.user._id;
-        const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!check)
             throw new ForbiddenException('Forbidden. You can not access this course');
         const courseInfo = await this.courseService.fetchInfo(courseId);
@@ -81,7 +83,7 @@ export class CourseController {
     async fetchGoals(@Req() req, @Param() params: FetchGoalsDto): Promise<IResponse<any>> {
         const teacherId: string = req.user._id;
         const { id: courseId } = params;
-        const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!check)
             throw new ForbiddenException('Forbidden. You can not access this course');
         const courseGoals = await this.courseService.fetchGoals(courseId);
@@ -100,7 +102,7 @@ export class CourseController {
     ): Promise<IResponse<{ progress: number, data: IWhatLearn[] }>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
-        const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!check)
             throw new ForbiddenException('Forbidden. You can not access this course');
         const whatLearns: { progress: number, data: IWhatLearn[] } = await this.courseService.updateWhatLearns(teacherId, courseId, body);
@@ -125,7 +127,7 @@ export class CourseController {
     ): Promise<IResponse<{ progress: number, data: IRequirement[] }>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
-        const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!check)
             throw new ForbiddenException('Forbidden. You can not access this course');
         const requirements: { progress: number, data: IRequirement[] } = await this.courseService.updateRequirements(teacherId, courseId, body);
@@ -150,7 +152,7 @@ export class CourseController {
     ): Promise<IResponse<{ progress: number, data: ITargetStudent[] }>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
-        const check = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!check)
             throw new ForbiddenException('Forbidden. You can not access this course');
         const targetStudents: { progress: number, data: ITargetStudent[] } = await this.courseService.updateTargetStudents(teacherId, courseId, body);
@@ -181,7 +183,7 @@ export class CourseController {
         const checkCourse = await this.courseService.validateCourse(courseId);
         if (!checkCourse)
             throw new NotFoundException('Invalid course');
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const historyDatas = await this.historyService.fetch(courseId, sort, page, limit);
@@ -197,7 +199,7 @@ export class CourseController {
         const checkCourse = await this.courseService.validateCourse(courseId);
         if (!checkCourse)
             throw new NotFoundException('Invalid course');
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const syllabus: IChapter[] = await this.chapterService.fetchSyllabus(courseId);
@@ -218,7 +220,7 @@ export class CourseController {
         const checkCourse = await this.courseService.validateCourse(courseId);
         if (!checkCourse)
             throw new NotFoundException('Invalid course');
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const chapter: { progress: number, data: IChapter } = await this.courseService.createChapter(teacherId, courseId, title, description);
@@ -247,7 +249,7 @@ export class CourseController {
             throw new NotFoundException('Invalid chapter');
         else if (checkChapter === -1)
             throw new BadRequestException('Chapter doesn\'t belong to course');
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const chapter: IChapter = await this.chapterService.update(teacherId, chapterId, title, description);
@@ -269,7 +271,7 @@ export class CourseController {
     ): Promise<IResponse<{ progress: number, data: string }>> {
         const teacherId: string = req.user._id;
         const { courseId, chapterId } = params;
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const deleteResult = await this.courseService.deleteChapter(courseId, chapterId);
@@ -295,7 +297,7 @@ export class CourseController {
         const teacherId: string = req.user._id;
         const { courseId, chapterId } = params;
         const { title, type } = body;
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const { status, data: lecture } = await this.courseService.createLecture(teacherId, courseId, chapterId, title, type);
@@ -321,7 +323,7 @@ export class CourseController {
         const teacherId: string = req.user._id;
         const { courseId, chapterId, lectureId } = params;
         const { title, type } = body;
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const { status, data: lecture } = await this.chapterService.updateLecture(teacherId, courseId, chapterId, lectureId, title, type);
@@ -347,7 +349,7 @@ export class CourseController {
     ): Promise<IResponse<{ progress: number, data: string }>> {
         const teacherId: string = req.user._id;
         const { courseId, chapterId, lectureId } = params;
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const { status, data } = await this.courseService.deleteLecture(courseId, chapterId, lectureId);
@@ -368,7 +370,7 @@ export class CourseController {
     async fetchLanding(@Req() req, @Param() params: FetchLandingDto): Promise<IResponse<any>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const landing = await this.courseService.fetchLanding(courseId);
@@ -383,7 +385,7 @@ export class CourseController {
     async updateLanding(@Req() req, @Param() params: UpdateLandingParamDto, @Body() body: UpdateLandingDto): Promise<IResponse<any>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const { status, data } = await this.courseService.updateLanding(courseId, body);
@@ -403,7 +405,7 @@ export class CourseController {
     async updateAvatar(@Req() req, @Param() params: UpdateAvatarParamDto, @Body() body: UpdateAvatarDto): Promise<IResponse<any>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const url: string = body.url;
@@ -424,7 +426,7 @@ export class CourseController {
     async fetchPrice(@Req() req, @Param() params: FetchPriceDto): Promise<IResponse<Price>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const price: Price = await this.courseService.fetchPrice(courseId);
@@ -442,7 +444,7 @@ export class CourseController {
     ): Promise<IResponse<{ progress: number, data: Price }>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const price: Price = body.price;
@@ -463,7 +465,7 @@ export class CourseController {
     async fetchMessages(@Req() req, @Param() params: FetchMessagesParamDto): Promise<IResponse<any>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const messages = await this.courseService.fetchMessages(courseId);
@@ -481,7 +483,7 @@ export class CourseController {
     ): Promise<IResponse<{ progress: number, data: any }>> {
         const teacherId: string = req.user._id;
         const courseId: string = params.id;
-        const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+        const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
         const { welcome, congratulation } = body;
@@ -510,7 +512,7 @@ export class CourseController {
         if (!checkCourse)
             status = ValidateStatus.InvalidCourse;
         else {
-            const checkAuthor: boolean = await this.courseService.validateTeacherCourse(teacherId, courseId);
+            const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
             if (!checkAuthor) status = ValidateStatus.InvalidTeacher;
         }
         return new ResponseSuccess<ValidateStatus>('VALIDATE_OK', status);

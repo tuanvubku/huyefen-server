@@ -3,7 +3,6 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as _ from 'lodash';
 import { ICourse } from './interfaces/course.interface';
-import { IAuthor } from './interfaces/author.interface';
 import { TeacherCoursesSort as Sort, ProgressBase, Lecture, Price } from '@/config/constants';
 import { UpdateGoalsDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
@@ -13,6 +12,8 @@ import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { ChapterService } from '@/chapter/chapter.service';
 import { ILecture } from '@/chapter/interfaces/lecture.interface';
 import { UpdateLandingDto } from './dtos/landing.dto';
+import { IAuthor } from '@/author/interfaces/author.interface';
+import { AuthorService } from '@/author/author.service';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -22,7 +23,7 @@ type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
 export class CourseService {
     constructor(
         @InjectModel('Course') private readonly courseModel: Model<ICourse>,
-        @InjectModel('Author') private readonly authorModel: Model<IAuthor>,
+        private readonly authorService: AuthorService,
         private readonly chapterService: ChapterService
     ) {}
 
@@ -33,44 +34,17 @@ export class CourseService {
         });
         course = await course.save();
         const courseId: string = course._id;
-        const author: IAuthor = new this.authorModel({
-            teacher: teacherId,
-            course: courseId,
-            isOwner: true,
-            permission: {
-                announcement: true,
-                review: true,
-                privacy: true,
-                messenger: true,
-                invite: true
-            }
-        });
-        await author.save();
+        await this.authorService.create(teacherId, courseId);
         return course;
     }
 
     async fetch(teacherId: string, sort: Sort, page: number, limit: number): Promise<{ total: number, list: Array<any> }> {
         let authors: Array<any>;
         if (sort === Sort.Newest || sort === Sort.Oldest) {
-            authors = await this.authorModel
-                .find({ teacher: teacherId })
-                .sort({
-                    createdAt: (sort === Sort.Newest) ? -1 : 1
-                })
-                .populate('course', 'title lastUpdated privacy progress')
-                .lean()
-                .exec();
-            
+            authors = await this.authorService.fetchWithTimeSortType(teacherId, sort);
         }
         else {
-            authors = await this.authorModel
-                .find({ teacher: teacherId })
-                .populate({
-                    path: 'course', 
-                    select: 'title lastUpdated privacy progress',
-                })
-                .lean()
-                .exec();
+            authors = await this.authorService.fetchWithoutTimeSortType(teacherId);
             authors = _.orderBy(
                 authors,
                 ['course.title', 'createdAt'],
@@ -100,25 +74,10 @@ export class CourseService {
         };
     }
 
-    async countCoursesOfTeacher(teacherId: string): Promise<number> {
-        return await this.authorModel
-            .find({ teacher: teacherId })
-            .count();
-    }
-
     async validateCourse(courseId: string): Promise<boolean> {
         const course: ICourse = await this.courseModel
                 .findById(courseId);
         return !!course;
-    }
-
-    async validateTeacherCourse(teacherId: string, courseId: string): Promise<boolean> {
-        const author: IAuthor = await this.authorModel
-                .findOne({
-                    teacher: teacherId,
-                    course: courseId
-                });
-        return !!author;
     }
 
     async fetchInfo(courseId: string): Promise<any> {

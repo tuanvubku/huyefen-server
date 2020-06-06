@@ -3,14 +3,14 @@ import { TeacherController } from './teacher.controller';
 import { TeacherService } from './teacher.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { TeacherSchema } from './schemas/teacher.schema';
-import { CourseModule } from '@/course/course.module';
+import { AuthorModule } from '@/author/author.module';
 
 @Module({
 	imports: [
 		MongooseModule.forFeature([
 			{ name: 'Teacher', schema: TeacherSchema }
 		]),
-		CourseModule
+		AuthorModule
 	],
 	controllers: [TeacherController],
 	providers: [TeacherService],
