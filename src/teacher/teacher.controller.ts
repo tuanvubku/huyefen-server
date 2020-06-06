@@ -1,4 +1,4 @@
-import { Controller, Put, UseGuards, Body, Post, Get, Req, NotFoundException, ConflictException } from '@nestjs/common';
+import { Controller, Put, UseGuards, Body, Post, Get, Req, NotFoundException, ConflictException, Param } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
@@ -7,13 +7,13 @@ import { UpdateDto } from './dtos/update.dto';
 import { UpdateSocialsDto } from './dtos/socials.dto';
 import { UpdateAvatarDto } from './dtos/avatar.dto';
 import { ChangePasswordDto } from './dtos/password.dto';
+import { FetchTeacherParamDto } from './dtos/fetch.dto';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ITeacher } from './interfaces/teacher.interface';
 import { TeacherService } from './teacher.service';
 import { ResponseSuccess } from '@/utils/utils';
 
 @Controller('api/teachers')
-@Roles(Role.Teacher)
 export class TeacherController {
     constructor (
         private readonly teacherService: TeacherService
@@ -27,6 +27,7 @@ export class TeacherController {
 
     @Get('/me')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
     async fetch(@Req() req): Promise<IResponse<any>> {
         const teacher = await this.teacherService.findTeacherById(req.user._id);
         if (!teacher)
@@ -36,6 +37,7 @@ export class TeacherController {
 
     @Put('update')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
     async update(@Req() req, @Body() body: UpdateDto): Promise<IResponse<any>> {
         const teacherId = req.user._id;
         const teacher: any = await this.teacherService.update(teacherId, body);
@@ -46,6 +48,7 @@ export class TeacherController {
 
     @Put('update/socials')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
     async updateSocials(@Req() req, @Body() body: UpdateSocialsDto): Promise<IResponse<any>> {
         const teacherId = req.user._id;
         const teacher: any = await this.teacherService.updateSocials(teacherId, body);
@@ -56,6 +59,7 @@ export class TeacherController {
 
     @Put('update/avatar')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
     async updateAvatar(@Req() req, @Body() body: UpdateAvatarDto): Promise<IResponse<any>> {
         const teacherId: string = req.user._id;
         const { avatar } = body;
@@ -67,6 +71,7 @@ export class TeacherController {
 
     @Put('/update/password')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
     async changePassword(@Req() req, @Body() body: ChangePasswordDto): Promise<IResponse<boolean>> {
         const teacherId: string = req.user._id;
         const { oldPassword, newPassword } = body;
@@ -76,5 +81,19 @@ export class TeacherController {
         else if (status === -1)
             throw new ConflictException('Password doesn\'t matched!');
         return new ResponseSuccess('TEACHER.CHANGE_PASSWORD_SUCCESS', true);
+    }
+
+    @Get('/:id')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchTeacher(
+        @Req() req,
+        @Param() params: FetchTeacherParamDto
+    ): Promise<IResponse<any>> {
+        const userId: string = req.user._id;
+        const teacherId: string = params.id;
+        const teacher = await this.teacherService.fetchTeacher(userId, teacherId);
+        if (!teacher) throw new NotFoundException('Invalid teacher');
+        return new ResponseSuccess('FETCH_TEACHER_OK', teacher);
     }
 }

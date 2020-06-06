@@ -8,11 +8,13 @@ import { UpdateDto } from './dtos/update.dto'
 import { ITeacher } from './interfaces/teacher.interface';
 import { Role } from '@/config/constants';
 import { UpdateSocialsDto } from './dtos/socials.dto';
+import { CourseService } from '@/course/course.service';
 
 @Injectable()
 export class TeacherService {
     constructor (
         @InjectModel('Teacher') private readonly teacherModel: Model<ITeacher>,
+        private readonly courseService: CourseService,
         private readonly configService: ConfigService
     ) {}
 
@@ -112,5 +114,30 @@ export class TeacherService {
             return 1;
         }
         return 0;
+    }
+
+    async fetchTeacher(userId: string, teacherId: string): Promise<any> {
+        const teacher = await this.teacherModel
+            .findById(teacherId, {
+                followingStudents: {
+                    $elemMatch: userId
+                }
+            })
+            .select('name avatar biography twitter facebook youtube instagram followingStudents')
+            .lean()
+            .exec();
+        if (teacher) {
+            const isFollowed: boolean = !_.isEmpty(teacher.followingStudents);
+            //count numOfStudents, numOfCourses, numOfReviews.
+            const numOfCourses: number = await this.courseService.countCoursesOfTeacher(teacherId);
+            return {
+                ..._.omit(teacher, ['followingStudents']),
+                isFollowed,
+                numOfStudents: 21400,
+                numOfCourses,
+                numOfReviews: 12099
+            };
+        }
+        return null;
     }
 }

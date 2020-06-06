@@ -100,6 +100,12 @@ export class CourseService {
         };
     }
 
+    async countCoursesOfTeacher(teacherId: string): Promise<number> {
+        return await this.authorModel
+            .find({ teacher: teacherId })
+            .count();
+    }
+
     async validateCourse(courseId: string): Promise<boolean> {
         const course: ICourse = await this.courseModel
                 .findById(courseId);
