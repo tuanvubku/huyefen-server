@@ -126,4 +126,18 @@ export class FriendController {
         if (status === 0) throw new NotFoundException('Invalid friend');
         return new ResponseSuccess<null>('ACCEPT_FRIEND', null, 1 ? 0 : 1);
     }
+
+    @Put('/:id/reject')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async rejectInvitation(
+        @Req() req,
+        @Param() params: FetchFriendParamDto
+    ): Promise<IResponse<null>> {
+        const userId: string = req.user._id;
+        const friendId: string = params.id;
+        const status: 0 | 1 | -1 = await this.userService.rejectInvitation(userId, friendId);
+        if (status === 0) throw new NotFoundException('Invalid friend');
+        return new ResponseSuccess<null>('ACCEPT_FRIEND', null, 1 ? 0 : 1);
+    }
 }

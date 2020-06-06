@@ -405,4 +405,29 @@ export class UserService {
             return -1;
         }
     }
+
+    async rejectInvitation(userId: string, friendId: string): Promise<0 | 1 | -1> {
+        try {
+            const friend = await this.userModel
+                .findByIdAndUpdate(friendId, {
+                    $pull: {
+                        relationships: {
+                            friend: userId
+                        }
+                    }
+                });
+            if (!friend) return 0;
+            await this.userModel.updateOne({ _id: userId }, {
+                $pull: {
+                    relationships: {
+                        friend: friendId
+                    }
+                }
+            });
+            return 1;
+        }
+        catch (e) {
+            return -1;
+        }
+    }
 }
