@@ -470,4 +470,19 @@ export class UserService {
             return -1;
         }
     }
+
+    async unfollowTeacher(userId: string, teacherId: string): Promise<1 | -1> {
+        try {
+            await this.userModel
+                .updateOne({ _id: userId }, {
+                    $pull: {
+                        followedTeachers: teacherId
+                    }
+                });
+            return 1;
+        }
+        catch (e) {
+            return -1;
+        }
+    }
 }

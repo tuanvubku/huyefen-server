@@ -110,4 +110,18 @@ export class TeacherController {
         if (status === 0) throw new NotFoundException('Invalid teacher!');
         return new ResponseSuccess('FOLLOW_OK', null, status === 1 ? 0 : 1);
     }
+
+    @Put('/:id/unfollow')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async unfollow(
+        @Req() req,
+        @Param() params: FetchTeacherParamDto
+    ): Promise<IResponse<null>> {
+        const userId: string = req.user._id;
+        const teacherId: string = params.id;
+        const status = await this.teacherService.unfollow(userId, teacherId);
+        if (status === 0) throw new NotFoundException('Invalid teacher!');
+        return new ResponseSuccess('FOLLOW_OK', null, status === 1 ? 0 : 1);
+    }
 }

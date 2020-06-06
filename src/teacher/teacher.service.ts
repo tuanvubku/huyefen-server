@@ -167,4 +167,20 @@ export class TeacherService {
             return -1;
         }
     }
+
+    async unfollow(userId: string, teacherId: string): Promise<0 | 1 | -1> {
+        try {
+            const teacher: ITeacher = await this.teacherModel
+                .findByIdAndUpdate(teacherId, {
+                    $pull: {
+                        followingStudents: userId
+                    }
+                });
+            if (!teacher) return 0;
+            return  await this.userService.unfollowTeacher(userId, teacherId);
+        }
+        catch (e) {
+            return -1;
+        }
+    }
 }
