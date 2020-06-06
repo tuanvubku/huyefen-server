@@ -9,12 +9,14 @@ import { ITeacher } from './interfaces/teacher.interface';
 import { Role } from '@/config/constants';
 import { UpdateSocialsDto } from './dtos/socials.dto';
 import { AuthorService } from '@/author/author.service';
+import { UserService } from '@/user/user.service';
 
 @Injectable()
 export class TeacherService {
     constructor (
         @InjectModel('Teacher') private readonly teacherModel: Model<ITeacher>,
         private readonly authorService: AuthorService,
+        private readonly userService: UserService,
         private readonly configService: ConfigService
     ) {}
 
@@ -141,5 +143,28 @@ export class TeacherService {
             };
         }
         return null;
+    }
+
+    async follow(userId: string, teacherId: string): Promise<0 | 1 | -1> {
+        try {
+            const teacher: ITeacher = await this.teacherModel
+                .findByIdAndUpdate(teacherId, {
+                    $push: {
+                        followingStudents: userId
+                    }
+                }, {
+                    runValidators: true
+                });
+            if (!teacher) return 0;
+            const status: 1 | -1 =  await this.userService.followTeacher(userId, teacherId);
+            if (status === 1) {
+                
+            }
+            //firebase;
+            return status;
+        }
+        catch (e) {
+            return -1;
+        }
     }
 }

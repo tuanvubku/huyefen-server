@@ -11,7 +11,7 @@ import { JobModule } from '@/job/job.module';
 		MongooseModule.forFeature([
 			{ name: 'User', schema: UserSchema }
 		]),
-		TeacherModule,
+		//TeacherModule,
 		JobModule
 	],
 	controllers: [UserController],

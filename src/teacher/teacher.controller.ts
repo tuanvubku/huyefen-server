@@ -96,4 +96,18 @@ export class TeacherController {
         if (!teacher) throw new NotFoundException('Invalid teacher');
         return new ResponseSuccess('FETCH_TEACHER_OK', teacher);
     }
+
+    @Put('/:id/follow')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async follow(
+        @Req() req,
+        @Param() params: FetchTeacherParamDto
+    ): Promise<IResponse<null>> {
+        const userId: string = req.user._id;
+        const teacherId: string = params.id;
+        const status = await this.teacherService.follow(userId, teacherId);
+        if (status === 0) throw new NotFoundException('Invalid teacher!');
+        return new ResponseSuccess('FOLLOW_OK', null, status === 1 ? 0 : 1);
+    }
 }

@@ -17,7 +17,7 @@ export class UserService {
     constructor(
         @InjectModel('User') private readonly userModel: Model<IUser>,
         private readonly configService: ConfigService,
-        private readonly teacherService: TeacherService
+        //private readonly teacherService: TeacherService
     ) {}
 
     async countUserByPhoneEmail(user: { phone: string, email: string }): Promise<number> {
@@ -449,6 +449,21 @@ export class UserService {
                     }
                 }
             });
+            return 1;
+        }
+        catch (e) {
+            return -1;
+        }
+    }
+
+    async followTeacher(userId: string, teacherId: string): Promise<1 | -1> {
+        try {
+            await this.userModel
+                .updateOne({ _id: userId }, {
+                    $push: {
+                        followedTeachers: teacherId
+                    }
+                });
             return 1;
         }
         catch (e) {
