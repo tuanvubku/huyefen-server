@@ -145,10 +145,12 @@ export class UserService {
     }
 
     async fetchFriends(userId: string, page: number, limit: number): Promise<{ hasMore: boolean, list: IFriend[] }> {
-        const user: IUser = await this.userModel
+        const user = await this.userModel
             .findById(userId)
             .populate('relationships.friend', 'name avatar relationships')
-            .select('relationships');
+            .select('relationships')
+            .lean()
+            .exec();
         const allFriends = _.filter(
             user.relationships,
             ['status', FriendStatuses.Friend]
@@ -158,7 +160,7 @@ export class UserService {
             _.slice(allFriends, (page - 1) * limit, page * limit),
             relationship => {
                 const friend = relationship.friend as any;
-                const numOfFriends: number = _.size(_.filter(friend.relationships, ['status', 4]));
+                const numOfFriends: number = _.size(_.filter(friend.relationships, ['status', FriendStatuses.Friend]));
                 return {
                     ..._.omit(friend, ['relationships']),
                     numOfFriends
@@ -172,10 +174,12 @@ export class UserService {
     }
 
     async allFriends(userId: string, existed: number): Promise<{ hasMore: boolean, list: IFriend[] }> {
-        const user: IUser = await this.userModel
+        const user = await this.userModel
             .findById(userId)
             .populate('relationships.friend', 'name avatar relationships')
-            .select('relationships');
+            .select('relationships')
+            .lean()
+            .exec();
         const allFriends = _.filter(
             user.relationships,
             ['status', FriendStatuses.Friend]
@@ -228,10 +232,12 @@ export class UserService {
     }
 
     async fetchFriendsOfFriend(userId: string, friendId: string, page: number, limit: number): Promise<{ status: boolean, data: { hasMore: boolean, list: IFriend[] } }> {
-        const friend: IUser = await this.userModel
+        const friend = await this.userModel
             .findById(friendId)
             .populate('relationships.friend', 'avatar name relationships')
-            .select('relationships');
+            .select('relationships')
+            .lean()
+            .exec();
         if (!friend) return { status: false, data: null };
         const allFriends = _.filter(
             friend.relationships,
@@ -267,10 +273,12 @@ export class UserService {
     }
 
     async allFriendsOfFriend(userId: string, friendId: string, existed: number): Promise<{ status: boolean, data: { hasMore: boolean, list: IFriend[] } }> {
-        const friend: IUser = await this.userModel
+        const friend= await this.userModel
             .findById(friendId)
             .populate('relationships.friend', 'avatar name relationships')
-            .select('relationships');
+            .select('relationships')
+            .lean()
+            .exec();
         if (!friend) return { status: false, data: null };
         const allFriends = _.filter(
             friend.relationships,
@@ -308,17 +316,16 @@ export class UserService {
     async addFriend(userId: string, friendId: string): Promise<0 | 1 | -1> {
         try {
             const friend = await this.userModel
-            .findByIdAndUpdate(friendId, {
-                $push: {
-                    relationships: {
-                        friend: userId,
-                        status: FriendStatuses.ReceivedInvitation
+                .findByIdAndUpdate(friendId, {
+                    $push: {
+                        relationships: {
+                            friend: userId,
+                            status: FriendStatuses.ReceivedInvitation
+                        }
                     }
-                }
-            }, {
-                new: true,
-                runValidators: true
-            });
+                }, {
+                    runValidators: true
+                });
             if (!friend) return 0;
             await this.userModel.updateOne({
                 _id: userId
@@ -331,6 +338,67 @@ export class UserService {
                 }
             });
             //firebase notification.
+            return 1;
+        }
+        catch (e) {
+            return -1;
+        }
+    }
+
+    async cancelInvitation(userId: string, friendId: string): Promise<0 | 1 | -1> {
+        try {
+            const friend = await this.userModel
+                .findByIdAndUpdate(friendId, {
+                    $pull: {
+                        relationships: {
+                            friend: userId
+                        }
+                    }
+                }, {
+                    runValidators: true
+                });
+            if (!friend) return 0;
+            await this.userModel.updateOne({
+                _id: userId
+            }, {
+                $pull: {
+                    relationships: {
+                        friend: friendId
+                    }
+                }
+            });
+            return 1;
+        }
+        catch (e) {
+            return -1;
+        }
+    }
+
+    async acceptInvitation(userId: string, friendId: string): Promise<0 | 1 | -1> {
+        try {
+            const friend = await this.userModel
+                .findByIdAndUpdate(friendId, {
+                    $set: {
+                        'relationships.$[element].status': FriendStatuses.Friend
+                    }
+                }, {
+                    runValidators: true,
+                    arrayFilters: [{
+                        'element.friend': userId
+                    }]
+                });
+            if (!friend) return 0;
+            await this.userModel
+                .updateOne({ _id: userId }, {
+                    $set: {
+                        'relationships.$[element].status': FriendStatuses.Friend
+                    }
+                }, {
+                    runValidators: true,
+                    arrayFilters: [{
+                        'element.friend': friendId
+                    }]
+                });
             return 1;
         }
         catch (e) {
