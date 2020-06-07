@@ -111,8 +111,10 @@ export class CourseService {
             .select({
                 whatLearns: 1,
                 requirements: 1,
-                targetStudents: 1
-            });
+                targetStudents: 1,
+                _id: 0
+            })
+            .populate('whatLearns.owner requirements.owner targetStudents.owner', 'name avatar');
     }
 
     async finalGoals(course: ICourse, field: GoalFields): Promise<{ progress: number, data: IGoals[] }> {
@@ -150,7 +152,8 @@ export class CourseService {
                 ),
                 addWhatLearns as IWhatLearn[]
             );
-            course = await course.save();
+            await course.save();
+            course = await this.courseModel.findById(courseId).populate('whatLearns.owner', 'name avatar');
             return await this.finalGoals(course, 'whatLearns');
         }
         return null;
@@ -192,7 +195,8 @@ export class CourseService {
                 ),
                 addRequirements as IRequirement[]
             );
-            course = await course.save();
+            await course.save();
+            course = await this.courseModel.findById(courseId).populate('requirements.owner', 'name avatar');
             return await this.finalGoals(course, 'requirements');
         }
         return null;
@@ -220,7 +224,8 @@ export class CourseService {
                 ),
                 addTargetStudents as ITargetStudent[]
             );
-            course = await course.save();
+            await course.save();
+            course = await this.courseModel.findById(courseId).populate('targetStudents.owner', 'name avatar');
             return await this.finalGoals(course, 'targetStudents');
         }
         return null;
