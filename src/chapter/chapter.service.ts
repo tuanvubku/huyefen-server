@@ -171,22 +171,31 @@ export class ChapterService {
             });
         if (!chapter) return { status: 0, data: null };
         if (chapter.lectures[0].content && type !== chapter.lectures[0].type) return { status: -1, data: null };
-        chapter.lectures[0].owner = teacherId;
-        chapter.lectures[0].title = title;
-        chapter.lectures[0].type = type;
-        await chapter.save();
+        // chapter.lectures[0].owner = teacherId;
+        // chapter.lectures[0].title = title;
+        // chapter.lectures[0].type = type;
+        // await chapter.save();
         chapter = await this.chapterModel
-            .findById(chapterId, {
-                lectures: {
-                    $elemMatch: { _id: lectureId }
+            .findByIdAndUpdate(chapterId, {
+                $set: {
+                    'lectures.$[element].type': type,
+                    'lectures.$[element].title': title,
+                    'lectures.$[element].owner': teacherId
                 }
+            }, {
+                runValidators: true,
+                arrayFilters: [{
+                    'element._id': lectureId
+                }],
+                new: true
             })
             .populate('lectures.owner', 'name avatar')
             .select('-lectures.content -lectures.isPreviewed');
+        const lecture = _.find(chapter.lectures, lecture => lecture._id.toString() === lectureId);
         return {
             status: 1,
-            data: chapter.lectures[0]
-        }
+            data: lecture
+        };
     }
 
     async deleteLecture (
