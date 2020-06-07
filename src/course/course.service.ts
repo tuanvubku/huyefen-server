@@ -99,7 +99,7 @@ export class CourseService {
             return {
                 ...info,
                 completeStatus,
-                chapters
+                syllabus: chapters
             };
         }
         return null;
