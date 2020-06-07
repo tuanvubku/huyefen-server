@@ -11,7 +11,16 @@ async function bootstrap() {
     key: readFileSync(`${join(__dirname, '../', 'ssl')}/key.pem`),
     cert: readFileSync(`${join(__dirname, '../', 'ssl')}/cert.pem`)
   };
-  const app = await NestFactory.create(AppModule, { httpsOptions });
+  const app = await NestFactory.create(AppModule, {
+    httpsOptions,
+    cors: {
+      origin: ['http://localhost:2112', 'http://localhost:8000'],
+      methods: ['GET', 'PUT', 'POST', 'DELETE'],
+      preflightContinue: false,
+      optionsSuccessStatus: 204,
+      credentials: true
+    }
+  });
   const configService = app.get(ConfigService);
   await app.listen(configService.get<string>('HTTPS_PORT'));
   if (module.hot) {
