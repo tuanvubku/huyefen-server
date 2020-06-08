@@ -35,3 +35,5 @@ lerna-debug.log*
 
 #ENV
 config/env/*.local.env
+
+/public

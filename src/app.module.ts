@@ -22,6 +22,7 @@ import { ChapterModule } from './chapter/chapter.module';
 import { TopicModule } from './topic/topic.module';
 import { FriendModule } from './friend/friend.module';
 import { AuthorModule } from './author/author.module';
+import { CloudModule } from './cloud/cloud.module';
 
 @Module({
 	imports: [
@@ -49,7 +50,8 @@ import { AuthorModule } from './author/author.module';
 		ChapterModule,
 		TopicModule,
 		FriendModule,
-		AuthorModule
+		AuthorModule,
+        CloudModule
 	],
 	providers: [
 		{
