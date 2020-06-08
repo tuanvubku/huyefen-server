@@ -1,6 +1,7 @@
 # compiled output
 /dist
 /node_modules
+/public
 
 # Logs
 logs
@@ -36,4 +37,3 @@ lerna-debug.log*
 #ENV
 config/env/*.local.env
 
-/public
