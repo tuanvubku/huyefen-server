@@ -1,7 +1,7 @@
 import { Schema } from 'mongoose';
 
 export const JobSchema = new Schema({
-    name: {
+    title: {
         type: String,
         required: true
     }

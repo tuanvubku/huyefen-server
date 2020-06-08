@@ -363,10 +363,10 @@ export class CourseService {
         return await this.finalLanding(course, ['avatar']);
     }
 
-    async fetchPrice(courseId: string): Promise<Price> {
+    async fetchPrice(courseId: string): Promise<Price | false> {
         const course: ICourse = await this.courseModel
             .findById(courseId);
-        return course ? course.price : null;
+        return course ? course.price : false;
     }
 
     async updatePrice(courseId: string, price: Price): Promise<{ status: boolean, data: { progress: number, data: Price } }> {

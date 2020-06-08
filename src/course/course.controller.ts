@@ -429,8 +429,8 @@ export class CourseController {
         const checkAuthor: boolean = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!checkAuthor)
             throw new ForbiddenException('Forbidden to access this course');
-        const price: Price = await this.courseService.fetchPrice(courseId);
-        if (!price) throw new NotFoundException('Invalid course!!');
+        const price: Price | false = await this.courseService.fetchPrice(courseId);
+        if (price === false) throw new NotFoundException('Invalid course!!');
         return new ResponseSuccess<Price>('FETCH_PRICE_OK', price);
     }
 

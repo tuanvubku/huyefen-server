@@ -17,9 +17,9 @@ export class JobService {
         return jobs;
     }
 
-    async create(name: string): Promise<IJob> {
+    async create(title: string): Promise<IJob> {
         const job: IJob = new this.jobModel({
-            name
+            title
         });
         return await job.save();
     }
