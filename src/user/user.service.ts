@@ -207,18 +207,16 @@ export class UserService {
 
     async fetchFriend(userId: string, friendId: string): Promise<IFriend> {
         const friend = await this.userModel
-            .findById(friendId, {
-                relationships: {
-                    $elemMatch: { friend: userId }
-                }
-            })
+            .findById(friendId)
             .select('name avatar relationships')
             .lean()
             .exec();
+
         if (friend) {
             let status: FriendStatuses = FriendStatuses.NoFriend;
-            if (_.size(friend.relationships) > 0) {
-                const _status: FriendStatuses = _.head(friend.relationships).status;
+            const userRel = _.find(friend.relationships, rel => rel.friend.toString() === userId);
+            if (userRel) {
+                const _status: FriendStatuses = userRel.status;
                 if (_status === FriendStatuses.Friend) status = FriendStatuses.Friend;
                 else if (_status === FriendStatuses.SentInvitation) status = FriendStatuses.ReceivedInvitation;
                 else status = FriendStatuses.SentInvitation;
