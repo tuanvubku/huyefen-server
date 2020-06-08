@@ -1,16 +1,17 @@
 import { User } from '@/utils/decorators/user.decorator';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { generateFileName, ResponseSuccess } from '@/utils/utils';
-import { Body, Controller, Param, Post, UploadedFile, UseGuards, UseInterceptors, Res } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bull';
+import { Body, Controller, Param, Post, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { Queue } from 'bull';
 import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import { CloudService } from './cloud.service';
-import { Queue } from 'bull';
-import { InjectQueue } from '@nestjs/bull';
-import { join } from 'path';
+import { Roles } from '@/utils/decorators/roles.decorator';
+import { Role } from '@/config/constants';
 @Controller('cloud')
 export class CloudController {
 
@@ -20,13 +21,14 @@ export class CloudController {
         @InjectQueue('video') private videoQueue: Queue
     ) { }
 
-    @Post('upload/user')
+    @Post('/upload')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher, Role.User)
     @UseInterceptors(FileInterceptor('avatar',
         {
             storage: diskStorage({
                 destination: (req, file, cb) => {
-                    console.log(req)
+                    //console.log(req)
                     const role = `${req.user["role"]}s`;
                     const filePath = `./public/${role}/${req.user["_id"]}`;
                     if (!fs.existsSync(filePath)) {
@@ -40,7 +42,6 @@ export class CloudController {
             })
         }))
     async uploadAvatar(@UploadedFile() file, @User() user) {
-        // validate user
         const url = `${this.configService.get<string>('HOST')}\/${file.filename}`;
         const res = { url };
         return new ResponseSuccess<any>("UPLOAD.SUCCESS", res)
@@ -49,6 +50,7 @@ export class CloudController {
 
     @Post('upload/course/:id/avatar')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
     @UseInterceptors(FileInterceptor('avatar',
         {
             storage: diskStorage({
