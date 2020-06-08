@@ -31,7 +31,8 @@ export class ChapterService {
             .select({
                 title: 1,
                 'lectures.type': 1,
-                'lectures.title': 1
+                'lectures.title': 1,
+                'lectures._id': 1
             });
     }
 

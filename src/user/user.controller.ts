@@ -66,9 +66,9 @@ export class UserController {
         const status = await this.userService.updatePassword(userId, oldPassword, newPassword);
         if (status === 0)
             throw new NotFoundException('User doesn\'t existed!');
-        else if (status === -1)
-            throw new ConflictException('Password doesn\'t matched!');
-        return new ResponseSuccess('USER.CHANGE_PASSWORD_SUCCESS', true);
+        const message: string = status === -1 ? 'Password doesn\'t match' : 'Change password ok';
+        const errorCode: 0 | 1 = status === -1 ? 1 : 0;
+        return new ResponseSuccess(message, true, errorCode);
     }
 
     @Put('/update/avatar')

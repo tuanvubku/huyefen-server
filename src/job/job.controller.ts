@@ -33,8 +33,8 @@ export class JobController {
 
     @Post()
     async create(@Body() body: CreateDto): Promise<IResponse<IJob>> {
-        const { name } = body;
-        const job: IJob = await this.jobService.create(name);
+        const { title } = body;
+        const job: IJob = await this.jobService.create(title);
         return new ResponseSuccess<IJob>('CREATE_JOB.SUCCESSFULLY', job);
     }
 
