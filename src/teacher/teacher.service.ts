@@ -29,6 +29,17 @@ export class TeacherService {
         return await teacher.save();
     }
 
+    async addCourse(teacherId: string, courseId: string): Promise<void> {
+        await this.teacherModel
+            .findByIdAndUpdate(teacherId, {
+                $push: {
+                    courses: courseId
+                }
+            }, {
+                runValidators: true
+            });
+    }
+
     async findTeacherByPhone(phone: string): Promise<any> {
         const teacher: any = await this.teacherModel
             .findOne({ phone })

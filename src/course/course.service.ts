@@ -14,7 +14,7 @@ import { ILecture } from '@/chapter/interfaces/lecture.interface';
 import { UpdateLandingDto } from './dtos/landing.dto';
 import { IAuthor } from '@/author/interfaces/author.interface';
 import { AuthorService } from '@/author/author.service';
-import { ITeacher } from '@/teacher/interfaces/teacher.interface';
+import { TeacherService } from '@/teacher/teacher.service';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -25,17 +25,20 @@ export class CourseService {
     constructor(
         @InjectModel('Course') private readonly courseModel: Model<ICourse>,
         private readonly authorService: AuthorService,
-        private readonly chapterService: ChapterService
-    ) { }
+        private readonly chapterService: ChapterService,
+        private readonly teacherService: TeacherService
+    ) {}
 
     async create(teacherId: string, area: string, title: string): Promise<ICourse> {
         let course: ICourse = new this.courseModel({
             area,
-            title
+            title,
+            authors: [teacherId]
         });
         course = await course.save();
         const courseId: string = course._id;
         await this.authorService.create(teacherId, courseId);
+        await this.teacherService.addCourse(teacherId, courseId);
         return course;
     }
 
