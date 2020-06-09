@@ -8,6 +8,8 @@ export interface ICourse extends Document {
     _id: string;
     title: string;
     subTitle: string;
+    authors: string[];
+    numOfStudents: number;
     description: string;
     language: string;
     level: Level;

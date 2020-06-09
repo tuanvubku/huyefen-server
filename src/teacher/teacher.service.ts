@@ -147,19 +147,19 @@ export class TeacherService {
                     $elemMatch: userId
                 }
             })
-            .select('name avatar biography twitter facebook youtube instagram followingStudents')
+            .select('name avatar biography twitter facebook youtube instagram followingStudents courses')
+            .populate('courses', 'numOfStudents')
             .lean()
             .exec();
         if (teacher) {
             const isFollowed: boolean = !_.isEmpty(teacher.followingStudents);
             //count numOfStudents, numOfCourses, numOfReviews.
-            const teacherCourses: string[] = await this.authorService.fetchCoursesOfTeacher(teacherId);
-            const numOfCourses: number = _.size(teacherCourses);
-            //use teacherCourses to find numOfStudents.
+            const numOfCourses: number = _.size(teacher.courses);
+            const numOfStudents: number = _.sum(_.map(teacher.courses, ['numOfStudents']));
             return {
-                ..._.omit(teacher, ['followingStudents']),
+                ..._.omit(teacher, ['followingStudents', 'courses']),
                 isFollowed,
-                numOfStudents: 21400,
+                numOfStudents,
                 numOfCourses,
                 numOfReviews: 12099
             };
