@@ -6,6 +6,7 @@ import { UpdateDto } from './dtos/update.dto';
 import { UpdateCatesDto } from './dtos/catesOfConcern.dto';
 import { ChangePasswordDto } from './dtos/password.dto';
 import { UpdateAvatarDto } from './dtos/avatar.dto';
+import { UpdateFCMDto } from './dtos/fcm.dto';
 import { ResponseSuccess } from '@/utils/utils';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { IResponse } from '@/utils/interfaces/response.interface';
@@ -80,5 +81,16 @@ export class UserController {
         if (!user)
             throw new NotFoundException('User doesn\'t existed!');
         return new ResponseSuccess('USER.UPDATE_AVATAR_OK', user);
+    }
+
+    @Put('/update/token')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async updateFCMToken(@Req() req, @Body() body: UpdateFCMDto): Promise<IResponse<any>> {
+        const userId: string = req.user._id;
+        const token = body.token;
+        const user: any = await this.userService.updateFCMToken(userId, token);
+        if (!user)
+            throw new NotFoundException('User doesn\'t existed!');
+        return new ResponseSuccess('USER_UPDATE_FCM_OK', user);
     }
 }

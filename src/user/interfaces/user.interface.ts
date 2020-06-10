@@ -14,6 +14,7 @@ export interface IUser extends Document{
 	job: string,
 	facebook: string,
 	linkedin: string,
+	fcmToken: string,
 	notifications: INotification[],
 	catesOfConcern: string[],
 	followedTeachers: string[],

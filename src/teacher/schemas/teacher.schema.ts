@@ -53,6 +53,10 @@ export const TeacherSchema = new Schema({
         type: String,
         default: null
     },
+    fcmToken: {
+        type: String,
+        default: null
+    },
     courses: {
         type: [{
             type: Schema.Types.ObjectId,

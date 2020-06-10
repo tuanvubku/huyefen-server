@@ -498,4 +498,17 @@ export class UserService {
             return -1;
         }
     }
+
+    async updateFCMToken(userId: string, token: string): Promise<any> {
+        await this.userModel
+            .findByIdAndUpdate(userId, {
+                $set: {
+                    fcmToken: token
+                }
+            }, {
+                new: true,
+                runValidators: true
+            })
+            .select('fcmToken -_id');
+    }
 }

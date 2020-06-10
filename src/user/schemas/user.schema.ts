@@ -52,6 +52,10 @@ export const UserSchema = new Schema({
 		type: String,
 		default: null
 	},
+	fcmToken: {
+		type: String,
+		default: null
+	},
 	notifications: {
 		type: [NotificationSchema],
 		default: []
