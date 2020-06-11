@@ -414,10 +414,19 @@ export class UserService {
 
     async acceptInvitation(userId: string, friendId: string): Promise<0 | 1 | -1> {
         try {
+            const notificationData = {
+                type: Notification.Friend,
+                content: 'đã chấp nhận lời mời kết bạn. Hai bạn hãy cùng trò chuyện nhau nhé!',
+                user: userId
+            };
+            const notification = new this.notificationModel(notificationData);
             const friend = await this.userModel
                 .findByIdAndUpdate(friendId, {
                     $set: {
                         'relationships.$[element].status': FriendStatuses.Friend
+                    },
+                    $push: {
+                        notifications: notification
                     }
                 }, {
                     runValidators: true,
@@ -426,8 +435,8 @@ export class UserService {
                     }]
                 });
             if (!friend) return 0;
-            await this.userModel
-                .updateOne({ _id: userId }, {
+            const user = await this.userModel
+                .findByIdAndUpdate(userId, {
                     $set: {
                         'relationships.$[element].status': FriendStatuses.Friend
                     }
@@ -437,6 +446,24 @@ export class UserService {
                         'element.friend': friendId
                     }]
                 });
+            if (friend.fcmToken) {
+                await this.messagingService.send(friend.fcmToken, {
+                    notification: {
+                        title: 'Chấp nhận lời mời',
+                        body: `${user.name} đã chấp nhận lời mời kết bạn.`
+                    },
+                    data: {
+                        _id: notification._id.toString(),
+                        createdAt: notification.createdAt.toString(),
+                        userId,
+                        userName: user.name,
+                        ...(user.avatar ? { userAvatar: user.avatar } : {}),
+                        pushType: Push.Notification,
+                        type: Notification.Friend,
+                        content: `đã chấp nhận lời mời kết bạn. Hai bạn hãy cùng trò chuyện nhau nhé!`,
+                    }
+                });
+            }
             return 1;
         }
         catch (e) {
