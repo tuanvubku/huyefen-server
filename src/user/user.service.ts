@@ -584,4 +584,29 @@ export class UserService {
             list: _.slice(user.notifications, skip, skip + limit)
         };
     }
+
+    async seen(userId: string, notificationId: string): Promise<boolean> {
+        try { 
+            const user: IUser = await this.userModel.findById(userId);
+            const index: number = _.indexOf(_.map(user.notifications, notification => notification._id.toString()), notificationId);
+            if (index === -1) return false;
+            user.notifications[index].seen = true;
+            await user.save();
+            return true;
+        }
+        catch (e) {
+            return false;
+        }
+    }
+
+    async allSeen(userId: string): Promise<void> {
+        await this.userModel
+            .findByIdAndUpdate(userId, {
+                $set: {
+                    'notifications.$[].seen': true
+                }
+            }, {
+                runValidators: true
+            });
+    }
 }

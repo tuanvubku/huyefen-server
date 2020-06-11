@@ -107,4 +107,25 @@ export class UserController {
         const notifications: { hasMore: boolean, list: INotification[] } = await this.userService.fetchNotifications(userId, skip, limit);
         return new ResponseSuccess<{ hasMore: boolean, list: INotification[] }>('FETCH_NOTIFS_OK', notifications);
     }
+
+    @Put('/notifications/:id/seen')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async seenNotification(
+        @Req() req,
+        @Param('id') notificationId: string
+    ): Promise<IResponse<boolean>> {
+        const userId: string = req.user._id;
+        const status: boolean = await this.userService.seen(userId, notificationId);
+        return new ResponseSuccess<boolean>('SEEN_OK', status);
+    }
+
+    @Put('/notifications/all-seen')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async seenAllNotification(
+        @Req() req
+    ): Promise<IResponse<null>> {
+        const userId: string = req.user._id;
+        await this.userService.allSeen(userId);
+        return new ResponseSuccess('SEEN_ALL_OK');
+    }
 }
