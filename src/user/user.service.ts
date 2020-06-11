@@ -343,7 +343,10 @@ export class UserService {
                             friend: userId,
                             status: FriendStatuses.ReceivedInvitation
                         },
-                        notifications: notification
+                        notifications: {
+                            $each: [notification],
+                            $position: 0
+                        }
                     }
                 }, {
                     runValidators: true
@@ -426,7 +429,10 @@ export class UserService {
                         'relationships.$[element].status': FriendStatuses.Friend
                     },
                     $push: {
-                        notifications: notification
+                        notifications: {
+                            $each: [notification],
+                            $position: 0
+                        }
                     }
                 }, {
                     runValidators: true,
@@ -563,5 +569,19 @@ export class UserService {
                 runValidators: true
             })
             .select('fcmToken -_id');
+    }
+
+    async fetchNotifications(userId: string, skip: number, limit: number): Promise<{ hasMore: boolean, list: INotification[] }> {
+        const user = await this.userModel
+            .findById(userId)
+            .select('notifications')
+            .populate('notifications.user', 'name avatar')
+            .lean()
+            .exec();
+        const hasMore: boolean = skip + limit < _.size(user.notifications);
+        return {
+            hasMore,
+            list: _.slice(user.notifications, skip, skip + limit)
+        };
     }
 }

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Query, Put, UseGuards, HttpException, HttpStatus, Req, NotFoundException, ConflictException } from '@nestjs/common';
+import { Body, Controller, Get, Param, Query, Put, UseGuards, HttpException, HttpStatus, Req, NotFoundException, ConflictException, ParseIntPipe } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { User } from '@/utils/decorators/user.decorator';
@@ -7,6 +7,7 @@ import { UpdateCatesDto } from './dtos/catesOfConcern.dto';
 import { ChangePasswordDto } from './dtos/password.dto';
 import { UpdateAvatarDto } from './dtos/avatar.dto';
 import { UpdateFCMDto } from './dtos/fcm.dto';
+import { FetchNotificationsDto } from './dtos/notification.dto';
 import { ResponseSuccess } from '@/utils/utils';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { IResponse } from '@/utils/interfaces/response.interface';
@@ -15,6 +16,7 @@ import { IUser } from './interfaces/user.interface';
 import { UserService } from './user.service';
 import { JobService } from '@/job/job.service';
 import { IJob } from '@/job/interfaces/job.interface';
+import { INotification } from './interfaces/notification.interface';
 
 @Controller('api/users')
 @Roles(Role.User)
@@ -92,5 +94,17 @@ export class UserController {
         if (!user)
             throw new NotFoundException('User doesn\'t existed!');
         return new ResponseSuccess('USER_UPDATE_FCM_OK', user);
+    }
+
+    @Get('/notifications')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async fetchNotification(
+        @Req() req,
+        @Query('skip', ParseIntPipe) skip: number,
+        @Query('limit', ParseIntPipe) limit: number
+    ): Promise<IResponse<{ hasMore: boolean, list: INotification[] }>> {
+        const userId: string = req.user._id;
+        const notifications: { hasMore: boolean, list: INotification[] } = await this.userService.fetchNotifications(userId, skip, limit);
+        return new ResponseSuccess<{ hasMore: boolean, list: INotification[] }>('FETCH_NOTIFS_OK', notifications);
     }
 }
