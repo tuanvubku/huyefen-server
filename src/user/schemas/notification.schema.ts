@@ -1,4 +1,5 @@
 import { Schema } from 'mongoose';
+import { Notification } from '@/config/constants';
 
 export const NotificationSchema = new Schema({
 	user: {
@@ -19,7 +20,7 @@ export const NotificationSchema = new Schema({
 		}
 	},
 	type: {
-		type: Number,
+		type: String,
 		required: true,
 	},
 	content: {

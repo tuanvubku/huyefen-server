@@ -11,8 +11,8 @@ import { JobModule } from './job/job.module';
 import { SharedModule } from './shared/shared.module';
 import { TeacherModule } from './teacher/teacher.module';
 import { CourseModule } from './course/course.module';
-import { NotificationModule } from './notification/notification.module';
-import { DeviceModule } from './device/device.module';
+// import { NotificationModule } from './notification/notification.module';
+// import { DeviceModule } from './device/device.module';
 import { SearchModule } from './search/search.module';
 import { CONFIG_ENV_PATH } from '@/config/constants';
 import { MongooseConfig } from '@/config/mongoose.config';
@@ -23,6 +23,7 @@ import { TopicModule } from './topic/topic.module';
 import { FriendModule } from './friend/friend.module';
 import { AuthorModule } from './author/author.module';
 import { CloudModule } from './cloud/cloud.module';
+import { FirebaseModule } from './firebase/firebase.module';
 import { AnnouncementModule } from './announcement/announcement.module';
 
 @Module({
@@ -37,6 +38,7 @@ import { AnnouncementModule } from './announcement/announcement.module';
 		ServeStaticModule.forRoot({
 			rootPath: join(__dirname, '..', 'public'),
 		}),
+		FirebaseModule.register(),
 		AreaModule,
 		UserModule,
 		AuthModule,
@@ -44,8 +46,8 @@ import { AnnouncementModule } from './announcement/announcement.module';
 		SharedModule, 
 		TeacherModule,
 		CourseModule,
-		NotificationModule,
-		DeviceModule,
+		//NotificationModule,
+		//DeviceModule,
 		SearchModule,
 		HistoryModule,
 		ChapterModule,

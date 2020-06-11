@@ -5,20 +5,22 @@ import { Model } from 'mongoose';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { RegisterDto } from '@/auth/dtos/register.dto';
-import { TeacherService } from '@/teacher/teacher.service';
+import { MessagingService } from '@/firebase/messaging.service';
 import { UpdateDto } from './dtos/update.dto';
 import { IUser } from './interfaces/user.interface';
 import { IFriend } from '@/friend/interfaces/friend.interface';
-import { FriendStatuses } from '@/config/constants';
+import { FriendStatuses, Notification, Push } from '@/config/constants';
+import { INotification } from './interfaces/notification.interface';
 
 @Injectable()
 export class UserService {
 
     constructor(
         @InjectModel('User') private readonly userModel: Model<IUser>,
+        @InjectModel('Notification') private readonly notificationModel: Model<INotification>,
         private readonly configService: ConfigService,
-        //private readonly teacherService: TeacherService
-    ) { }
+        private readonly messagingService: MessagingService
+    ) {}
 
     async countUserByPhoneEmail(user: { phone: string, email: string }): Promise<number> {
         const { phone, email } = user;
@@ -328,29 +330,52 @@ export class UserService {
 
     async addFriend(userId: string, friendId: string): Promise<0 | 1 | -1> {
         try {
+            const notificationData = {
+                type: Notification.Friend,
+                content: `đã gửi yêu cầu kết bạn với bạn.`,
+                user: userId
+            };
+            const notification: INotification = new this.notificationModel(notificationData);
             const friend = await this.userModel
                 .findByIdAndUpdate(friendId, {
                     $push: {
                         relationships: {
                             friend: userId,
                             status: FriendStatuses.ReceivedInvitation
-                        }
+                        },
+                        notifications: notification
                     }
                 }, {
                     runValidators: true
                 });
             if (!friend) return 0;
-            await this.userModel.updateOne({
-                _id: userId
-            }, {
-                $push: {
-                    relationships: {
-                        friend: friendId,
-                        status: FriendStatuses.SentInvitation
+            const user = await this.userModel
+                .findByIdAndUpdate(userId, {
+                    $push: {
+                        relationships: {
+                            friend: friendId,
+                            status: FriendStatuses.SentInvitation
+                        }
                     }
-                }
-            });
-            //firebase notification.
+                })
+                .select('name avatar');
+            if (friend.fcmToken)
+                await this.messagingService.send(friend.fcmToken, {
+                    notification: {
+                        title: `Yêu cầu kết bạn`,
+                        body: `${user.name} đã gửi yêu cầu kết bạn với bạn.`
+                    },
+                    data: {
+                        _id: notification._id.toString(),
+                        createdAt: notification.createdAt.toString(),
+                        userId,
+                        userName: user.name,
+                        ...(user.avatar ? { userAvatar: user.avatar } : {}),
+                        pushType: Push.Notification,
+                        type: Notification.Friend,
+                        content: `đã gửi yêu cầu kết bạn với bạn.`,
+                    }
+                });
             return 1;
         }
         catch (e) {
@@ -500,7 +525,8 @@ export class UserService {
     }
 
     async updateFCMToken(userId: string, token: string): Promise<any> {
-        await this.userModel
+        this.messagingService.sayHello(token);
+        return await this.userModel
             .findByIdAndUpdate(userId, {
                 $set: {
                     fcmToken: token

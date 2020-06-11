@@ -34,6 +34,9 @@ lerna-debug.log*
 !.vscode/launch.json
 !.vscode/extensions.json
 
+#SERVICE_ACCOUNT_KEY
+serviceAccountKey.json
+
 #ENV
 config/env/*.local.env
 

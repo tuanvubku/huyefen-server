@@ -99,3 +99,14 @@ export enum Comment {
     User = "User",
     Teacher = "Teacher"
 };
+
+
+export enum Notification {
+    Friend = 'friend',
+    Recommend = 'recommend'
+};
+
+export enum Push {
+    Messenger = 'messenger',
+    Notification = 'notification'
+};
