@@ -1,22 +1,20 @@
+import { Progressive, Resolution } from '@/utils/utils';
 import { OnQueueActive, OnQueueCompleted, OnQueueProgress, Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 import { join } from 'path';
-import { Progressive, Resolution } from '@/utils/utils';
-import * as fs from 'fs';
-import { JobController } from '@/job/job.controller';
 const ffmpeg = require('fluent-ffmpeg');
+
 @Processor('video')
 export class VideoConsumer {
 
     @Process('video')
     async changeResolution(job: Job) {
 
-        console.dir(job.data.video);
-        const filePath = job.data.video.path;
+        console.log(job.data.video);
+        //const filePath = job.data.video.path;
         const courseId = job.data.courseId;
         const lectureId = job.data.lectureId;
         const fileName = job.data.video.filename;
-        console.log("vudt")
         
         console.log("XU ly")
         //console.log(height);

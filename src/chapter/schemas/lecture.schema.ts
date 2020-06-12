@@ -1,5 +1,6 @@
 import { Schema } from 'mongoose';
 import { Lecture } from '@/config/constants';
+import { ResourceSchema } from './resource.schema';
 
 export const LectureSchema = new Schema({
     title: {
@@ -28,5 +29,13 @@ export const LectureSchema = new Schema({
     isPreviewed: {
         type: Boolean,
         default: false
+    },
+    description: {
+        type: String,
+        default: null
+    },
+    resources: {
+        type: ResourceSchema,
+        default: null
     }
 })

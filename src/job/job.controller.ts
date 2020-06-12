@@ -4,7 +4,6 @@ import {
     Param,
     Body,
     Get,
-    Put,
     Post,
     Delete,
     ParseIntPipe,

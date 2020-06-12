@@ -2,7 +2,7 @@ import { User } from '@/utils/decorators/user.decorator';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { generateFileName, ResponseSuccess } from '@/utils/utils';
 import { InjectQueue } from '@nestjs/bull';
-import { Body, Controller, Param, Post, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Param, Post, Res, UploadedFile, UseGuards, UseInterceptors, ForbiddenException, NotAcceptableException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -11,13 +11,16 @@ import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import { CloudService } from './cloud.service';
 import { Roles } from '@/utils/decorators/roles.decorator';
-import { Role } from '@/config/constants';
+import { Role, SIZE_LIMIT } from '@/config/constants';
+import { AuthorService } from '@/author/author.service';
+import * as path from 'path'
 @Controller('cloud')
 export class CloudController {
 
     constructor(
         private readonly cloudService: CloudService,
         private readonly configService: ConfigService,
+        private readonly authorService: AuthorService,
         @InjectQueue('video') private videoQueue: Queue
     ) { }
 
@@ -28,11 +31,10 @@ export class CloudController {
         {
             storage: diskStorage({
                 destination: (req, file, cb) => {
-                    //console.log(req)
                     const role = `${req.user["role"]}s`;
                     const filePath = `./public/${role}/${req.user["_id"]}`;
                     if (!fs.existsSync(filePath)) {
-                        fs.mkdirSync(filePath, { recursive: true })
+                        fs.mkdirSync(filePath, { recursive: true });
                     }
                     cb(null, filePath);
                 },
@@ -44,7 +46,7 @@ export class CloudController {
     async uploadAvatar(@UploadedFile() file, @User() user) {
         const url = `${this.configService.get<string>('HOST')}\/${file.filename}`;
         const res = { url };
-        return new ResponseSuccess<any>("UPLOAD.SUCCESS", res)
+        return new ResponseSuccess<any>("UPLOAD.SUCCESS", res);
     }
 
 
@@ -56,9 +58,9 @@ export class CloudController {
             storage: diskStorage({
                 destination: (req, file, cb) => {
                     const { courseId } = req.body;
-                    const filePath = `./public/Courses/avatars/${courseId}`
+                    const filePath = `./public/Courses/avatars/${courseId}`;
                     if (!fs.existsSync(filePath)) {
-                        fs.mkdirSync(filePath, { recursive: true })
+                        fs.mkdirSync(filePath, { recursive: true });
                     }
                     cb(null, filePath);
                 },
@@ -70,16 +72,99 @@ export class CloudController {
     async uploadACourseAvatar(
         @UploadedFile() file,
         @User() user,
-        @Param('id') courseId: String
+        @Param('id') courseId: string
     ) {
+        const isCourseOfTeacher = await this.authorService.validateTeacherCourse(user['_id'], courseId);
+        if (!isCourseOfTeacher)
+            throw new ForbiddenException("COURSE_NOT_MATCH_TEACHER");
+        const url = `${this.configService.get<string>('HOST')}\/${file.filename}`;
+        const res = { url };
+        return new ResponseSuccess<any>("UPLOAD.SUCCESS", res);
+    }
+
+    @Post('upload/course/:id/resource')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    @UseInterceptors(FileInterceptor('resource',
+        {
+            storage: diskStorage({
+                destination: (req, file, cb) => {
+                    const { lectureId } = req.body;
+                    const courseId = req.params.id;
+                    const filePath = `./public/Courses/videos/${courseId}/${lectureId}/resources`;
+                    if (!fs.existsSync(filePath)) {
+                        fs.mkdirSync(filePath, { recursive: true });
+                    }
+                    cb(null, filePath);
+                },
+                filename: (req, file, cb) => {
+                    generateFileName(req, file, cb);
+                }
+            }),
+            limits: {
+                fileSize: SIZE_LIMIT
+            }
+        }))
+    async uploadResources(
+        @UploadedFile() file,
+        @User() user,
+        @Param('id') courseId: string
+    ) {
+        const isCourseOfTeacher = await this.authorService.validateTeacherCourse(user['_id'], courseId);
+        if (!isCourseOfTeacher)
+            throw new ForbiddenException("COURSE_NOT_MATCH_TEACHER");
+        const url = `${this.configService.get<string>('HOST')}\/${file.filename}`;
+        const res = { url };
+        return new ResponseSuccess<any>("UPLOAD.SUCCESS", res);
+    }
+
+    @Post('upload/course/:id/caption')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    @UseInterceptors(FileInterceptor('caption',
+        {
+            storage: diskStorage({
+                destination: (req, file, cb) => {
+                    const { lectureId } = req.body;
+                    const courseId = req.params.id;
+                    const filePath = `./public/Courses/videos/${courseId}/${lectureId}`
+                    if (!fs.existsSync(filePath)) {
+                        fs.mkdirSync(filePath, { recursive: true });
+                    }
+                    cb(null, filePath);
+                },
+                filename: (req, file, cb) => {
+                    generateFileName(req, file, cb);
+                }
+            }),
+            fileFilter: (req, file, cb) => {
+                const ext = path.extname(file.originalname);
+                if (ext !== '.vtt')
+                    return cb(null, false);
+                cb(null, true);
+            },
+            limits: {
+                fileSize: SIZE_LIMIT
+            }
+        }))
+    async uploadCaptionVideo(
+        @UploadedFile() file,
+        @User() user,
+        @Param('id') courseId: string
+    ) {
+        if (!file)
+            throw new NotAcceptableException("Only .vtt extension is allowed");
+        const isCourseOfTeacher = await this.authorService.validateTeacherCourse(user['_id'], courseId);
+        if (!isCourseOfTeacher)
+            throw new ForbiddenException("COURSE_NOT_MATCH_TEACHER");
         const url = `${this.configService.get<string>('HOST')}\/${file.filename}`;
         const res = { url };
         return new ResponseSuccess<any>("UPLOAD.SUCCESS", res)
     }
 
-
     @Post('upload/course/:id/video')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
     @UseInterceptors(FileInterceptor('video',
         {
             storage: diskStorage({
@@ -103,12 +188,14 @@ export class CloudController {
         @Res() res
     ) {
 
+        console.log(file)
         const _jobId = await this.videoQueue.add("video", {
             video: file,
             courseId,
             lectureId
         })
 
+        
         const cb = (jobId, result) => {
             console.log("Hello")
             console.log(_jobId.id == jobId)
@@ -119,5 +206,6 @@ export class CloudController {
                 this.videoQueue.removeListener("global:completed", cb);
             }
         }
+        this.videoQueue.addListener("global:completed", cb);
     }
 }

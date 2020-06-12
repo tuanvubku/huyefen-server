@@ -1,12 +1,15 @@
 export const CONFIG_ENV_PATH: string = 'config/env';
 
+export const TOKEN_EXPIRED = '12h';
+
+export const SIZE_LIMIT = 5 * 1024 * 1024
+
 export enum Role {
     User = "User",
     Teacher = "Teacher",
     Admin = "Admin"
 };
 
-export const TOKEN_EXPIRED = '12h';
 
 export enum FriendStatuses {
     NoFriend = 1,
@@ -22,7 +25,7 @@ export enum Gender {
 
 export enum Level {
     AllLevel = 'allLevel',
-    Beginner ='beginner',
+    Beginner = 'beginner',
     Intermediate = 'intermediate',
     Expert = 'expert'
 };
@@ -42,7 +45,7 @@ export enum Price {
 };
 
 export enum TeacherCoursesSort {
-    Newest =  'newest',
+    Newest = 'newest',
     Oldest = 'oldest',
     AtoZ = 'a-z',
     ZtoA = 'z-a'
@@ -80,3 +83,4 @@ export enum ValidateStatus {
     InvalidCourse = 1,
     InvalidTeacher = 2
 };
+
