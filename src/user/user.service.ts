@@ -82,6 +82,15 @@ export class UserService {
         };
     }
 
+    async findUserToken(userId: string): Promise<string> {
+        const user: any = await this.userModel.findById(userId);
+        return user ? user.fcmToken : null;
+    }
+
+    async findById(userId: string): Promise<IUser> {
+        return await this.userModel.findById(userId);
+    }
+
     async update(userId: string, params: UpdateDto): Promise<any> {
         try {
             const user = await this.userModel

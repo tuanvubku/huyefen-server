@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards, Req, Param } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Req, Param, Body, ForbiddenException, ConflictException, NotFoundException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
@@ -6,6 +6,7 @@ import { Role } from '@/config/constants';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { MessengerService } from './messenger.service';
 import { ResponseSuccess } from '@/utils/utils';
+import { SendDto } from './dtos/send.dto';
 
 @Controller('api/messenger')
 @Roles(Role.User)
@@ -19,10 +20,24 @@ export class MessengerController {
     async check(
         @Req() req,
         @Param('friendId') friendId: string
-    ): Promise<IResponse<boolean>> {
+    ): Promise<IResponse<string>> {
         const userId: string = req.user._id;
-        const checkStatus: boolean = await this.messengerService.check(userId, friendId);
-        return new ResponseSuccess<boolean>('CHECK_STATUS_OK', checkStatus);
+        const converId: string = await this.messengerService.check(userId, friendId);
+        return new ResponseSuccess<string>('CHECK_STATUS_OK', converId);
     }
 
+    @Post('/send')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async send(
+        @Req() req,
+        @Body() body: SendDto
+    ): Promise<IResponse<any>> {
+        const userId: string = req.user._id;
+        const sendRet: any = await this.messengerService.send(userId, body);
+        if (sendRet === -1)
+            throw new ForbiddenException('You don\'t have permission in this conversation!');
+        else if (sendRet === -2)
+            throw new ConflictException('The conversation has been created!');
+        return new ResponseSuccess('SEND_OK', sendRet);
+    }
 }
