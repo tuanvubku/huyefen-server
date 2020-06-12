@@ -14,10 +14,12 @@ export const ConversationSchema = new Schema({
     },
     lastUpdated: {
         type: Date,
-        default: Date.now
+        default: Date.now,
+        required: true
     },
     lastMessage: {
         type: String,
+        required: true,
         default: null
     }
 });
