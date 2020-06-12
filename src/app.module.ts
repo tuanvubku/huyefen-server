@@ -24,6 +24,7 @@ import { FriendModule } from './friend/friend.module';
 import { AuthorModule } from './author/author.module';
 import { CloudModule } from './cloud/cloud.module';
 import { FirebaseModule } from './firebase/firebase.module';
+import { MessengerModule } from './messenger/messenger.module';
 import { AnnouncementModule } from './announcement/announcement.module';
 
 @Module({
@@ -56,6 +57,7 @@ import { AnnouncementModule } from './announcement/announcement.module';
 		AuthorModule,
         CloudModule,
         AnnouncementModule
+        MessengerModule
 	],
 	providers: [
 		{
