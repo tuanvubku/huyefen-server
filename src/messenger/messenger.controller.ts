@@ -52,4 +52,17 @@ export class MessengerController {
         const result: { hasMore: boolean, list: object } = await this.messengerService.fetch(userId, skip, limit);
         return new ResponseSuccess('FETCH_CONVERS_OK', result);
     }
+
+    @Get('/conversations/:id/partner')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async fetchPartner(
+        @Req() req,
+        @Param('id') conversationId: string
+    ): Promise<IResponse<any>> {
+        const userId: string = req.user._id;
+        const partner = await this.messengerService.fetchPartner(userId, conversationId);
+        if (!partner)
+            throw new ForbiddenException('You don\'t have permission to access this conversation!');
+        return new ResponseSuccess('FETCH_PARTNER_OK', partner);
+    }
 }

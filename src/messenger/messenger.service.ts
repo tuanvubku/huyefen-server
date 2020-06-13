@@ -138,4 +138,16 @@ export class MessengerService {
             list: _.keyBy(arrList, '_id')
         };
     }
+
+    async fetchPartner(userId: string, converId: string): Promise<any> {
+        const conversation: IConversation = await this.conversationModel
+            .findOne({ _id: converId, members: userId })
+            .populate('members', 'avatar name')
+            .select('members');
+        if (conversation) {
+            const partner = _.find(conversation.members, member => (member as any)._id.toString() !== userId);
+            return partner;
+        }
+        return null;
+    }
 }
