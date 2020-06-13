@@ -1,11 +1,11 @@
-import { JobModule } from '@/job/job.module';
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { UserSchema } from './schemas/user.schema';
 import { UserController } from './user.controller';
 import { UserService } from './user.service';
 import { JobModule } from '@/job/job.module';
 import { NotificationSchema } from './schemas/notification.schema';
+import { MessengerModule } from '@/messenger/messenger.module';
 
 @Module({
 	imports: [
@@ -13,7 +13,8 @@ import { NotificationSchema } from './schemas/notification.schema';
 			{ name: 'User', schema: UserSchema },
 			{ name: 'Notification', schema: NotificationSchema }
 		]),
-		JobModule
+		JobModule,
+		forwardRef(() => MessengerModule)
 	],
 	controllers: [UserController],
 	providers: [UserService],

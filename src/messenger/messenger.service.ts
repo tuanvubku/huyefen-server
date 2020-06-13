@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IConversation } from './interfaces/conversation.interface';
@@ -9,7 +9,6 @@ import { UserService } from '@/user/user.service';
 import { IUser } from '@/user/interfaces/user.interface';
 import { Push } from '@/config/constants';
 import * as _ from 'lodash';
-import { pick } from 'lodash';
 
 @Injectable()
 export class MessengerService {
@@ -17,7 +16,7 @@ export class MessengerService {
         @InjectModel('Conversation') private readonly conversationModel: Model<IConversation>,
         @InjectModel('Message') private readonly messageModel: Model<IMessage>,
         private readonly messagingService: MessagingService,
-        private readonly userService: UserService
+        @Inject(forwardRef(() => UserService)) private readonly userService: UserService
     ) {}
 
     async check(userId: string, friendId: string): Promise<string> {
@@ -213,5 +212,31 @@ export class MessengerService {
             hasMore,
             list: messages
         };
+    }
+
+    async countUsMessage(userId: string): Promise<number> {
+        const conversations: IConversation[] = await this.conversationModel
+            .find({ members: userId });
+        const conversationIds = _.map(conversations, '_id');
+        const usConversations = await this.messageModel.aggregate([
+            {
+                //filter
+                $match: {
+                    conver: {
+                        $in: conversationIds,
+                    },
+                    sender: {
+                        $ne: userId
+                    },
+                    seenAt: null
+                }
+            },
+            {
+                $group: {
+                    _id: 'conver'
+                }
+            }
+        ]);
+        return _.size(usConversations);
     }
 }

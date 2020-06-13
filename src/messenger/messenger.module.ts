@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { MessengerController } from './messenger.controller';
 import { MessengerService } from './messenger.service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -12,9 +12,11 @@ import { UserModule } from '@/user/user.module';
 			{ name: 'Conversation', schema: ConversationSchema },
 			{ name: 'Message', schema: MessageSchema }
 		]),
-		UserModule
+		//UserModule
+		forwardRef(() => UserModule)
     ],
     controllers: [MessengerController],
-    providers: [MessengerService]
+	providers: [MessengerService],
+	exports: [MessengerService]
 })
 export class MessengerModule {}

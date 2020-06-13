@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus, Injectable, ConflictException, BadRequestException } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, ConflictException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import * as _ from 'lodash';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -11,6 +11,7 @@ import { IUser } from './interfaces/user.interface';
 import { IFriend } from '@/friend/interfaces/friend.interface';
 import { FriendStatuses, Notification, Push } from '@/config/constants';
 import { INotification } from './interfaces/notification.interface';
+import { MessengerService } from '@/messenger/messenger.service';
 
 @Injectable()
 export class UserService {
@@ -19,7 +20,8 @@ export class UserService {
         @InjectModel('User') private readonly userModel: Model<IUser>,
         @InjectModel('Notification') private readonly notificationModel: Model<INotification>,
         private readonly configService: ConfigService,
-        private readonly messagingService: MessagingService
+        private readonly messagingService: MessagingService,
+        private readonly messengerService: MessengerService
     ) {}
 
     async countUserByPhoneEmail(user: { phone: string, email: string }): Promise<number> {
@@ -53,7 +55,7 @@ export class UserService {
             .exec();
         if (!user) return null;
         const noOfUsNotification: number = _.size(_.filter(user.notifications, notification => !notification.seen));
-        const noOfUsMessage: number = 9;         //temporary;
+        const noOfUsMessage: number = await this.messengerService.countUsMessage(user._id);
         return {
             ..._.omit(user, ['notifications']),
             noOfUsNotification,
@@ -74,7 +76,7 @@ export class UserService {
             .exec();
         if (!user) return null;
         const noOfUsNotification: number = _.size(_.filter(user.notifications, notification => !notification.seen));
-        const noOfUsMessage: number = 9;         //temporary;
+        const noOfUsMessage: number = await this.messengerService.countUsMessage(userId);
         return {
             ..._.omit(user, ['notifications']),
             noOfUsMessage,
