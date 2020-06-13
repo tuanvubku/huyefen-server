@@ -74,9 +74,9 @@ export class MessengerController {
         @Param('id') conversationId: string,
         @Query('skip', ParseIntPipe) skip: number,
         @Query('limit', ParseIntPipe) limit: number
-    ): Promise<IResponse<{ hasMore: boolean, list: IMessage[] }>> {
+    ): Promise<IResponse<{ seenCount: number, hasMore: boolean, list: IMessage[] }>> {
         const userId: string = req.user._id;
-        const result: { hasMore: boolean, list: IMessage[] } = await this.messengerService.fetchMessages(userId, conversationId, skip, limit);
+        const result: { seenCount: number, hasMore: boolean, list: IMessage[] } = await this.messengerService.fetchMessages(userId, conversationId, skip, limit);
         if (!result)
             throw new ForbiddenException('You don\'t have permission to access this conversation!');
         return new ResponseSuccess('FETCH_MESSAGES_OK', result);

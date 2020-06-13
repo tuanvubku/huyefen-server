@@ -8,6 +8,7 @@ import { MessagingService } from '@/firebase/messaging.service';
 import { UserService } from '@/user/user.service';
 import { IUser } from '@/user/interfaces/user.interface';
 import { Push } from '@/config/constants';
+import { Types } from 'mongoose';
 import * as _ from 'lodash';
 
 @Injectable()
@@ -74,6 +75,8 @@ export class MessengerService {
             content
         });
         await message.save();
+        let unseensPair: any = await this.countUnseensPair(conversation._id);
+        unseensPair = _.keyBy(unseensPair, '_id');
         const friend: IUser = await this.userService.findById(targetId);
         const user: IUser = await this.userService.findById(userId);
         //view user is on in socket?
@@ -91,6 +94,7 @@ export class MessengerService {
                     ...(message.content.text ? { text: message.content.text } : {}),
                     ...(message.content.image ? { image: message.content.image }: {}),
                     ...(message.content.video ? { video: message.content.video } : {}),
+                    unseen: (unseensPair[userId] && unseensPair[userId].value.toString()) || 0,
                     pushType: Push.Messenger,
                     userId,
                     userName: user.name,
@@ -98,9 +102,11 @@ export class MessengerService {
                 }
             });
         }
+        const friendId: string = friend._id.toString();
         return {
             conversation: {
                 ..._.pick(conversation, ['_id', 'lastUpdated', 'lastMessage']),
+                unseen: unseensPair[friendId] && unseensPair[friendId].value || 0,
                 name: friend.name,
                 avatar: friend.avatar
             },
@@ -135,7 +141,7 @@ export class MessengerService {
                 const converId: string = conversation._id.toString();
                 return {
                     ..._.pick(conversation, ['_id', 'lastMessage', 'lastUpdated']),
-                    unseen: unreadArr[converId].value,
+                    unseen: unreadArr[converId] && unreadArr[converId].value || 0,
                     name,
                     avatar
                 };
@@ -159,7 +165,7 @@ export class MessengerService {
         return null;
     }
 
-    async fetchMessages(userId: string, converId: string, skip: number, limit: number): Promise<{ hasMore: boolean, list: IMessage[] }> {
+    async fetchMessages(userId: string, converId: string, skip: number, limit: number): Promise<{ seenCount: number, hasMore: boolean, list: IMessage[] }> {
         const checkCount: number = await this.conversationModel
             .findOne({
                 _id: converId,
@@ -218,6 +224,7 @@ export class MessengerService {
         );
         _.reverse(messages);
         return {
+            seenCount: _.size(unseenMessageIds),
             hasMore,
             list: messages
         };
@@ -235,7 +242,7 @@ export class MessengerService {
                         $in: conversationIds,
                     },
                     sender: {
-                        $ne: userId
+                        $ne: Types.ObjectId(userId)
                     },
                     seenAt: null
                 }
@@ -257,7 +264,7 @@ export class MessengerService {
                         $in: converIds
                     },
                     sender: {
-                        $ne: userId
+                        $ne: Types.ObjectId(userId)
                     },
                     seenAt: null
                 }
@@ -265,6 +272,23 @@ export class MessengerService {
             {
                 $group: {
                     _id: '$conver',
+                    value: { $sum: 1 }
+                }
+            }
+        ]);
+    }
+
+    async countUnseensPair(converId: string): Promise<any> {
+        return await this.messageModel.aggregate([
+            {
+                $match: {
+                    conver: converId,
+                    seenAt: null
+                }
+            },
+            {
+                $group: {
+                    _id: '$sender',
                     value: { $sum: 1 }
                 }
             }
