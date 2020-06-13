@@ -4,9 +4,9 @@ export interface IMessage extends Document {
     _id: string;
     conver: string;
     sender: string;
-    createdAt: number;
-    receivedAt: number;
-    seenAt: number;
+    createdAt: string;
+    receivedAt: string;
+    seenAt: string;
     content: {
         text: string;
         image: string;

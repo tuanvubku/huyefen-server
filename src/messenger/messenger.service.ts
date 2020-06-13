@@ -150,4 +150,68 @@ export class MessengerService {
         }
         return null;
     }
+
+    async fetchMessages(userId: string, converId: string, skip: number, limit: number): Promise<{ hasMore: boolean, list: IMessage[] }> {
+        const checkCount: number = await this.conversationModel
+            .findOne({
+                _id: converId,
+                members: userId
+            })
+            .count();
+        if (checkCount < 1) return null;
+        const numOfMessage: number = await this.messageModel.find({ conver: converId }).count();
+        const hasMore: boolean = skip + limit < numOfMessage;
+        const messagesList: IMessage[] = await this.messageModel
+            .find({ conver: converId })
+            .populate('sender', 'name avatar')
+            .sort('-createdAt')
+            .skip(skip)
+            .limit(limit);
+        const unseenMessageIds = _.map(
+            _.filter(
+                messagesList,
+                message => (message.sender as any)._id.toString() !== userId && !message.seenAt
+            ),
+            '_id'
+        );
+        const seenAt = new Date().toISOString();
+        if (!_.isEmpty(unseenMessageIds)) {
+            //check socket --> if ok -> emit to socket unseenMessageIds array with seenAt value
+            await this.messageModel
+                .updateMany({
+                    _id: {
+                        $in: unseenMessageIds
+                    }
+                }, {
+                    $set: {
+                        seenAt
+                    }
+                });
+        }
+        const messages = _.map(
+            messagesList,
+            message => {
+                const sender = message.sender as any;
+                const userName: string = sender.name;
+                const avatar: string = sender.avatar;
+                const userId: string = sender._id.toString();
+                let seenAtValue = message.seenAt;
+                if (_.indexOf(unseenMessageIds, message._id) > -1)
+                    seenAtValue = seenAt;
+                return {
+                    ..._.pick(message, ['_id', 'content', 'createdAt', 'receivedAt']),
+                    userName,
+                    avatar,
+                    userId,
+                    conversationId: converId,
+                    seenAt: seenAtValue
+                };
+            }
+        );
+        _.reverse(messages);
+        return {
+            hasMore,
+            list: messages
+        };
+    }
 }

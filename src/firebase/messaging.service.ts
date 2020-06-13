@@ -17,13 +17,18 @@ export class MessagingService {
     }
 
     async send(token: string, message: any): Promise<void> {
-        await this.messaging.send({
-            data: message.data,
-            notification: {
-                ...message.notification,
-                imageUrl: 'https://i.ibb.co/WtcZtGw/logo-transparent-background.png'
-            },
-            token
-        });
+        try {
+            await this.messaging.send({
+                data: message.data,
+                notification: {
+                    ...message.notification,
+                    imageUrl: 'https://i.ibb.co/WtcZtGw/logo-transparent-background.png'
+                },
+                token
+            });
+        }
+        catch (e) {
+            console.log(e.message);
+        }
     }
 }

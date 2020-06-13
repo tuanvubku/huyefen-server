@@ -7,6 +7,7 @@ import { IResponse } from '@/utils/interfaces/response.interface';
 import { MessengerService } from './messenger.service';
 import { ResponseSuccess } from '@/utils/utils';
 import { SendDto } from './dtos/send.dto';
+import { IMessage } from './interfaces/message.interface';
 
 @Controller('api/messenger')
 @Roles(Role.User)
@@ -64,5 +65,20 @@ export class MessengerController {
         if (!partner)
             throw new ForbiddenException('You don\'t have permission to access this conversation!');
         return new ResponseSuccess('FETCH_PARTNER_OK', partner);
+    }
+
+    @Get('/conversations/:id/messages')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async fetchMessages(
+        @Req() req,
+        @Param('id') conversationId: string,
+        @Query('skip', ParseIntPipe) skip: number,
+        @Query('limit', ParseIntPipe) limit: number
+    ): Promise<IResponse<{ hasMore: boolean, list: IMessage[] }>> {
+        const userId: string = req.user._id;
+        const result: { hasMore: boolean, list: IMessage[] } = await this.messengerService.fetchMessages(userId, conversationId, skip, limit);
+        if (!result)
+            throw new ForbiddenException('You don\'t have permission to access this conversation!');
+        return new ResponseSuccess('FETCH_MESSAGES_OK', result);
     }
 }
