@@ -119,14 +119,23 @@ export class MessengerService {
             .populate('members', 'name avatar')
             .sort('-lastUpdated');
         const hasMore: boolean = skip + limit < _.size(conversations);
+        const mainList =  _.slice(conversations, skip, skip + limit);
+        const converIds = _.map(mainList, '_id');
+        let unreadArr: any = [];
+        if (!_.isEmpty(converIds)) {
+            unreadArr = await this.countUnread(userId, converIds);
+            unreadArr = _.keyBy(unreadArr, '_id');
+        }
         const arrList = _.map(
-            _.slice(conversations, skip, skip + limit),
+            mainList,
             conversation => {
                 const friend: any = _.find(conversation.members, member => (member as any)._id.toString() !== userId);
                 const name: string = friend.name;
                 const avatar: string = friend.avatar;
+                const converId: string = conversation._id.toString();
                 return {
                     ..._.pick(conversation, ['_id', 'lastMessage', 'lastUpdated']),
+                    unseen: unreadArr[converId].value,
                     name,
                     avatar
                 };
@@ -233,10 +242,32 @@ export class MessengerService {
             },
             {
                 $group: {
-                    _id: 'conver'
+                    _id: '$conver'
                 }
             }
         ]);
         return _.size(usConversations);
+    }
+
+    async countUnread(userId: string, converIds: string[]): Promise<any[]> {
+        return await this.messageModel.aggregate([
+            {
+                $match: {
+                    conver: {
+                        $in: converIds
+                    },
+                    sender: {
+                        $ne: userId
+                    },
+                    seenAt: null
+                }
+            },
+            {
+                $group: {
+                    _id: '$conver',
+                    value: { $sum: 1 }
+                }
+            }
+        ]);
     }
 }

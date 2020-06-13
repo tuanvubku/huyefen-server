@@ -81,4 +81,14 @@ export class MessengerController {
             throw new ForbiddenException('You don\'t have permission to access this conversation!');
         return new ResponseSuccess('FETCH_MESSAGES_OK', result);
     }
+
+    @Get('/unread')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async fetchUnread(
+        @Req() req
+    ): Promise<IResponse<number>> {
+        const userId: string = req.user._id;
+        const unread: number = await this.messengerService.countUsMessage(userId);
+        return new ResponseSuccess<number>('FETCH_OK', unread);
+    }
 }
