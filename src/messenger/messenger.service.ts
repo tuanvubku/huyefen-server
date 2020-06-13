@@ -9,6 +9,7 @@ import { UserService } from '@/user/user.service';
 import { IUser } from '@/user/interfaces/user.interface';
 import { Push } from '@/config/constants';
 import * as _ from 'lodash';
+import { pick } from 'lodash';
 
 @Injectable()
 export class MessengerService {
@@ -110,6 +111,31 @@ export class MessengerService {
                 userName: user.name,
                 avatar: user.avatar
             }
+        };
+    }
+
+    async fetch(userId: string, skip: number, limit: number): Promise<{ hasMore: boolean, list: object }> {
+        const conversations = await this.conversationModel
+            .find({ members: userId })
+            .populate('members', 'name avatar')
+            .sort('-lastUpdated');
+        const hasMore: boolean = skip + limit < _.size(conversations);
+        const arrList = _.map(
+            _.slice(conversations, skip, skip + limit),
+            conversation => {
+                const friend: any = _.find(conversation.members, member => (member as any)._id.toString() !== userId);
+                const name: string = friend.name;
+                const avatar: string = friend.avatar;
+                return {
+                    ..._.pick(conversation, ['_id', 'lastMessage', 'lastUpdated']),
+                    name,
+                    avatar
+                };
+            }
+        )
+        return {
+            hasMore,
+            list: _.keyBy(arrList, '_id')
         };
     }
 }

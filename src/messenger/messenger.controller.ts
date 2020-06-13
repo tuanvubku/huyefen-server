@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Req, Param, Body, ForbiddenException, ConflictException, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Req, Param, Body, ForbiddenException, ConflictException, NotFoundException, ParseIntPipe, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
@@ -39,5 +39,17 @@ export class MessengerController {
         else if (sendRet === -2)
             throw new ConflictException('The conversation has been created!');
         return new ResponseSuccess('SEND_OK', sendRet);
+    }
+
+    @Get('/conversations')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    async fetch(
+        @Req() req,
+        @Query('skip', ParseIntPipe) skip: number,
+        @Query('limit', ParseIntPipe) limit: number
+    ): Promise<IResponse<{ hasMore: boolean, list: object }>> {
+        const userId: string = req.user._id;
+        const result: { hasMore: boolean, list: object } = await this.messengerService.fetch(userId, skip, limit);
+        return new ResponseSuccess('FETCH_CONVERS_OK', result);
     }
 }
