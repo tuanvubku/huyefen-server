@@ -64,8 +64,7 @@ import { AnnouncementModule } from './announcement/announcement.module';
 		{
 			provide: APP_PIPE,
 			useValue: new ValidationPipe(validationPipeConfig)
-		},
-		MessengerGateway
+		}
 	]
 })
 export class AppModule {}

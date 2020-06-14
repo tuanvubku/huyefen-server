@@ -10,6 +10,7 @@ import { IUser } from '@/user/interfaces/user.interface';
 import { Push } from '@/config/constants';
 import { Types } from 'mongoose';
 import * as _ from 'lodash';
+import { MessengerGateway } from './messenger.gateway';
 
 @Injectable()
 export class MessengerService {
@@ -17,7 +18,8 @@ export class MessengerService {
         @InjectModel('Conversation') private readonly conversationModel: Model<IConversation>,
         @InjectModel('Message') private readonly messageModel: Model<IMessage>,
         private readonly messagingService: MessagingService,
-        @Inject(forwardRef(() => UserService)) private readonly userService: UserService
+        @Inject(forwardRef(() => UserService)) private readonly userService: UserService,
+        private readonly messengerGateway: MessengerGateway
     ) {}
 
     async check(userId: string, friendId: string): Promise<string> {
@@ -67,55 +69,62 @@ export class MessengerService {
         }
         await conversation.save();
         //check target status
+        const checkOnline = this.messengerGateway.checkUserInConversation(targetId, conversation._id.toString());
+        console.log(checkOnline);
         const message: IMessage = new this.messageModel({
             sender: userId,
             conver: conversation._id,
             createdAt,
-            seenAt: null,
-            content
+            content,
+            ...(!checkOnline ? { seenAt: null } : {})
         });
         await message.save();
         let unseensPair: any = await this.countUnseensPair(conversation._id);
         unseensPair = _.keyBy(unseensPair, '_id');
         const friend: IUser = await this.userService.findById(targetId);
         const user: IUser = await this.userService.findById(userId);
-        //view user is on in socket?
-        //if yes --> send to socket.
-        //if no --> firebase
-        if (friend.fcmToken) {
-            this.messagingService.send(friend.fcmToken, {
-                notification: {
-                    title: 'Tin nhắn mới',
-                    body: `${user.name} đã gửi cho bạn một tin nhắn`
-                },
-                data: {
-                    converId: conversation._id.toString(),
-                    createdAt: message.createdAt.toString(),
-                    ...(message.content.text ? { text: message.content.text } : {}),
-                    ...(message.content.image ? { image: message.content.image }: {}),
-                    ...(message.content.video ? { video: message.content.video } : {}),
-                    unseen: (unseensPair[userId] && unseensPair[userId].value.toString()) || 0,
-                    pushType: Push.Messenger,
-                    userId,
-                    userName: user.name,
-                    userAvatar: user.avatar
-                }
-            });
+        const messageRet = {
+            ..._.pick(message, ['_id', 'content', 'createdAt', 'seenAt', 'receivedAt']),
+            userId,
+            userName: user.name,
+            avatar: user.avatar
+        };
+        if (checkOnline) {
+            this.messengerGateway.sendMessage(
+                targetId,
+                messageRet
+            );
         }
-        const friendId: string = friend._id.toString();
+        else {
+            if (friend.fcmToken) {
+                this.messagingService.send(friend.fcmToken, {
+                    notification: {
+                        title: 'Tin nhắn mới',
+                        body: `${user.name} đã gửi cho bạn một tin nhắn`
+                    },
+                    data: {
+                        converId: conversation._id.toString(),
+                        createdAt: message.createdAt.toString(),
+                        ...(message.content.text ? { text: message.content.text } : {}),
+                        ...(message.content.image ? { image: message.content.image }: {}),
+                        ...(message.content.video ? { video: message.content.video } : {}),
+                        unseen: (unseensPair[userId] && unseensPair[userId].value.toString()) || 0,
+                        pushType: Push.Messenger,
+                        userId,
+                        userName: user.name,
+                        userAvatar: user.avatar
+                    }
+                });
+            }
+        }
         return {
             conversation: {
                 ..._.pick(conversation, ['_id', 'lastUpdated', 'lastMessage']),
-                unseen: unseensPair[friendId] && unseensPair[friendId].value || 0,
+                unseen: unseensPair[targetId] && unseensPair[targetId].value || 0,
                 name: friend.name,
                 avatar: friend.avatar
             },
-            message: {
-                ..._.pick(message, ['_id', 'content', 'createdAt', 'seenAt', 'receivedAt']),
-                userId,
-                userName: user.name,
-                avatar: user.avatar
-            }
+            message: messageRet
         };
     }
 

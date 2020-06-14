@@ -7,53 +7,60 @@ export class MessengerGateway implements OnGatewayInit, OnGatewayConnection, OnG
 	@WebSocketServer() wss: Server;
 
 	private logger: Logger = new Logger('MessengerGateway');
-	private rooms: object = {};
+	private available: object = {};
+	private socketIds: object = {};
 
-	afterInit(){
+	afterInit() {
 		this.logger.log('Initialized gateway');
 	}
 
-	handleConnection() {
-		this.logger.log('New client is connecting!');
+	handleConnection(client: Socket) {
+		const clientId: string = client.id;
+		const userId: string = client.handshake.query.userId;
+		if (userId) {
+			this.socketIds[userId] = clientId;
+			this.logger.log(`New client: ${userId} is connecting!`);
+		}
 	}
 
 	handleDisconnect() {
 		this.logger.log('One client disconnected!');
 	}
 
-	checkClientInRoom(client: string, room: string) {
-		return this.rooms[room] && this.rooms[room].has(client);
+	checkUserInConversation(userId: string, converId: string): boolean {
+		return this.available[userId] && (this.available[userId] === converId);
 	}
 
-	@SubscribeMessage('joinRoom')
-	handleJoinRoom(
-		@MessageBody() payload: { userId: string, room: string },
+	@SubscribeMessage('start')
+	handleJoin(
+		@MessageBody() payload: { userId: string, converId: string },
 		@ConnectedSocket() client: Socket
 	): void {
-		const { userId, room } = payload;
-		if (this.rooms[room] && this.rooms[room].has(userId)) {
-			client.emit('roomJoined', room);
-		}
-		else {
-			client.join(room);
-			if (!this.rooms[room])
-				this.rooms[room] = new Set([userId]);
-			else
-				this.rooms[room].add(userId);
-			client.emit('joinRoomSuccess', room);
+		const { userId, converId } = payload;
+		this.available[userId] = converId;
+		this.logger.log(`User: ${userId} join conversation: ${converId}`);
+		client.emit('startOk');
+	}
+
+	@SubscribeMessage('end')
+	handleLeave(
+		@MessageBody() payload: { userId: string },
+		@ConnectedSocket() client: Socket
+	): void {
+		const { userId } = payload;
+		const converId = this.available[userId];
+		if (converId) {
+			delete this.available[userId];
+			this.logger.log(`User ${userId} leave conversation: ${converId}`);
+			client.emit('endOk');
 		}
 	}
 
-	@SubscribeMessage('leaveRoom')
-	handleLeaveRoom(
-		@MessageBody() payload: { userId: string, room: string },
-		@ConnectedSocket() client: Socket
-	): void {
-		const { userId, room } = payload;
-		client.leave(room);
-		this.rooms[room].delete(userId);
-		if (!this.rooms[room].size)
-			delete this.rooms[room];
-		client.emit('leaveRoomSuccess', room);
+	sendMessage(targetId: string, payload: object): void {
+		const clientId: string = this.socketIds[targetId];
+		if (clientId)
+			this.wss.to(clientId).emit('message', payload);
+		else
+			this.logger.log('Client isn\'t existed');
 	}
 }
