@@ -70,7 +70,6 @@ export class MessengerService {
         await conversation.save();
         //check target status
         const checkOnline = this.messengerGateway.checkUserInConversation(targetId, conversation._id.toString());
-        console.log(checkOnline);
         const message: IMessage = new this.messageModel({
             sender: userId,
             conver: conversation._id,
@@ -83,16 +82,24 @@ export class MessengerService {
         unseensPair = _.keyBy(unseensPair, '_id');
         const friend: IUser = await this.userService.findById(targetId);
         const user: IUser = await this.userService.findById(userId);
-        const messageRet = {
-            ..._.pick(message, ['_id', 'content', 'createdAt', 'seenAt', 'receivedAt']),
-            userId,
-            userName: user.name,
-            avatar: user.avatar
+        const result = {
+            conversation: {
+                ..._.pick(conversation, ['_id', 'lastUpdated', 'lastMessage']),
+                unseen: unseensPair[targetId] && unseensPair[targetId].value || 0,
+                name: friend.name,
+                avatar: friend.avatar
+            },
+            message: {
+                ..._.pick(message, ['_id', 'content', 'createdAt', 'seenAt', 'receivedAt']),
+                userId,
+                userName: user.name,
+                avatar: user.avatar
+            }
         };
         if (checkOnline) {
             this.messengerGateway.sendMessage(
                 targetId,
-                messageRet
+                result
             );
         }
         else {
@@ -117,15 +124,7 @@ export class MessengerService {
                 });
             }
         }
-        return {
-            conversation: {
-                ..._.pick(conversation, ['_id', 'lastUpdated', 'lastMessage']),
-                unseen: unseensPair[targetId] && unseensPair[targetId].value || 0,
-                name: friend.name,
-                avatar: friend.avatar
-            },
-            message: messageRet
-        };
+        return result;
     }
 
     async fetch(userId: string, skip: number, limit: number): Promise<{ hasMore: boolean, list: object }> {
