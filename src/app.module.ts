@@ -25,6 +25,7 @@ import { AuthorModule } from './author/author.module';
 import { CloudModule } from './cloud/cloud.module';
 import { FirebaseModule } from './firebase/firebase.module';
 import { MessengerModule } from './messenger/messenger.module';
+import { MessengerGateway } from './messenger/messenger.gateway';
 import { AnnouncementModule } from './announcement/announcement.module';
 
 @Module({
@@ -63,7 +64,8 @@ import { AnnouncementModule } from './announcement/announcement.module';
 		{
 			provide: APP_PIPE,
 			useValue: new ValidationPipe(validationPipeConfig)
-		}
+		},
+		MessengerGateway
 	]
 })
 export class AppModule {}
