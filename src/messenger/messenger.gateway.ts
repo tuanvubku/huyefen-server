@@ -63,4 +63,12 @@ export class MessengerGateway implements OnGatewayInit, OnGatewayConnection, OnG
 		else
 			this.logger.log('Client isn\'t existed');
 	}
+
+	emitSeen(targetId: string, payload: object): void {
+		const clientId: string = this.socketIds[targetId];
+		if (clientId)
+			this.wss.to(clientId).emit('seen', payload);
+		else
+			this.logger.log('Client isn\'t existed');
+	}
 }

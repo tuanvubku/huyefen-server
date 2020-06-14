@@ -174,13 +174,12 @@ export class MessengerService {
     }
 
     async fetchMessages(userId: string, converId: string, skip: number, limit: number): Promise<{ seenCount: number, hasMore: boolean, list: IMessage[] }> {
-        const checkCount: number = await this.conversationModel
+        const converItem: IConversation = await this.conversationModel
             .findOne({
                 _id: converId,
                 members: userId
-            })
-            .count();
-        if (checkCount < 1) return null;
+            });
+        if (!converItem) return null;
         const numOfMessage: number = await this.messageModel.find({ conver: converId }).count();
         const hasMore: boolean = skip + limit < numOfMessage;
         const messagesList: IMessage[] = await this.messageModel
@@ -199,6 +198,14 @@ export class MessengerService {
         const seenAt = new Date().toISOString();
         if (!_.isEmpty(unseenMessageIds)) {
             //check socket --> if ok -> emit to socket unseenMessageIds array with seenAt value
+            const friendId: string = (_.find(converItem.members, id => id.toString() !== userId)).toString();
+            const checkOnline: boolean = this.messengerGateway.checkUserInConversation(friendId, converId);
+            if (checkOnline) {
+                this.messengerGateway.emitSeen(friendId, {
+                    value: seenAt,
+                    messageIds: unseenMessageIds
+                });
+            }
             await this.messageModel
                 .updateMany({
                     _id: {
