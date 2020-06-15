@@ -311,6 +311,21 @@ export class UserService {
         };
     }
 
+    async fetchIdAvatarNameById(userId: string): Promise<IUser> {
+        const user: any = await this.userModel
+            .findById(userId)
+            .select({
+                _id: 1,
+                avatar: 1,
+                name: 1
+            })
+            .lean()
+            .exec();
+        if (!user)
+            return null;
+        return user;
+    }
+
     async addFriend(userId: string, friendId: string): Promise<0 | 1 | -1> {
         try {
             const friend = await this.userModel

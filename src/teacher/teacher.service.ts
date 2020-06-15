@@ -69,6 +69,20 @@ export class TeacherService {
             return null;
         return teacher;
     }
+    async fetchIdAvatarNameById(teacherId: string): Promise<ITeacher> {
+        const teacher: any = await this.teacherModel
+            .findById(teacherId)
+            .select({
+                _id: 1,
+                avatar: 1,
+                name: 1
+            })
+            .lean()
+            .exec();
+        if (!teacher)
+            return null;
+        return teacher;
+    }
 
     async update(teacherId: string, params: UpdateDto): Promise<any> {
         try {
@@ -192,7 +206,7 @@ export class TeacherService {
         }
     }
 
-    async updateNotification(teacherId: string, notification: any): Promise<{status: Boolean}> {
+    async updateNotification(teacherId: string, notification: any): Promise<{ status: Boolean }> {
         const teacher: ITeacher = await this.teacherModel
             .findByIdAndUpdate(teacherId, {
                 $push: {

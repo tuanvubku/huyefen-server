@@ -23,6 +23,7 @@ import { TopicModule } from './topic/topic.module';
 import { FriendModule } from './friend/friend.module';
 import { AuthorModule } from './author/author.module';
 import { CloudModule } from './cloud/cloud.module';
+import { AnnouncementModule } from './announcement/announcement.module';
 
 @Module({
 	imports: [
@@ -51,7 +52,8 @@ import { CloudModule } from './cloud/cloud.module';
 		TopicModule,
 		FriendModule,
 		AuthorModule,
-        CloudModule
+        CloudModule,
+        AnnouncementModule
 	],
 	providers: [
 		{

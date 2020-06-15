@@ -94,3 +94,8 @@ export enum Permission {
     Invite = 4,
     Default = 5
 }
+
+export enum Comment {
+    User = "User",
+    Teacher = "Teacher"
+};
