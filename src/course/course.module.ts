@@ -8,6 +8,7 @@ import { CourseSchema } from './schemas/course.schema';
 import { HistoryModule } from '@/history/history.module';
 import { AuthorModule } from '@/author/author.module';
 import { TeacherModule } from '@/teacher/teacher.module';
+import { StudentModule } from '@/student/student.module';
 
 @Module({
 	imports: [
@@ -18,7 +19,8 @@ import { TeacherModule } from '@/teacher/teacher.module';
 		HistoryModule,
 		ChapterModule,
 		AuthorModule,
-		TeacherModule
+		TeacherModule,
+		StudentModule
 	],
 	providers: [CourseService],
 	controllers: [CourseController],

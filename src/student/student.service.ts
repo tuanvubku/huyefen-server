@@ -16,4 +16,13 @@ export class StudentService {
         });
         return await student.save();
     }
+
+    async validateUserCourse(userId: string, courseId: string): Promise<boolean> {
+        const student: IStudent = await this.studentModel
+            .findOne({
+                user: userId,
+                course: courseId
+            });
+        return !!student;
+    }
 }

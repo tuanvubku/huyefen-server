@@ -33,7 +33,6 @@ import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { INotification } from '@/user/interfaces/notification.interface';
 import { IAuthor } from '@/author/interfaces/author.interface';
-import { throws } from 'assert';
 
 @Controller('api/courses')
 export class CourseController {
@@ -44,7 +43,8 @@ export class CourseController {
         private readonly authorService: AuthorService,
         private readonly searchService: SearchService,
         private readonly teacherService: TeacherService
-    ) { }
+        private readonly studentService: StudentService
+    ) {}
 
     @Post()
     @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -668,5 +668,26 @@ export class CourseController {
         if (!instructors)
             throw new NotFoundException("Invalid course");
         return new ResponseSuccess<Object>("FETCH_INSTRUCTORS_OK", instructors);
+    }
+
+    @Get('/:id/info/user')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchInfoForUser(@Req() req, @Param('id') courseId: string): Promise<IResponse<any>> {
+        const userId: string = req.user._id;
+        const checkStatus: boolean = await this.studentService.validateUserCourse(userId, courseId);
+        if (!checkStatus)
+            throw new ForbiddenException('You don\'t have permission to access this course!');
+        const courseInfo = await this.courseService.fetchInfoForUser(courseId);
+        return new ResponseSuccess('FETCHOK', courseInfo);
+    }
+
+    @Get('/:id/overview')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchOverview(
+        @Req() req
+    ): Promise<IResponse<any>> {
+        return null;
     }
 }

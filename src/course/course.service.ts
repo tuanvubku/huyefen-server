@@ -480,4 +480,8 @@ export class CourseService {
         const teachers = await this.authorService.fetchAuthorsByCourseId(courseId);
         return teachers;
     }
+
+    async fetchInfoForUser(courseId: string): Promise<any> {
+        return null;
+    }
 }
