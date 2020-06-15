@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as _ from 'lodash';
 import { ICourse } from './interfaces/course.interface';
-import { TeacherCoursesSort as Sort, ProgressBase, Lecture, Price } from '@/config/constants';
+import { TeacherCoursesSort as Sort, ProgressBase, Lecture, Price, Privacy } from '@/config/constants';
 import { UpdateGoalsDto } from './dtos/goals.dto';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
@@ -14,6 +14,7 @@ import { ILecture } from '@/chapter/interfaces/lecture.interface';
 import { UpdateLandingDto } from './dtos/landing.dto';
 import { IAuthor } from '@/author/interfaces/author.interface';
 import { AuthorService } from '@/author/author.service';
+import { ITeacher } from '@/teacher/interfaces/teacher.interface';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -25,7 +26,7 @@ export class CourseService {
         @InjectModel('Course') private readonly courseModel: Model<ICourse>,
         private readonly authorService: AuthorService,
         private readonly chapterService: ChapterService
-    ) {}
+    ) { }
 
     async create(teacherId: string, area: string, title: string): Promise<ICourse> {
         let course: ICourse = new this.courseModel({
@@ -59,7 +60,7 @@ export class CourseService {
         );
         const courses = _.map(authors, item => {
             const course = item.course;
-            const progress: number = 
+            const progress: number =
                 + (course.progress.goals * ProgressBase.Goals)
                 + (course.progress.syllabus * ProgressBase.Syllabus)
                 + (course.progress.landing * ProgressBase.Landing)
@@ -76,16 +77,16 @@ export class CourseService {
 
     async validateCourse(courseId: string): Promise<boolean> {
         const course: ICourse = await this.courseModel
-                .findById(courseId);
+            .findById(courseId);
         return !!course;
     }
 
     async fetchInfo(courseId: string): Promise<any> {
         let info: any = await this.courseModel
-                .findById(courseId)
-                .select('title privacy progress')
-                .lean()
-                .exec();
+            .findById(courseId)
+            .select('title privacy progress')
+            .lean()
+            .exec();
         if (info) {
             let completeStatus = {};
             _.forEach(_.keys(info.progress), key => {
@@ -106,7 +107,7 @@ export class CourseService {
     }
 
     async fetchGoals(courseId: string): Promise<any> {
-        return await this.courseModel 
+        return await this.courseModel
             .findById(courseId)
             .select({
                 whatLearns: 1,
@@ -157,10 +158,10 @@ export class CourseService {
             return await this.finalGoals(course, 'whatLearns');
         }
         return null;
-        
+
         // const course = await this.courseModel
         //         .findByIdAndUpdate(courseId, {
-                    
+
         //             $push: {
         //                 whatLearns: {
         //                     $each: (addWhatLearns as IWhatLearn[])
@@ -240,7 +241,7 @@ export class CourseService {
             });
     }
 
-    async createChapter(teacherId: string, courseId: string, title: string, description: string): Promise<{ progress: number, data: IChapter}> {
+    async createChapter(teacherId: string, courseId: string, title: string, description: string): Promise<{ progress: number, data: IChapter }> {
         const data: { progress: number, data: IChapter } = await this.chapterService.create(teacherId, courseId, title, description);
         await this.saveSyllabusProgress(courseId, data.progress);
         return data;
@@ -259,7 +260,7 @@ export class CourseService {
         }
     }
 
-    async createLecture (
+    async createLecture(
         teacherId: string,
         courseId: string,
         chapterId: string,
@@ -274,7 +275,7 @@ export class CourseService {
         return data;
     }
 
-    async deleteLecture (
+    async deleteLecture(
         courseId: string,
         chapterId: string,
         lectureId: string
@@ -422,5 +423,58 @@ export class CourseService {
                 data: course.messages
             }
         }
+    }
+
+    async updatePrivacy(courseId: string, privacy: Privacy, password: string): Promise<{ status: Boolean }> {
+        if (privacy !== Privacy.Password)
+            password = null;
+        const course: ICourse = await this.courseModel
+            .findByIdAndUpdate(courseId, {
+                privacy,
+                password
+            }, {
+                new: true,
+                runValidators: true
+            })
+        if (!course)
+            return { status: false };
+        return { status: true }
+    }
+
+    async getCourseName(courseId: string): Promise<String> {
+        const course = await this.courseModel
+            .findById(courseId)
+        return course.title;
+    }
+
+    async deleteAuthor(teacherId: string, courseId: string) {
+        const course: ICourse = await this.courseModel
+            .findByIdAndUpdate(courseId, {
+                $pull: {
+                    authors: teacherId
+                }
+            }, {
+                new: true,
+                runValidators: true
+            });
+        if (!course)
+            return { status: false };
+        return { status: true };
+    }
+
+    async fetchCourseOverview(courseId: string): Promise<Object> {
+        const overview = this.courseModel
+            .findById(courseId)
+            .select('whatLearns.content requirements.content description')
+            .lean()
+            .exec()
+        if (!overview)
+            return null;
+        return overview;
+    }
+
+    async fetchInstructors(courseId: string) {
+        const teachers = await this.authorService.fetchAuthorsByCourseId(courseId);
+        return teachers;
     }
 }

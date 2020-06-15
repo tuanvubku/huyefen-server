@@ -53,6 +53,13 @@ export const TeacherSchema = new Schema({
         type: String,
         default: null
     },
+    courses: {
+        type: [{
+            type: Schema.Types.ObjectId,
+            ref: 'Course'
+        }],
+        default: []
+    },
     notifications: {
         type: [NotificationSchema],
         default: []

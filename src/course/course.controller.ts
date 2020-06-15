@@ -1,43 +1,50 @@
-import { Body, Controller, Query, Get, Put, Post, UseGuards, Req, ValidationPipe, Param, ParseUUIDPipe, ForbiddenException, NotFoundException, UsePipes, Res, BadRequestException, Delete, MethodNotAllowedException } from '@nestjs/common';
-import { CourseService } from './course.service';
-import { SearchService } from '@/search/search.service';
-import { AuthGuard } from '@nestjs/passport';
-import { RolesGuard } from '@/utils/guards/roles.guard';
-import { Roles } from '@/utils/decorators/roles.decorator';
-import { Role, HistoryType, Price, ValidateStatus } from '@/config/constants';
-import { ICourse } from './interfaces/course.interface';
-import { IResponse } from '@/utils/interfaces/response.interface';
-import { ResponseSuccess } from '@/utils/utils';
-import { CreateDto } from './dtos/create.dto';
-import { FetchDto } from './dtos/fetch.dto';
-import { FetchInfoDto } from './dtos/fetchInfo.dto';
-import { FetchGoalsDto } from './dtos/fetchGoals.dto';
-import { SyllabusDto, CreateChapterDto, CreateChapterParamDto, UpdateChapterDto, UpdateChapterParamDto, DeleteChapterParamDto, CreateLectureDto, CreateLectureParamDto, UpdateLectureDto, UpdateLectureParamDto, DeleteLectureParamDto } from './dtos/syllabus.dto';
-import { FetchHistoriesDto, FetchHistoriesParamDto } from './dtos/histories.dto';
-import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
-import { FetchLandingDto, UpdateLandingDto, UpdateLandingParamDto, UpdateAvatarDto, UpdateAvatarParamDto } from './dtos/landing.dto';
-import { IWhatLearn } from './interfaces/whatLearn.interface';
-import { IRequirement } from './interfaces/requirement.interface';
-import { ITargetStudent } from './interfaces/targetStudent.interface';
+import { AuthorService } from '@/author/author.service';
+import { ChapterService } from '@/chapter/chapter.service';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { ILecture } from '@/chapter/interfaces/lecture.interface';
-import { IHistory } from '@/history/interfaces/history.interface';
-import { ChapterService } from '@/chapter/chapter.service';
+import { HistoryType, Permission, Price, Privacy, Role, ValidateStatus } from '@/config/constants';
 import { HistoryService } from '@/history/history.service';
+import { IHistory } from '@/history/interfaces/history.interface';
+import { SearchService } from '@/search/search.service';
+import { TeacherService } from '@/teacher/teacher.service';
+import { Roles } from '@/utils/decorators/roles.decorator';
+import { User } from '@/utils/decorators/user.decorator';
+import { RolesGuard } from '@/utils/guards/roles.guard';
+import { IResponse } from '@/utils/interfaces/response.interface';
+import { ResponseSuccess } from '@/utils/utils';
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, MethodNotAllowedException, NotFoundException, Param, Post, Put, Query, Req, UseGuards, Res } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { CourseService } from './course.service';
+import { CreateDto } from './dtos/create.dto';
+import { FetchDto } from './dtos/fetch.dto';
+import { FetchGoalsDto } from './dtos/fetchGoals.dto';
+import { FetchInfoDto } from './dtos/fetchInfo.dto';
+import { UpdateGoalsDto, UpdateGoalsParamDto } from './dtos/goals.dto';
+import { FetchHistoriesDto, FetchHistoriesParamDto } from './dtos/histories.dto';
+import { FetchLandingDto, UpdateAvatarDto, UpdateAvatarParamDto, UpdateLandingDto, UpdateLandingParamDto } from './dtos/landing.dto';
+import { FetchMessagesParamDto, UpdateMessagesDto, UpdateMessagesParamDto } from './dtos/messages.dto';
 import { FetchPriceDto, UpdatePriceDto, UpdatePriceParamDto } from './dtos/price.dto';
-import { FetchMessagesParamDto, UpdateMessagesParamDto, UpdateMessagesDto } from './dtos/messages.dto';
+import { PrivacyDto } from './dtos/privacy.dto';
+import { CreateChapterDto, CreateChapterParamDto, CreateLectureDto, CreateLectureParamDto, DeleteChapterParamDto, DeleteLectureParamDto, SyllabusDto, UpdateChapterDto, UpdateChapterParamDto, UpdateLectureDto, UpdateLectureParamDto } from './dtos/syllabus.dto';
 import { ValidateParamDto } from './dtos/validate.dto';
-import { AuthorService } from '@/author/author.service';
+import { ICourse } from './interfaces/course.interface';
+import { IRequirement } from './interfaces/requirement.interface';
+import { ITargetStudent } from './interfaces/targetStudent.interface';
+import { IWhatLearn } from './interfaces/whatLearn.interface';
+import { INotification } from '@/user/interfaces/notification.interface';
+import { IAuthor } from '@/author/interfaces/author.interface';
+import { throws } from 'assert';
 
 @Controller('api/courses')
 export class CourseController {
-    constructor (
+    constructor(
         private readonly courseService: CourseService,
         private readonly chapterService: ChapterService,
         private readonly historyService: HistoryService,
         private readonly authorService: AuthorService,
-        private readonly searchService: SearchService
-    ) {}
+        private readonly searchService: SearchService,
+        private readonly teacherService: TeacherService
+    ) { }
 
     @Post()
     @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -116,7 +123,7 @@ export class CourseController {
         );
         return new ResponseSuccess('CHANGE_WHAT_LEARN_OK', whatLearns);
     }
-    
+
     @Put('update/:id/requirements')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
@@ -343,7 +350,7 @@ export class CourseController {
     @Delete('/:courseId/chapters/:chapterId/lectures/:lectureId')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
-    async deleteLecture (
+    async deleteLecture(
         @Req() req,
         @Param() params: DeleteLectureParamDto
     ): Promise<IResponse<{ progress: number, data: string }>> {
@@ -476,7 +483,7 @@ export class CourseController {
     @Put('/:id/messages')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
-    async updateMessages (
+    async updateMessages(
         @Req() req,
         @Param() params: UpdateMessagesParamDto,
         @Body() body: UpdateMessagesDto
@@ -516,5 +523,150 @@ export class CourseController {
             if (!checkAuthor) status = ValidateStatus.InvalidTeacher;
         }
         return new ResponseSuccess<ValidateStatus>('VALIDATE_OK', status);
+    }
+
+    @Put('/:courseId/privacy')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updatePrivacy(
+        @User() teacher,
+        @Body() privacyDto: PrivacyDto,
+        @Param('courseId') courseId: string
+    ) {
+        const { value, password } = privacyDto;
+        if (value == Privacy.Password && password == null)
+            throw new BadRequestException("Password is null")
+        const teacherId = teacher._id;
+        const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!check)
+            throw new ForbiddenException('Forbidden. You can not access this course');
+        const hasPermission = this.authorService.checkPermission(teacherId, courseId, Permission.Privacy);
+        if (!hasPermission)
+            throw new ForbiddenException("You are not authorized to edit this course!");
+        const { status } = await this.courseService.updatePrivacy(courseId, value, password);
+        if (!status)
+            throw new NotFoundException('Invalid course!!');
+        return new ResponseSuccess('UPDATE_PRIVACY_OK', status);
+    }
+
+    @Post('/:courseId/invite')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async createInvite(
+        @User() teacher,
+        @Body('email') email: string,
+        @Param('courseId') courseId: string
+    ) {
+        const teacherId = teacher._id;
+        const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!check)
+            throw new ForbiddenException('Forbidden. You can not access this course');
+        const hasPermission = await this.authorService.checkPermission(teacherId, courseId, Permission.Invite);
+        if (!hasPermission)
+            throw new ForbiddenException("You are not authorized to edit this course!");
+        const coTeacher = await this.teacherService.findTeacherByEmail(email);
+        if (!coTeacher)
+            throw new NotFoundException('Teacher doesn\'t existed!');
+        const courseName = await this.courseService.getCourseName(courseId);
+        const notification = {
+            user: teacherId,
+            content: `Mời bạn tham gia phát triển khoá học ${courseName}`,
+            type: 1
+        }
+        const { status } = await this.teacherService.updateNotification(coTeacher._id, notification);
+        // notificaition to user
+        if (!status)
+            throw new NotFoundException('Invalid teacher!!');
+        return new ResponseSuccess('UPDATE_NOTIFICATION_OK', status);
+    }
+
+    @Delete('/:courseId/member/:memberId')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async removeCoTeacher(
+        @User() teacher,
+        @Param('courseId') courseId: string,
+        @Param('memberId') memberId: string
+    ) {
+        const teacherId = teacher._id;
+        const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!check)
+            throw new ForbiddenException('Forbidden. You can not access this course');
+        const hasPermission = await this.authorService.checkPermission(teacherId, courseId, Permission.Default);
+        if (!hasPermission)
+            throw new ForbiddenException("You are not authorized to edit this course!");
+        const { status } = await this.authorService.deleteAuthor(memberId, courseId);
+        if (!status)
+            throw new NotFoundException('Invalid author and course!!');
+        const result = await this.courseService.deleteAuthor(memberId, courseId);
+        return new ResponseSuccess("DELETE_OK", result);
+
+    }
+
+    @Get('/:courseId/members')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchAllAuthors(
+        @User() teacher,
+        @Param('courseId') courseId: string
+    ): Promise<IResponse<IAuthor[]>> {
+        const teacherId = teacher._id;
+        const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!check)
+            throw new ForbiddenException('Forbidden. You can not access this course');
+        const allAuthors = await this.authorService.fetchAllAuthors();
+        return new ResponseSuccess<IAuthor[]>("FETCH_OK", allAuthors);
+    }
+
+    @Put('/:courseId/members')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updatePermission(
+        @User() teacher,
+        @Body() body,
+        @Param('courseId') courseId: string
+    ): Promise<IResponse<Boolean>> {
+        const teacherId = teacher._id;
+        const hasPermission = await this.authorService.checkPermission(teacherId, courseId, Permission.Default);
+        if (!hasPermission)
+            throw new ForbiddenException("You are not authorized to edit this course!");
+        const status = await this.authorService.updatePermission(courseId, body);
+        return new ResponseSuccess<Boolean>("UPDATE_OK", status);
+    }
+
+    @Get('/:courseId/permission')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchPermission(
+        @User() teacher,
+        @Query("type") type: string,
+        @Param('courseId') courseId: string
+    ): Promise<IResponse<Number>> {
+        const teacherId = teacher._id;
+        const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!check)
+            throw new ForbiddenException('Forbidden. You can not access this course');
+        const result = await this.authorService.fetchPermission(teacherId, courseId, type);
+        return new ResponseSuccess<Number>("FETCH_OK", result);
+    }
+
+    @Get('/:courseId/overview/public')
+    async fetchCourseOverview(
+        @Param('courseId') courseId
+    ): Promise<IResponse<Object>> {
+        const overview = await this.courseService.fetchCourseOverview(courseId);
+        if (!overview)
+            throw new NotFoundException("Invalid course");
+        return new ResponseSuccess<Object>("FETCH_OVERVIEW_OK", overview);
+    }
+
+    @Get(':courseId/instructors/public')
+    async fetchInstructors(
+        @Param('courseId') courseId
+    ): Promise<IResponse<Object>> {
+        const instructors = await this.courseService.fetchInstructors(courseId);
+        if (!instructors)
+            throw new NotFoundException("Invalid course");
+        return new ResponseSuccess<Object>("FETCH_INSTRUCTORS_OK", instructors);
     }
 }

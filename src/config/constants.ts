@@ -1,3 +1,5 @@
+import { emit } from "cluster";
+
 export const CONFIG_ENV_PATH: string = 'config/env';
 
 export const TOKEN_EXPIRED = '12h';
@@ -84,3 +86,11 @@ export enum ValidateStatus {
     InvalidTeacher = 2
 };
 
+export enum Permission {
+    Announcement = 0,
+    Review = 1,
+    Privacy = 2,
+    Messenger = 3,
+    Invite = 4,
+    Default = 5
+}

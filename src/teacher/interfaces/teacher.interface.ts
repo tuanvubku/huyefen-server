@@ -15,6 +15,7 @@ export interface ITeacher extends Document {
     facebook: string;
     youtube: string;
     instagram: string;
+    courses: string[];
     followingStudents: string[];
     notifications: INotification[]
 };

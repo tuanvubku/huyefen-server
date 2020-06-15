@@ -7,6 +7,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { CourseSchema } from './schemas/course.schema';
 import { HistoryModule } from '@/history/history.module';
 import { AuthorModule } from '@/author/author.module';
+import { TeacherModule } from '@/teacher/teacher.module';
 
 @Module({
 	imports: [
@@ -16,7 +17,8 @@ import { AuthorModule } from '@/author/author.module';
 		SearchModule,
 		HistoryModule,
 		ChapterModule,
-		AuthorModule
+		AuthorModule,
+		TeacherModule
 	],
 	providers: [CourseService],
 	controllers: [CourseController],

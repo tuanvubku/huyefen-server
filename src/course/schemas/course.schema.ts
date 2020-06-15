@@ -17,6 +17,17 @@ export const CourseSchema = new Schema({
         minlength: 20,
         default: null
     },
+    authors: {
+        type: [{
+            type: Schema.Types.ObjectId,
+            ref: 'Teacher'
+        }],
+        default: []
+    },
+    numOfStudents: {
+        type: Number,
+        default: 0
+    },
     description: {
         type: String,
         default: null

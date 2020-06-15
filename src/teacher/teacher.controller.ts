@@ -124,4 +124,5 @@ export class TeacherController {
         if (status === 0) throw new NotFoundException('Invalid teacher!');
         return new ResponseSuccess('FOLLOW_OK', null, status === 1 ? 0 : 1);
     }
+
 }

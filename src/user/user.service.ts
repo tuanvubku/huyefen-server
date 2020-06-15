@@ -18,7 +18,7 @@ export class UserService {
         @InjectModel('User') private readonly userModel: Model<IUser>,
         private readonly configService: ConfigService,
         //private readonly teacherService: TeacherService
-    ) {}
+    ) { }
 
     async countUserByPhoneEmail(user: { phone: string, email: string }): Promise<number> {
         const { phone, email } = user;
@@ -40,15 +40,15 @@ export class UserService {
     }
 
     async findUserByPhone(phone: string): Promise<any> {
-        const user: any =  await this.userModel
-                .findOne({ phone })
-                .select({
-                    conversations: 0,
-                    relationships: 0,
-                    followedTeachers: 0
-                })
-                .lean()
-                .exec();
+        const user: any = await this.userModel
+            .findOne({ phone })
+            .select({
+                conversations: 0,
+                relationships: 0,
+                followedTeachers: 0
+            })
+            .lean()
+            .exec();
         if (!user) return null;
         const noOfUsNotification: number = _.size(_.filter(user.notifications, notification => !notification.seen));
         const noOfUsMessage: number = 9;         //temporary;
@@ -61,15 +61,15 @@ export class UserService {
 
     async findUserById(userId: string): Promise<any> {
         const user: any = await this.userModel
-                .findById(userId)
-                .select({
-                    conversations: 0,
-                    relationships: 0,
-                    followedTeachers: 0,
-                    password: 0
-                })
-                .lean()
-                .exec();
+            .findById(userId)
+            .select({
+                conversations: 0,
+                relationships: 0,
+                followedTeachers: 0,
+                password: 0
+            })
+            .lean()
+            .exec();
         if (!user) return null;
         const noOfUsNotification: number = _.size(_.filter(user.notifications, notification => !notification.seen));
         const noOfUsMessage: number = 9;         //temporary;
@@ -82,7 +82,7 @@ export class UserService {
 
     async update(userId: string, params: UpdateDto): Promise<any> {
         try {
-            const user =  await this.userModel
+            const user = await this.userModel
                 .findByIdAndUpdate(userId, {
                     ...params
                 }, {
@@ -104,13 +104,13 @@ export class UserService {
     async updateCatesOfConcern(userId: string, targetKeys: string[]): Promise<any> {
         try {
             const user = await this.userModel
-                    .findByIdAndUpdate(userId, {
-                        catesOfConcern: targetKeys
-                    }, {
-                        new: true,
-                        runValidators: true
-                    })
-                    .select('catesOfConcern');
+                .findByIdAndUpdate(userId, {
+                    catesOfConcern: targetKeys
+                }, {
+                    new: true,
+                    runValidators: true
+                })
+                .select('catesOfConcern');
             return user;
         }
         catch (e) {
@@ -136,12 +136,12 @@ export class UserService {
 
     async updateAvatar(userId: string, avatar: string): Promise<any> {
         return await this.userModel
-                .findByIdAndUpdate(userId, {
-                    avatar
-                }, {
-                    new: true
-                })
-                .select('avatar');
+            .findByIdAndUpdate(userId, {
+                avatar
+            }, {
+                new: true
+            })
+            .select('avatar');
     }
 
     async fetchFriends(userId: string, page: number, limit: number): Promise<{ hasMore: boolean, list: IFriend[] }> {
@@ -271,7 +271,7 @@ export class UserService {
     }
 
     async allFriendsOfFriend(userId: string, friendId: string, existed: number): Promise<{ status: boolean, data: { hasMore: boolean, list: IFriend[] } }> {
-        const friend= await this.userModel
+        const friend = await this.userModel
             .findById(friendId)
             .populate('relationships.friend', 'avatar name relationships')
             .select('relationships')

@@ -13,12 +13,12 @@ import { UserService } from '@/user/user.service';
 
 @Injectable()
 export class TeacherService {
-    constructor (
+    constructor(
         @InjectModel('Teacher') private readonly teacherModel: Model<ITeacher>,
         private readonly authorService: AuthorService,
         private readonly userService: UserService,
         private readonly configService: ConfigService
-    ) {}
+    ) { }
 
     async create(body): Promise<ITeacher> {
         const saltRounds = parseInt(this.configService.get<string>('SALT_ROUNDS'));
@@ -30,13 +30,13 @@ export class TeacherService {
     }
 
     async findTeacherByPhone(phone: string): Promise<any> {
-        const teacher: any =  await this.teacherModel
-                .findOne({ phone })
-                .select({
-                    followingStudents: 0
-                })
-                .lean()
-                .exec();
+        const teacher: any = await this.teacherModel
+            .findOne({ phone })
+            .select({
+                followingStudents: 0
+            })
+            .lean()
+            .exec();
         if (!teacher) return null;
         const noOfUsNotification: number = _.size(_.filter(teacher.notifications, notification => !notification.seen));
         return {
@@ -47,13 +47,13 @@ export class TeacherService {
 
     async findTeacherById(teacherId: string): Promise<any> {
         const teacher: any = await this.teacherModel
-                .findById(teacherId)
-                .select({
-                    followingStudents: 0,
-                    password: 0
-                })
-                .lean()
-                .exec();
+            .findById(teacherId)
+            .select({
+                followingStudents: 0,
+                password: 0
+            })
+            .lean()
+            .exec();
         if (!teacher) return null;
         const noOfUsNotification: number = _.size(_.filter(teacher.notifications, notification => !notification.seen));
         return {
@@ -62,16 +62,24 @@ export class TeacherService {
         };
     }
 
+    async findTeacherByEmail(email: string): Promise<ITeacher> {
+        const teacher = await this.teacherModel
+            .findOne({ email })
+        if (!teacher)
+            return null;
+        return teacher;
+    }
+
     async update(teacherId: string, params: UpdateDto): Promise<any> {
         try {
             const teacher = await this.teacherModel
-                    .findByIdAndUpdate(teacherId, {
-                        ...params
-                    }, {
-                        new: true,
-                        runValidators: true
-                    })
-                    .select('phone name email biography headline');
+                .findByIdAndUpdate(teacherId, {
+                    ...params
+                }, {
+                    new: true,
+                    runValidators: true
+                })
+                .select('phone name email biography headline');
             return teacher;
         }
         catch (e) {
@@ -79,7 +87,7 @@ export class TeacherService {
                 throw new ConflictException(e.errmsg);
             else if (e.name === 'ValidationError')
                 throw new BadRequestException(e.message);
-            throw e; 
+            throw e;
         }
     }
 
@@ -96,12 +104,12 @@ export class TeacherService {
 
     async updateAvatar(teacherId: string, avatar: string): Promise<any> {
         return await this.teacherModel
-                .findByIdAndUpdate(teacherId, {
-                    avatar
-                }, {
-                    new: true
-                })
-                .select('avatar');
+            .findByIdAndUpdate(teacherId, {
+                avatar
+            }, {
+                new: true
+            })
+            .select('avatar');
     }
 
     async updatePassword(teacherId: string, oldPassword: string, newPassword: string): Promise<0 | -1 | 1> {
@@ -156,9 +164,9 @@ export class TeacherService {
                     runValidators: true
                 });
             if (!teacher) return 0;
-            const status: 1 | -1 =  await this.userService.followTeacher(userId, teacherId);
+            const status: 1 | -1 = await this.userService.followTeacher(userId, teacherId);
             if (status === 1) {
-                
+
             }
             //firebase;
             return status;
@@ -177,10 +185,22 @@ export class TeacherService {
                     }
                 });
             if (!teacher) return 0;
-            return  await this.userService.unfollowTeacher(userId, teacherId);
+            return await this.userService.unfollowTeacher(userId, teacherId);
         }
         catch (e) {
             return -1;
         }
+    }
+
+    async updateNotification(teacherId: string, notification: any): Promise<{status: Boolean}> {
+        const teacher: ITeacher = await this.teacherModel
+            .findByIdAndUpdate(teacherId, {
+                $push: {
+                    notifications: notification
+                }
+            })
+        if (!teacher)
+            return { status: false };
+        return { status: true };
     }
 }
