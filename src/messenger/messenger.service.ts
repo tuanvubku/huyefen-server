@@ -7,7 +7,7 @@ import { SendDto } from './dtos/send.dto';
 import { MessagingService } from '@/firebase/messaging.service';
 import { UserService } from '@/user/user.service';
 import { IUser } from '@/user/interfaces/user.interface';
-import { Push } from '@/config/constants';
+import { Push, Role } from '@/config/constants';
 import { Types } from 'mongoose';
 import * as _ from 'lodash';
 import { MessengerGateway } from './messenger.gateway';
@@ -70,6 +70,7 @@ export class MessengerService {
         await conversation.save();
         //check target status
         const checkOnline = this.messengerGateway.checkUserInConversation(targetId, conversation._id.toString());
+        console.log(checkOnline);
         const message: IMessage = new this.messageModel({
             sender: userId,
             conver: conversation._id,
@@ -117,9 +118,10 @@ export class MessengerService {
                         ...(message.content.video ? { video: message.content.video } : {}),
                         unseen: (unseensPair[userId] && unseensPair[userId].value.toString()) || 0,
                         pushType: Push.Messenger,
-                        userId,
-                        userName: user.name,
-                        userAvatar: user.avatar
+                        ownerType: Role.User,
+                        ownerId: userId,
+                        ownerName: user.name,
+                        ownerAvatar: user.avatar
                     }
                 });
             }
