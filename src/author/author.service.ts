@@ -184,4 +184,15 @@ export class AuthorService {
         })
         return _authors;
     }
+
+    async fetchInstructors(courseId: string): Promise<any> {
+        const authors = await this.authorModel
+            .find({
+                course: courseId
+            })
+            .populate('teacher', 'name avatar biography')
+            .lean()
+            .exec();
+        return _.map(authors, 'teacher');
+	}
 }

@@ -47,7 +47,6 @@ export class AuthService {
 		}
 		return null;
 	}
-
 	// async valdiateLogin(phone: string, password: string, identity: any): Promise<any> {
 	// 	if (!identity) throw new HttpException('LOGIN.NOT_CREATED', HttpStatus.UNAUTHORIZED);
 	// 	const isValidPass = await bcrypt.compare(password, identity.password);
