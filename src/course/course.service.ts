@@ -1,20 +1,19 @@
-import { Injectable, Inject, forwardRef } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import * as _ from 'lodash';
-import { ICourse } from './interfaces/course.interface';
-import { TeacherCoursesSort as Sort, ProgressBase, Lecture, Price, Privacy } from '@/config/constants';
-import { UpdateGoalsDto } from './dtos/goals.dto';
-import { IWhatLearn } from './interfaces/whatLearn.interface';
+import { AuthorService } from '@/author/author.service';
+import { ChapterService } from '@/chapter/chapter.service';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
+import { ILecture } from '@/chapter/interfaces/lecture.interface';
+import { Lecture, Price, Privacy, ProgressBase, TeacherCoursesSort as Sort } from '@/config/constants';
+import { TeacherService } from '@/teacher/teacher.service';
+import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import * as _ from 'lodash';
+import { Model } from 'mongoose';
+import { UpdateGoalsDto } from './dtos/goals.dto';
+import { UpdateLandingDto } from './dtos/landing.dto';
+import { ICourse } from './interfaces/course.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
-import { ChapterService } from '@/chapter/chapter.service';
-import { ILecture } from '@/chapter/interfaces/lecture.interface';
-import { UpdateLandingDto } from './dtos/landing.dto';
-import { IAuthor } from '@/author/interfaces/author.interface';
-import { AuthorService } from '@/author/author.service';
-import { TeacherService } from '@/teacher/teacher.service';
+import { IWhatLearn } from './interfaces/whatLearn.interface';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -27,7 +26,7 @@ export class CourseService {
         private readonly authorService: AuthorService,
         private readonly chapterService: ChapterService,
         private readonly teacherService: TeacherService
-    ) {}
+    ) { }
 
     async create(teacherId: string, area: string, title: string): Promise<ICourse> {
         let course: ICourse = new this.courseModel({

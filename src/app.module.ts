@@ -59,7 +59,7 @@ import { StudentModule } from './student/student.module';
 		AuthorModule,
         CloudModule,
         MessengerModule,
-        StudentModule
+        StudentModule,
         AnnouncementModule
 	],
 	providers: [
