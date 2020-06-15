@@ -33,6 +33,7 @@ import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { INotification } from '@/user/interfaces/notification.interface';
 import { IAuthor } from '@/author/interfaces/author.interface';
+import { StudentService } from '@/student/student.service';
 
 @Controller('api/courses')
 export class CourseController {
@@ -42,7 +43,7 @@ export class CourseController {
         private readonly historyService: HistoryService,
         private readonly authorService: AuthorService,
         private readonly searchService: SearchService,
-        private readonly teacherService: TeacherService
+        private readonly teacherService: TeacherService,
         private readonly studentService: StudentService
     ) {}
 
@@ -661,7 +662,7 @@ export class CourseController {
     }
 
     @Get(':courseId/instructors/public')
-    async fetchInstructors(
+    async fetchInstructorsPublic(
         @Param('courseId') courseId
     ): Promise<IResponse<Object>> {
         const instructors = await this.courseService.fetchInstructors(courseId);
