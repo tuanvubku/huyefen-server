@@ -236,4 +236,15 @@ export class ChapterService {
             progress
         }
     }
+
+    async fetchLecturesInfo(courseId: string): Promise<{ totalTime: number, numOfLectures: number }> {
+        //totalTime???
+        const chapters: IChapter[] = await this.chapterModel
+            .find({ course: courseId });
+        const numOfLectures: number = _.sum(_.map(chapters, chapter => _.size(chapter.lectures)));
+        return {
+            totalTime: 2,
+            numOfLectures
+        };
+    }
 }

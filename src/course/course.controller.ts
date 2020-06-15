@@ -679,6 +679,8 @@ export class CourseController {
         if (!checkStatus)
             throw new ForbiddenException('You don\'t have permission to access this course!');
         const courseInfo = await this.courseService.fetchInfoForUser(courseId);
+        if (!courseInfo)
+            throw new NotFoundException('Invalid course');
         return new ResponseSuccess('FETCHOK', courseInfo);
     }
 
@@ -686,8 +688,16 @@ export class CourseController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
     async fetchOverview(
-        @Req() req
+        @Req() req,
+        @Param('id') courseId: string
     ): Promise<IResponse<any>> {
-        return null;
+        const userId: string = req.user._id;
+        const checkStatus: boolean = await this.studentService.validateUserCourse(userId, courseId);
+        if (!checkStatus)
+            throw new ForbiddenException('You don\'t have permission to access this course!');
+        const courseOverview = await this.courseService.fetchOverview(courseId);
+        if (!courseOverview)
+            throw new NotFoundException('Invalid course');
+        return new ResponseSuccess('FETCH_OVERVIEW_OK', courseOverview);
     }
 }

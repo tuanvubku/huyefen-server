@@ -484,4 +484,37 @@ export class CourseService {
     async fetchInfoForUser(courseId: string): Promise<any> {
         return null;
     }
+
+    async fetchOverview(courseId: string): Promise<any> {
+        const course = await this.courseModel
+            .findById(courseId)
+            .select({
+                subTitle: 1,
+                starRating: 1,
+                numOfStudents: 1,
+                language: 1,
+                level: 1,
+                description: 1,
+                'whatLearns.content': 1,
+                'requirements.content': 1,
+                'targetStudents.content': 1
+            })
+            .lean()
+            .exec();
+        if (!course) return null;
+        const courseLecturesInfo: {
+            totalTime: number,
+            numOfLectures: number
+        } = await this.chapterService.fetchLecturesInfo(courseId);
+        const whatLearnsData: string[] = _.map(course.whatLearns, 'content');
+        const requirementsData: string[] = _.map(course.requirements, 'content');
+        const targetStudentsData: string[] = _.map(course.targetStudents, 'content');
+        return {
+            ...course,
+            ...courseLecturesInfo,
+            whatLearns: whatLearnsData,
+            requirements: requirementsData,
+            targetStudents: targetStudentsData
+        };
+    }
 }
