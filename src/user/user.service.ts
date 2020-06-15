@@ -9,7 +9,7 @@ import { MessagingService } from '@/firebase/messaging.service';
 import { UpdateDto } from './dtos/update.dto';
 import { IUser } from './interfaces/user.interface';
 import { IFriend } from '@/friend/interfaces/friend.interface';
-import { FriendStatuses, Notification, Push } from '@/config/constants';
+import { FriendStatuses, Notification, Push, Role } from '@/config/constants';
 import { INotification } from './interfaces/notification.interface';
 import { MessengerService } from '@/messenger/messenger.service';
 
@@ -344,7 +344,8 @@ export class UserService {
             const notificationData = {
                 type: Notification.Friend,
                 content: `đã gửi yêu cầu kết bạn với bạn.`,
-                user: userId
+                owner: userId,
+                ownerType: Role.User
             };
             const notification: INotification = new this.notificationModel(notificationData);
             const friend = await this.userModel
@@ -382,9 +383,10 @@ export class UserService {
                     data: {
                         _id: notification._id.toString(),
                         createdAt: notification.createdAt.toString(),
-                        userId,
-                        userName: user.name,
-                        ...(user.avatar ? { userAvatar: user.avatar } : {}),
+                        ownerType: Role.User,
+                        ownerId: userId,
+                        ownerName: user.name,
+                        ...(user.avatar ? { ownerAvatar: user.avatar } : {}),
                         pushType: Push.Notification,
                         type: Notification.Friend,
                         content: `đã gửi yêu cầu kết bạn với bạn.`,
@@ -431,7 +433,8 @@ export class UserService {
             const notificationData = {
                 type: Notification.Friend,
                 content: 'đã chấp nhận lời mời kết bạn. Hai bạn hãy cùng trò chuyện nhau nhé!',
-                user: userId
+                owner: userId,
+                ownerType: Role.User
             };
             const notification = new this.notificationModel(notificationData);
             const friend = await this.userModel
@@ -472,9 +475,10 @@ export class UserService {
                     data: {
                         _id: notification._id.toString(),
                         createdAt: notification.createdAt.toString(),
-                        userId,
-                        userName: user.name,
-                        ...(user.avatar ? { userAvatar: user.avatar } : {}),
+                        ownerType: Role.User,
+                        ownerId: userId,
+                        ownerName: user.name,
+                        ...(user.avatar ? { ownerAvatar: user.avatar } : {}),
                         pushType: Push.Notification,
                         type: Notification.Friend,
                         content: `đã chấp nhận lời mời kết bạn. Hai bạn hãy cùng trò chuyện nhau nhé!`,
@@ -586,7 +590,7 @@ export class UserService {
         const user = await this.userModel
             .findById(userId)
             .select('notifications')
-            .populate('notifications.user', 'name avatar')
+            .populate('notifications.owner', 'name avatar')
             .lean()
             .exec();
         const hasMore: boolean = skip + limit < _.size(user.notifications);

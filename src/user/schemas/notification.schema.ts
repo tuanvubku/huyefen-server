@@ -1,23 +1,16 @@
 import { Schema } from 'mongoose';
-import { Notification } from '@/config/constants';
+import { Notification, Role } from '@/config/constants';
 
 export const NotificationSchema = new Schema({
-	user: {
+	owner: {
 		type: Schema.Types.ObjectId,
-		ref: 'User',
-		default: null
+		refPath: 'notifications.ownerType',
+		required: true
 	},
-	avatar: {
+	ownerType: {
 		type: String,
-		default: null,
-		validate: {
-			validator: function(val) {
-				if (!this.user)
-					return val !== null;
-				return true;
-			},
-			message: 'Notifications must have user or avatar field.'
-		}
+		enum: [Role.Admin, Role.Teacher, Role.User],
+		required: true
 	},
 	type: {
 		type: String,
