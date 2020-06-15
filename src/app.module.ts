@@ -27,6 +27,7 @@ import { FirebaseModule } from './firebase/firebase.module';
 import { MessengerModule } from './messenger/messenger.module';
 import { MessengerGateway } from './messenger/messenger.gateway';
 import { AnnouncementModule } from './announcement/announcement.module';
+import { StudentModule } from './student/student.module';
 
 @Module({
 	imports: [
@@ -57,8 +58,9 @@ import { AnnouncementModule } from './announcement/announcement.module';
 		FriendModule,
 		AuthorModule,
         CloudModule,
+        MessengerModule,
+        StudentModule
         AnnouncementModule
-        MessengerModule
 	],
 	providers: [
 		{
