@@ -465,7 +465,7 @@ export class CourseService {
     async fetchCourseOverview(courseId: string): Promise<Object> {
         const overview = this.courseModel
             .findById(courseId)
-            .select('whatLearns.content requirements.content description')
+            .select('whatLearns.content requirements.content targetStudents.content description')
             .lean()
             .exec()
         if (!overview)
