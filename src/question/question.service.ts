@@ -113,4 +113,27 @@ export class QuestionService {
             return false;
         }
     }
+
+    async unvoteQuestion(userId: string, userRole: Role, courseId: string, questionId: string): Promise<boolean> {
+        try {
+            const question = await this.questionModel
+                .findOneAndUpdate({
+                    _id: questionId,
+                    course: courseId
+                }, {
+                    $pull: {
+                        votes: {
+                            owner: userId,
+                            ownerType: userRole
+                        }
+                    }
+                }, {
+                    runValidators: true
+                });
+            return !!question;
+        }
+        catch {
+            return false;
+        }
+    }
 }

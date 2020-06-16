@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Req, Body, ForbiddenException, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Req, Body, ForbiddenException, Param, NotFoundException, Delete } from '@nestjs/common';
 import { QuestionService } from './question.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
@@ -44,7 +44,7 @@ export class QuestionController {
         @Param('id') questionId: string
     ): Promise<IResponse<any>> {
         const userId: string = req.user._id;
-        const userRole: string = req.user.role;
+        const userRole: Role = req.user.role;
         if (userRole === Role.User) {
             const checkStatus: boolean = await this.studentService.validateUserCourse(userId, courseId);
             if (!checkStatus)
@@ -82,6 +82,30 @@ export class QuestionController {
                 throw new ForbiddenException('You do not have permission!');
         }
         const status: boolean = await this.questionService.voteQuestion(userId, userRole, courseId, questionId);
+        return new ResponseSuccess<any>('FETCH_ONE_OK', status);
+    }
+
+    @Delete('/course/:courseId/:id/unvote')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User, Role.Teacher)
+    async unvoteQuestion(
+        @Req() req,
+        @Param('courseId') courseId: string,
+        @Param('id') questionId: string
+    ): Promise<IResponse<boolean>> {
+        const userId: string = req.user._id;
+        const userRole: Role = req.user.role;
+        if (userRole === Role.User) {
+            const checkStatus: boolean = await this.studentService.validateUserCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        else {
+            const checkStatus: boolean = await this.authorService.validateTeacherCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        const status: boolean = await this.questionService.unvoteQuestion(userId, userRole, courseId, questionId);
         return new ResponseSuccess<any>('FETCH_ONE_OK', status);
     }
 }
