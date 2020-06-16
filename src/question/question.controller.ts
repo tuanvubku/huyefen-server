@@ -10,6 +10,7 @@ import { CreateDto } from './dtos/create.dto';
 import { StudentService } from '@/student/student.service';
 import { ResponseSuccess } from '@/utils/utils';
 import { AuthorService } from '@/author/author.service';
+import { AnswerDto, VoteAnswerDto } from './dtos/answer.dto';
 
 @Controller('api/questions')
 export class QuestionController {
@@ -156,4 +157,56 @@ export class QuestionController {
         const status: boolean = await this.questionService.unfollowQuestion(userId, userRole, questionId);
         return new ResponseSuccess<any>('FETCH_ONE_OK', status);
     }
+
+    @Post('/course/:courseId/:id/answers')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User, Role.Teacher)
+    async answer(
+        @Req() req,
+        @Param('courseId') courseId: string,
+        @Param('id') questionId: string,
+        @Body() body: AnswerDto
+    ): Promise<IResponse<any>> {
+        const userId: string = req.user._id;
+        const userRole: Role = req.user.role;
+        if (userRole === Role.User) {
+            const checkStatus: boolean = await this.studentService.validateUserCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        else {
+            const checkStatus: boolean = await this.authorService.validateTeacherCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        const { content } = body;
+        const answer = await this.questionService.answer(userId, userRole, questionId, content);
+        return new ResponseSuccess<any>('CREATE_ANS_OK', answer);
+    }
+
+    @Post('/answers/:answerId/vote')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User, Role.Teacher)
+    async voteAnswer(
+        @Req() req,
+        @Param('answerId') answerId: string,
+        @Body() body: VoteAnswerDto
+    ): Promise<IResponse<boolean>> {
+        const userId: string = req.user._id;
+        const { courseId, questionId } = body;
+        const userRole: Role = req.user.role;
+        if (userRole === Role.User) {
+            const checkStatus: boolean = await this.studentService.validateUserCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        else {
+            const checkStatus: boolean = await this.authorService.validateTeacherCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        const status = await this.questionService.voteAnswer(userId, userRole, questionId, answerId);
+        return new ResponseSuccess<boolean>('VOTE_OK', status);
+    }
+
 }

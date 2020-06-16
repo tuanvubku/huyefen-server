@@ -168,4 +168,42 @@ export class QuestionService {
             return false;
         }
     }
+
+    async answer(userId: string, userRole: Role, questionId: string, content: string): Promise<any> {
+        const answer: IAnswer = new this.answerModel({
+            owner: userId,
+            ownerType: userRole,
+            question: questionId,
+            content
+        });
+        await answer.save();
+        return {
+            ..._.pick(answer, ['_id', 'owner', 'ownerType', 'createdAt']),
+            isVoted: false,
+            numOfVotes: 0
+        };
+    }
+
+    async voteAnswer(userId: string, userRole: Role, questionId: string, answerId: string): Promise<boolean> {
+        try {
+            const answer = await this.answerModel
+                .findOneAndUpdate({
+                    _id: answerId,
+                    question: questionId
+                }, {
+                    $push: {
+                        votes: {
+                            ownerType: userRole,
+                            owner: userId
+                        } as IVote
+                    }
+                });
+            return !!answer;
+        }
+        catch (e) {
+            return false;
+        }
+    }
+
+    
 }
