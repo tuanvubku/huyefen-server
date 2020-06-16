@@ -12,7 +12,7 @@ import { User } from '@/utils/decorators/user.decorator';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ResponseSuccess } from '@/utils/utils';
-import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, MethodNotAllowedException, NotFoundException, Param, Post, Put, Query, Req, UseGuards, Res } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, MethodNotAllowedException, NotFoundException, Param, Post, Put, Query, Req, UseGuards, Res, ParseIntPipe } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CourseService } from './course.service';
 import { CreateDto } from './dtos/create.dto';
@@ -34,6 +34,9 @@ import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { INotification } from '@/user/interfaces/notification.interface';
 import { IAuthor } from '@/author/interfaces/author.interface';
 import { StudentService } from '@/student/student.service';
+import { userInfo } from 'os';
+import { ReviewTeacherService } from '@/review-teacher/review-teacher.service';
+import { ReviewCourseService } from '@/review-course/review-course.service';
 
 @Controller('api/courses')
 export class CourseController {
@@ -44,8 +47,10 @@ export class CourseController {
         private readonly authorService: AuthorService,
         private readonly searchService: SearchService,
         private readonly teacherService: TeacherService,
-        private readonly studentService: StudentService
-    ) {}
+        private readonly studentService: StudentService,
+        private readonly reviewTeacherService: ReviewTeacherService,
+        private readonly reviewCourseService: ReviewCourseService
+    ) { }
 
     @Post()
     @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -716,6 +721,75 @@ export class CourseController {
         const instructors = await this.authorService.fetchInstructors(courseId);
         if (!instructors)
             throw new NotFoundException('Invalid course');
-        return new ResponseSuccess('FETCH_OVERVIEW_OK', instructors);
+        return new ResponseSuccess('FETCH_INSTRUCTOR_OK', instructors);
     }
+
+    @Get('/:id/review')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchMyReview(
+        @User() user,
+        @Param('id') courseId: string
+    ) {
+        const userId = user._id;
+        const isValidUser = await this.studentService.validateUserCourse(userId, courseId);
+        if (!isValidUser)
+            throw new ForbiddenException("You don\'t have permission to access this course!");
+        
+    }
+
+    @Post('/:id/review')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async createReview(
+        @User() user,
+        @Body('starRaing', ParseIntPipe) starRaing: number,
+        @Body('comment') comment: string,
+        @Param('id') courseId: string
+    ) {
+        const userId = user._id;
+        const isValidUser = await this.studentService.validateUserCourse(userId, courseId);
+        if (!isValidUser)
+            throw new ForbiddenException("You don\'t have permission to access this course!");
+        const review = await this.reviewCourseService.createReview(userId, courseId, starRaing, comment);
+        return new ResponseSuccess("", review);
+    }
+
+    @Put('/:id/review/instructors')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async updateReviewInstructor(
+        @User() user,
+        @Body('instructorId') instructorId: string,
+        @Body('starRating', ParseIntPipe) starRating: number,
+        @Body('comment') comment: string,
+        @Param('id') courseId: string
+    ): Promise<IResponse<Boolean>> {
+        const userId = user._id;
+        const isValidTeacher = await this.authorService.validateTeacherCourse(instructorId, courseId);
+        if (!isValidTeacher)
+            throw new ForbiddenException("Teachere don\'t have permission to access this course!");
+        const isValidUser = await this.studentService.validateUserCourse(userId, courseId);
+        if (!isValidUser)
+            throw new ForbiddenException("You don\'t have permission to access this course!");
+        const status = await this.reviewTeacherService.updateReviewInstructor(userId, instructorId, starRating, comment);
+        return new ResponseSuccess<Boolean>("UPDATE_REVIEW_OK", status);
+    }
+
+    @Get('/:id/review/instructors')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchReviewInstructor(
+        @User() user,
+        @Param('id') courseId: string
+    ) {
+        const userId = user._id;
+        const isValid = await this.studentService.validateUserCourse(userId, courseId);
+        if (!isValid)
+            throw new ForbiddenException(`You don\'t have permission to access this course!`);
+        const reviews = await this.courseService.fetchReviewInstructor(courseId, userId);
+        return new ResponseSuccess("FETCH_REVIEW_OK", reviews);
+    }
+
+
 }

@@ -28,6 +28,8 @@ import { MessengerModule } from './messenger/messenger.module';
 import { MessengerGateway } from './messenger/messenger.gateway';
 import { AnnouncementModule } from './announcement/announcement.module';
 import { StudentModule } from './student/student.module';
+import { ReviewTeacherModule } from './review-teacher/review-teacher.module';
+import { ReviewCourseModule } from './review-course/review-course.module';
 
 @Module({
 	imports: [
@@ -60,7 +62,9 @@ import { StudentModule } from './student/student.module';
         CloudModule,
         MessengerModule,
         StudentModule,
-        AnnouncementModule
+        AnnouncementModule,
+        ReviewTeacherModule,
+        ReviewCourseModule
 	],
 	providers: [
 		{

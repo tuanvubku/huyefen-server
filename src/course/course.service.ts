@@ -14,6 +14,7 @@ import { ICourse } from './interfaces/course.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
+import { ReviewTeacherService } from '@/review-teacher/review-teacher.service';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -25,7 +26,8 @@ export class CourseService {
         @InjectModel('Course') private readonly courseModel: Model<ICourse>,
         private readonly authorService: AuthorService,
         private readonly chapterService: ChapterService,
-        private readonly teacherService: TeacherService
+        private readonly teacherService: TeacherService,
+        private readonly reviewTeacherService: ReviewTeacherService,
     ) { }
 
     async create(teacherId: string, area: string, title: string): Promise<ICourse> {
@@ -515,5 +517,25 @@ export class CourseService {
             requirements: requirementsData,
             targetStudents: targetStudentsData
         };
+    }
+
+    async fetchReviewInstructor(courseId: string, userId: string) {
+        const teachersInfo = await this.authorService
+            .fetchAuthorsByCourseId(courseId);
+        const teacherIds = _.map(teachersInfo, '_id');
+        const reviews = await this.reviewTeacherService
+            .fetchReview(userId, teacherIds) as any;
+        const result = teachersInfo.map((teacher, i) => {
+            delete teacher.headline;
+            delete teacher.biography;
+            delete teacher.numOfReviews;
+            const review = reviews[i]
+            return {
+                ...teacher,
+                starRating: review ? review.rating.value : 3.5,
+                ratingContent: review ? review.rating.comment : null
+            }
+        })
+        return result;
     }
 }
