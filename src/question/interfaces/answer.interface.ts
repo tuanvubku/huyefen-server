@@ -1,5 +1,6 @@
 import { Document } from 'mongoose';
 import { Role } from '@/config/constants';
+import { IVote } from './vote.interface';
 
 export interface IAnswer extends Document {
     _id: string;
@@ -8,5 +9,5 @@ export interface IAnswer extends Document {
     ownerType: Role;
     content: string;
     createdAt: string;
-    numOfVotes: number;
+    votes: [IVote]
 };

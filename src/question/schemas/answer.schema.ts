@@ -1,5 +1,6 @@
 import { Schema } from 'mongoose';
 import { Role } from '@/config/constants';
+import { VoteSchema } from './vote.schema';
 
 export const AnswerSchema = new Schema({
     question: {
@@ -9,7 +10,7 @@ export const AnswerSchema = new Schema({
     },
     owner: {
         type: Schema.Types.ObjectId,
-        refPath: 'answers.ownerType',
+        refPath: 'ownerType',
         required: true
     },
     ownerType: {
@@ -25,8 +26,8 @@ export const AnswerSchema = new Schema({
         type: Date,
         default: Date.now
     },
-    numOfVotes: {
-        type: Number,
-        default: 0
+    votes: {
+        type: [VoteSchema],
+        default: []
     }
 });

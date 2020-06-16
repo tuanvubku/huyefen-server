@@ -1,5 +1,5 @@
 import { Document } from 'mongoose';
-
+import { IVote } from './vote.interface';
 
 export interface IQuestion extends Document {
     _id: string;
@@ -8,7 +8,7 @@ export interface IQuestion extends Document {
     lecture: string;
     lectureIndex: number;
     title: string;
-    numOfVotes: number;
+    votes: [IVote];
     content: string;
     createdAt: string;
 }

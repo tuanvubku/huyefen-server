@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { QuestionSchema } from './schemas/question.schema';
 import { AnswerSchema } from './schemas/answer.schema';
 import { StudentModule } from '@/student/student.module';
+import { AuthorModule } from '@/author/author.module';
 
 @Module({
 	imports: [
@@ -12,7 +13,8 @@ import { StudentModule } from '@/student/student.module';
 			{ name: 'Question', schema: QuestionSchema },
 			{ name: 'Answer', schema: AnswerSchema }
 		]),
-		StudentModule
+		StudentModule,
+		AuthorModule
 	],
 	controllers: [QuestionController],
 	providers: [QuestionService]

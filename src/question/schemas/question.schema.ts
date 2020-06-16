@@ -24,9 +24,9 @@ export const QuestionSchema = new Schema({
         type: String,
         required: true
     },
-    numOfVotes: {
-        type: Number,
-        default: 0
+    votes: {
+        type: [],
+        default: []
     },
     content: {
         type: String,
