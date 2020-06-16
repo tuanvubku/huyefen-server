@@ -253,4 +253,65 @@ export class QuestionService {
             return false;
         }
     }
+
+    async fetchAnswers(userId: string, userRole: Role, questionId: string, skip: number, limit: number): Promise<{ hasMore: boolean, list: IAnswer[] }> {
+        const question = await this.questionModel.findById(questionId);
+        const numOfAnswers: number = question.numOfAnswers;
+        const hasMore: boolean = skip + limit < numOfAnswers;
+        const answers: IAnswer[] = await this.answerModel
+            .aggregate([
+                {
+                    $match: {
+                        question: Types.ObjectId(questionId)
+                    }
+                },
+                {
+                    $sort: {
+                        createdAt: -1
+                    }
+                },
+                {
+                    $skip: skip
+                },
+                {
+                    $limit: limit
+                },
+                {
+                    $addFields: {
+                        numOfVotes: {
+                            $size: "$votes"
+                        },
+                        isVoted: {
+                            $gt: [
+                                {
+                                    $size: {
+                                        $filter: {
+                                            input: '$votes',
+                                            as: 'vote',
+                                            cond: {
+                                                $and: [
+                                                    { $eq: ['$$vote.ownerType', userRole] },
+                                                    { $eq: ['$$vote.owner', Types.ObjectId(userId)] }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                0
+                            ]
+                        }
+                    }
+                },
+                {
+                    $project: {
+                        'votes': 0,
+                        'question': 0
+                    }
+                }
+            ]);
+        return {
+            hasMore,
+            list: answers
+        };
+    }
 }

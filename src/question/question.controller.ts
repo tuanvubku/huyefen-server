@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Req, Body, ForbiddenException, Param, NotFoundException, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Req, Body, ForbiddenException, Param, NotFoundException, Delete, Query, ParseIntPipe } from '@nestjs/common';
 import { QuestionService } from './question.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
@@ -11,6 +11,7 @@ import { StudentService } from '@/student/student.service';
 import { ResponseSuccess } from '@/utils/utils';
 import { AuthorService } from '@/author/author.service';
 import { AnswerDto, VoteAnswerDto } from './dtos/answer.dto';
+import { IAnswer } from './interfaces/answer.interface';
 
 @Controller('api/questions')
 export class QuestionController {
@@ -232,5 +233,31 @@ export class QuestionController {
         }
         const status = await this.questionService.unvoteAnswer(userId, userRole, questionId, answerId);
         return new ResponseSuccess<boolean>('VOTE_OK', status);
+    }
+
+    @Get('/courses/:courseId/:id/answers')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User, Role.Teacher)
+    async fetchAnswers(
+        @Req() req,
+        @Param('courseId') courseId: string,
+        @Param('id') questionId: string,
+        @Query('skip', ParseIntPipe) skip: number,
+        @Query('limit', ParseIntPipe) limit: number
+    ): Promise<IResponse<{ hasMore: boolean, list: IAnswer[] }>> {
+        const userId: string = req.user._id;
+        const userRole: Role = req.user.role;
+        if (userRole === Role.User) {
+            const checkStatus: boolean = await this.studentService.validateUserCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        else {
+            const checkStatus: boolean = await this.authorService.validateTeacherCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        const result: { hasMore: boolean, list: IAnswer[] } = await this.questionService.fetchAnswers(userId, userRole, questionId, skip, limit);
+        return new ResponseSuccess('FETCH_OK', result);
     }
 }
