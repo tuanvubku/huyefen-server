@@ -5,6 +5,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { IQuestion } from './interfaces/question.interface';
 import { IAnswer } from './interfaces/answer.interface';
 import { CreateDto } from '@/question/dtos/create.dto';
+import { Role } from '@/config/constants';
+import { IVote } from './interfaces/vote.interface';
 
 
 @Injectable()
@@ -34,7 +36,7 @@ export class QuestionService {
         return question;
     }
 
-    async fetchOne(userId: string, userRole, courseId: string, questionId: string): Promise<any> {
+    async fetchOne(userId: string, userRole: Role, courseId: string, questionId: string): Promise<any> {
         const question: IQuestion = await this.questionModel
             .findOne({
                 _id: questionId,
@@ -87,5 +89,28 @@ export class QuestionService {
             answers,
             isFollowed: false
         };
+    }
+
+    async voteQuestion(userId: string, userRole: Role, courseId: string, questionId: string): Promise<boolean> {
+        try {
+            const question = await this.questionModel
+                .findOneAndUpdate({
+                    _id: questionId,
+                    course: courseId
+                }, {
+                    $push: {
+                        votes: {
+                            owner: userId,
+                            ownerType: userRole
+                        } as IVote
+                    }
+                }, {
+                    runValidators: true
+                });
+            return !!question;
+        }
+        catch {
+            return false;
+        }
     }
 }

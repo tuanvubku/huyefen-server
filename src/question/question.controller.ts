@@ -60,4 +60,28 @@ export class QuestionController {
             throw new NotFoundException('Invalid question!');
         return new ResponseSuccess<any>('FETCH_ONE_OK', question);
     }
+
+    @Post('/course/:courseId/:id/vote')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User, Role.Teacher)
+    async voteQuestion(
+        @Req() req,
+        @Param('courseId') courseId: string,
+        @Param('id') questionId: string
+    ): Promise<IResponse<boolean>> {
+        const userId: string = req.user._id;
+        const userRole: Role = req.user.role;
+        if (userRole === Role.User) {
+            const checkStatus: boolean = await this.studentService.validateUserCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        else {
+            const checkStatus: boolean = await this.authorService.validateTeacherCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        const status: boolean = await this.questionService.voteQuestion(userId, userRole, courseId, questionId);
+        return new ResponseSuccess<any>('FETCH_ONE_OK', status);
+    }
 }
