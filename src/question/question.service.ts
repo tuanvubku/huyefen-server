@@ -7,13 +7,15 @@ import { IAnswer } from './interfaces/answer.interface';
 import { CreateDto } from '@/question/dtos/create.dto';
 import { Role } from '@/config/constants';
 import { IVote } from './interfaces/vote.interface';
+import { IFollow } from './interfaces/follow.interface';
 
 
 @Injectable()
 export class QuestionService {
     constructor(
         @InjectModel('Question') private readonly questionModel: Model<IQuestion>,
-        @InjectModel('Answer') private readonly answerModel: Model<IAnswer>
+        @InjectModel('Answer') private readonly answerModel: Model<IAnswer>,
+        @InjectModel('Follow') private readonly followModel: Model<IFollow>
     ) {}
 
     async create(userId: string, params: CreateDto): Promise<IQuestion> {
@@ -134,6 +136,21 @@ export class QuestionService {
         }
         catch {
             return false;
+        }
+    }
+
+    async followQuestion(userId: string, userRole: Role, questionId: string): Promise<boolean> {
+        try {
+            const follow: IFollow = new this.followModel({
+                ownerType: userRole,
+                owner: userId,
+                question: questionId
+            });
+            await follow.save();
+            return true;
+        }
+        catch (e) {
+            return true;
         }
     }
 }
