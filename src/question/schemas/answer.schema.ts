@@ -1,7 +1,7 @@
 import { Schema } from 'mongoose';
 import { Role } from '@/config/constants';
 
-export const answerSchema = new Schema({
+export const AnswerSchema = new Schema({
     question: {
         type: Schema.Types.ObjectId,
         ref: 'Question',
