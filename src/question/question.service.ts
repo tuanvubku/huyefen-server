@@ -150,7 +150,22 @@ export class QuestionService {
             return true;
         }
         catch (e) {
+            return false;
+        }
+    }
+
+    async unfollowQuestion(userId: string, userRole: Role, questionId: string): Promise<boolean> {
+        try {
+            await this.followModel
+                .deleteOne({
+                    ownerType: userRole,
+                    owner: userId,
+                    question: questionId
+                });
             return true;
+        }
+        catch (e) {
+            return false;
         }
     }
 }
