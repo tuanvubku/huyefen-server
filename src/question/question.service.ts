@@ -46,7 +46,7 @@ export class QuestionService {
         const numOfVotes: number = _.size(question.votes);
         //get isFollowed
         //moreAnswers, numOfAnswers, and answers (5)
-        const answers: IAnswer[] = await this.answerModel
+        let answers: IAnswer[] = await this.answerModel
             .aggregate([
                 {
                     $match: {
@@ -67,10 +67,17 @@ export class QuestionService {
                     }
                 },
                 {
+                    $projection: {
+                        'votes': 0,
+                        'question': 0
+                    }
+                },
+                {
                     $skip: 0,
                     $limit: 5
                 }
             ]);
+        answers = await this.answerModel.populate(answers, { path: 'owner', select: 'name avatar' });
         const moreAnswers: boolean = question.numOfAnswers > 5;
         return {
             ..._.pick(question, ['_id', 'title', 'content', 'user', 'lectureId', 'lectureIndex', 'createdAt', 'numOfAnswers']),
