@@ -26,7 +26,7 @@ export const QuestionSchema = new Schema({
     },
     numOfVotes: {
         type: Number,
-        required: true
+        default: 0
     },
     content: {
         type: String,
