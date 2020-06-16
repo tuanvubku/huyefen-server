@@ -9,6 +9,7 @@ export interface IQuestion extends Document {
     lectureIndex: number;
     title: string;
     votes: [IVote];
+    numOfAnswers: number;
     content: string;
     createdAt: string;
 }

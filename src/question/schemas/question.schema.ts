@@ -28,6 +28,10 @@ export const QuestionSchema = new Schema({
         type: [],
         default: []
     },
+    numOfAnswers: {
+        type: Number,
+        default: 0
+    },
     content: {
         type: String,
         required: true

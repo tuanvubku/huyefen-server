@@ -65,18 +65,20 @@ export class QuestionService {
                             ]
                         }
                     }
+                },
+                {
+                    $skip: 0,
+                    $limit: 5
                 }
             ]);
-        const numOfAnswers: number = _.size(answers);
-        const moreAnswers: boolean = numOfAnswers > 5;
-        const finalAnswers: IAnswer[] = _.take(answers, 5);
+        const moreAnswers: boolean = question.numOfAnswers > 5;
         return {
-            ..._.pick(question, ['_id', 'title', 'content', 'user', 'lectureId', 'lectureIndex', 'createdAt']),
+            ..._.pick(question, ['_id', 'title', 'content', 'user', 'lectureId', 'lectureIndex', 'createdAt', 'numOfAnswers']),
             isVoted,
             numOfVotes,
             moreAnswers,
-            numOfAnswers,
-            answers: finalAnswers
+            answers,
+            isFollowed: false
         };
     }
 }
