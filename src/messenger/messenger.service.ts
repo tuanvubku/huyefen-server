@@ -70,7 +70,6 @@ export class MessengerService {
         await conversation.save();
         //check target status
         const checkOnline = this.messengerGateway.checkUserInConversation(targetId, conversation._id.toString());
-        console.log(checkOnline);
         const message: IMessage = new this.messageModel({
             sender: userId,
             conver: conversation._id,

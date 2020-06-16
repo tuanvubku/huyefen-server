@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import * as _ from 'lodash';
 import { InjectModel } from '@nestjs/mongoose';
 import { IQuestion } from './interfaces/question.interface';
@@ -48,37 +48,59 @@ export class QuestionService {
         if (!question) return null;
         const isVoted: boolean = _.some(question.votes, vote => vote.owner.toString() === userId && vote.ownerType === userRole);
         const numOfVotes: number = _.size(question.votes);
-        //get isFollowed
-        //moreAnswers, numOfAnswers, and answers (5)
+        const follow: IFollow = await this.followModel
+            .findOne({
+                owner: userId,
+                ownerType: userRole,
+                question: questionId
+            });
+        const isFollowed: boolean = !!follow;
         let answers: IAnswer[] = await this.answerModel
             .aggregate([
                 {
                     $match: {
-                        question: questionId
+                        question: Types.ObjectId(questionId)
                     }
                 },
                 {
-                    $addField: {
+                    $sort: {
+                        createdAt: -1
+                    }
+                },
+                {
+                    $limit: 5
+                },
+                {
+                    $addFields: {
                         numOfVotes: {
-                            $sum: "$votes"
+                            $size: "$votes"
                         },
                         isVoted: {
-                            $in: [
-                                { owner: userId, ownerType: userRole },
-                                "$votes"
+                            $gt: [
+                                {
+                                    $size: {
+                                        $filter: {
+                                            input: '$votes',
+                                            as: 'vote',
+                                            cond: {
+                                                $and: [
+                                                    { $eq: ['$$vote.ownerType', userRole] },
+                                                    { $eq: ['$$vote.owner', Types.ObjectId(userId)] }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                },
+                                0
                             ]
                         }
                     }
                 },
                 {
-                    $projection: {
+                    $project: {
                         'votes': 0,
                         'question': 0
                     }
-                },
-                {
-                    $skip: 0,
-                    $limit: 5
                 }
             ]);
         answers = await this.answerModel.populate(answers, { path: 'owner', select: 'name avatar' });
@@ -89,7 +111,7 @@ export class QuestionService {
             numOfVotes,
             moreAnswers,
             answers,
-            isFollowed: false
+            isFollowed
         };
     }
 
@@ -177,8 +199,14 @@ export class QuestionService {
             content
         });
         await answer.save();
+        await this.questionModel
+            .findByIdAndUpdate(questionId, {
+                $inc: {
+                    numOfAnswers: 1
+                }
+            });
         return {
-            ..._.pick(answer, ['_id', 'owner', 'ownerType', 'createdAt']),
+            ..._.pick(answer, ['_id', 'owner', 'ownerType', 'createdAt', 'content']),
             isVoted: false,
             numOfVotes: 0
         };

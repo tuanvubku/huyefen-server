@@ -36,7 +36,7 @@ export class QuestionController {
         return new ResponseSuccess<IQuestion>('CREATE_OK', question);
     }
 
-    @Get('/course/:courseId/:id')
+    @Get('/courses/:courseId/:id')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User, Role.Teacher)
     async fetchQuestion(
@@ -62,7 +62,7 @@ export class QuestionController {
         return new ResponseSuccess<any>('FETCH_ONE_OK', question);
     }
 
-    @Post('/course/:courseId/:id/vote')
+    @Post('/courses/:courseId/:id/vote')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User, Role.Teacher)
     async voteQuestion(
@@ -86,7 +86,7 @@ export class QuestionController {
         return new ResponseSuccess<any>('FETCH_ONE_OK', status);
     }
 
-    @Delete('/course/:courseId/:id/unvote')
+    @Delete('/courses/:courseId/:id/unvote')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User, Role.Teacher)
     async unvoteQuestion(
@@ -110,7 +110,7 @@ export class QuestionController {
         return new ResponseSuccess<any>('FETCH_ONE_OK', status);
     }
 
-    @Post('/course/:courseId/:id/follow')
+    @Post('/courses/:courseId/:id/follow')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User, Role.Teacher)
     async followQuestion(
@@ -134,7 +134,7 @@ export class QuestionController {
         return new ResponseSuccess<any>('FETCH_ONE_OK', status);
     }
 
-    @Delete('/course/:courseId/:id/unfollow')
+    @Delete('/courses/:courseId/:id/unfollow')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User, Role.Teacher)
     async unfollowQuestion(
@@ -158,7 +158,7 @@ export class QuestionController {
         return new ResponseSuccess<any>('FETCH_ONE_OK', status);
     }
 
-    @Post('/course/:courseId/:id/answers')
+    @Post('/courses/:courseId/:id/answers')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User, Role.Teacher)
     async answer(
