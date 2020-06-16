@@ -4,9 +4,5 @@ export interface IStudent extends Document {
     _id: string,
     course: string,
     user: string,
-    createdAt: string,
-    rating: {
-        value: number,
-        comment: string
-    }
+    createdAt: string
 };

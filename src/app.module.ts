@@ -28,6 +28,7 @@ import { MessengerModule } from './messenger/messenger.module';
 import { MessengerGateway } from './messenger/messenger.gateway';
 import { AnnouncementModule } from './announcement/announcement.module';
 import { StudentModule } from './student/student.module';
+import { QuestionModule } from './question/question.module';
 
 @Module({
 	imports: [
@@ -60,7 +61,8 @@ import { StudentModule } from './student/student.module';
         CloudModule,
         MessengerModule,
         StudentModule,
-        AnnouncementModule
+        AnnouncementModule,
+        QuestionModule
 	],
 	providers: [
 		{

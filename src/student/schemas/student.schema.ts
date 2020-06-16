@@ -18,17 +18,5 @@ export const StudentSchema = new Schema({
     progress: {
         type: Number,
         default: 0
-    },
-    rating: {
-        value: {
-            type: Number,
-            max: 5,
-            min: 1,
-            default: 3.5
-        },
-        comment: {
-            type: String,
-            default: null
-        }
     }
 });
