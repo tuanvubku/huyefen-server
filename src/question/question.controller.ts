@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Req, Body, ForbiddenException, Param, NotFoundException, Delete } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Req, Body, ForbiddenException, Param, NotFoundException, Delete, Query } from '@nestjs/common';
 import { QuestionService } from './question.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
@@ -209,4 +209,28 @@ export class QuestionController {
         return new ResponseSuccess<boolean>('VOTE_OK', status);
     }
 
+    @Delete('/answers/:answerId/unvote')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User, Role.Teacher)
+    async unvoteAnswer(
+        @Req() req,
+        @Param('answerId') answerId: string,
+        @Query('courseId') courseId: string,
+        @Query('questionId') questionId: string,
+    ): Promise<IResponse<boolean>> {
+        const userId: string = req.user._id;
+        const userRole: Role = req.user.role;
+        if (userRole === Role.User) {
+            const checkStatus: boolean = await this.studentService.validateUserCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        else {
+            const checkStatus: boolean = await this.authorService.validateTeacherCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        const status = await this.questionService.unvoteAnswer(userId, userRole, questionId, answerId);
+        return new ResponseSuccess<boolean>('VOTE_OK', status);
+    }
 }

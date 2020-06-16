@@ -205,5 +205,24 @@ export class QuestionService {
         }
     }
 
-    
+    async unvoteAnswer(userId: string, userRole: Role, questionId: string, answerId: string): Promise<boolean> {
+        try {
+            const answer = await this.answerModel
+                .findOneAndUpdate({
+                    _id: answerId,
+                    question: questionId
+                }, {
+                    $pull: {
+                        votes: {
+                            ownerType: userRole,
+                            owner: userId
+                        }
+                    }
+                });
+            return !!answer;
+        }
+        catch (e) {
+            return false;
+        }
+    }
 }
