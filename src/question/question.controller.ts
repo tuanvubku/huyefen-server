@@ -11,6 +11,7 @@ import { StudentService } from '@/student/student.service';
 import { ResponseSuccess } from '@/utils/utils';
 import { AuthorService } from '@/author/author.service';
 import { AnswerDto, VoteAnswerDto } from './dtos/answer.dto';
+import { FetchDto } from './dtos/fetch.dto';
 import { IAnswer } from './interfaces/answer.interface';
 
 @Controller('api/questions')
@@ -258,6 +259,32 @@ export class QuestionController {
                 throw new ForbiddenException('You do not have permission!');
         }
         const result: { hasMore: boolean, list: IAnswer[] } = await this.questionService.fetchAnswers(userId, userRole, questionId, skip, limit);
+        return new ResponseSuccess('FETCH_OK', result);
+    }
+
+    @Get()
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher, Role.User)
+    async fetchQuestions(
+        @Req() req,
+        @Query() query: FetchDto 
+    ): Promise<IResponse<{ hasMore: boolean, total: number, list: any[] }>> {
+        const { 
+            _id: userId,
+            role: userRole
+        } = req.user;
+        const { courseId } = query;
+        if (userRole === Role.User) {
+            const checkStatus: boolean = await this.studentService.validateUserCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        else {
+            const checkStatus: boolean = await this.authorService.validateTeacherCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        const result = await this.questionService.fetch(userId, userRole, query);
         return new ResponseSuccess('FETCH_OK', result);
     }
 }

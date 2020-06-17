@@ -1,13 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { Model, Types } from 'mongoose';
 import * as _ from 'lodash';
 import { InjectModel } from '@nestjs/mongoose';
 import { IQuestion } from './interfaces/question.interface';
 import { IAnswer } from './interfaces/answer.interface';
 import { CreateDto } from '@/question/dtos/create.dto';
-import { Role } from '@/config/constants';
+import { Role, QuestionType, QuestionSort } from '@/config/constants';
 import { IVote } from './interfaces/vote.interface';
 import { IFollow } from './interfaces/follow.interface';
+import { FetchDto } from './dtos/fetch.dto';
 
 
 @Injectable()
@@ -313,5 +314,150 @@ export class QuestionService {
             hasMore,
             list: answers
         };
+    }
+
+    async fetch(userId: string, userRole: Role, params: FetchDto): Promise<{ hasMore: boolean, total: number, list: Array<any> }> {
+        let {
+            courseId,
+            sort,
+            lecture,
+            page,
+            limit
+        } = params;
+        let questionTypes: any = params.questionTypes;
+        page = Number(page);
+        limit = Number(limit);
+        if (!_.isEmpty(questionTypes))
+            questionTypes = _.split(questionTypes, ',');
+        else
+            questionTypes = [];
+        if (userRole === Role.Teacher && _.indexOf(questionTypes, QuestionType.Asked) > -1) {
+            throw new BadRequestException('Teacher can not filter asked question!');
+        }
+        const filterObj: any = {
+            course: Types.ObjectId(courseId),
+            ...(lecture !== 'all'? { lecture: Types.ObjectId(lecture) } : {})
+        };
+        const questionTypesArr: any[] = [];
+        let followedQuestionIds: string[] = [];
+        if (sort === QuestionSort.Relevance || _.indexOf(questionTypes, QuestionType.Following) > -1) {
+            const follows: IFollow[] = await this.followModel
+                .find({
+                    owner: userId,
+                    ownerType: userRole
+                });
+            followedQuestionIds = _.map(follows, 'question');
+            if (_.indexOf(questionTypes, QuestionType.Following) > -1) {
+                questionTypesArr.push({
+                    _id: {
+                        $in: followedQuestionIds
+                    }
+                });
+            }
+        }
+        if (_.indexOf(questionTypes, QuestionType.Asked) > -1) {
+            questionTypesArr.push({
+                user: Types.ObjectId(userId)
+            });
+        }
+        if (_.indexOf(questionTypes, QuestionType.NoResponse) > -1) {
+            questionTypesArr.push({
+                numOfAnswers: 0
+            });
+        }
+        let sortObj: any = {};
+        if (sort === QuestionSort.Recent)
+            sortObj = {
+                createdAt: -1
+            };
+        else if (sort === QuestionSort.Upvoted)
+            sortObj = {
+                numOfVotes: -1,
+                createdAt: -1
+            };
+        else
+            sortObj = {
+                score: -1,
+                createdAt: -1
+            };
+        const questions: IQuestion[] = await this.questionModel
+            .aggregate([
+                {
+                    $match: {
+                        ...filterObj,
+                        ...(!_.isEmpty(questionTypesArr) ? { $or: questionTypesArr } : {})
+                    }
+                },
+                {
+                    $addFields: {
+                        numOfVotes: {
+                            $size: '$votes'
+                        },
+                        followScore: {
+                            $cond: {
+                                if: {
+                                    $in: ['$_id', followedQuestionIds]
+                                },
+                                then: 8,
+                                else: 0
+                            }
+                        }
+                    }
+                },
+                {
+                    $addFields: {
+                        score: {
+                            $add: ['$numOfVotes', '$numOfAnswers', '$followScore']
+                        }
+                    }
+                },
+                {
+                    $sort: sortObj
+                },
+                {
+                    $lookup: {
+                        from: 'users',
+                        let: { userId: '$user' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $eq: ['$_id', '$$userId']
+                                    }
+                                }
+                            },
+                            {
+                                $project: {
+                                    _id: 1,
+                                    name: 1,
+                                    avatar: 1
+                                }
+                            }
+                        ],
+                        as: 'user'
+                    }
+                },
+                {
+                    $project: {
+                        user: {
+                            $arrayElemAt: ['$user', 0]
+                        },
+                        numOfAnswers: 1,
+                        numOfVotes: 1,
+                        lectureIndex: 1,
+                        title: 1,
+                        content: 1,
+                        createdAt: 1
+                    }
+                }
+            ]);
+        const total: number = _.size(questions);
+        const hasMore: boolean = page * limit < _.size(questions);
+        const finalQuestions: IQuestion[] = _.slice(questions, (page - 1) * limit, page * limit);
+        return {
+            hasMore,
+            total,
+            list: finalQuestions
+        }
     }
 }

@@ -110,3 +110,15 @@ export enum Push {
     Messenger = 'messenger',
     Notification = 'notification'
 };
+
+export enum QuestionSort {
+    Relevance = 'relevance',
+    Recent = 'recent',
+    Upvoted = 'upvoted'
+};
+
+export enum QuestionType {
+    Following = 'following',
+    Asked = 'asked',
+    NoResponse = 'noResponse'
+};
