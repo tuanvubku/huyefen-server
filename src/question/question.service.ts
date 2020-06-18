@@ -193,7 +193,7 @@ export class QuestionService {
     }
 
     async answer(userId: string, userRole: Role, questionId: string, content: string): Promise<any> {
-        const answer: IAnswer = new this.answerModel({
+        let answer: IAnswer = new this.answerModel({
             owner: userId,
             ownerType: userRole,
             question: questionId,
@@ -206,6 +206,7 @@ export class QuestionService {
                     numOfAnswers: 1
                 }
             });
+        answer = await this.answerModel.findById(answer._id).populate('owner', 'name avatar');
         return {
             ..._.pick(answer, ['_id', 'owner', 'ownerType', 'createdAt', 'content']),
             isVoted: false,
