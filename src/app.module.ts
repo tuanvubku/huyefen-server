@@ -29,6 +29,8 @@ import { MessengerGateway } from './messenger/messenger.gateway';
 import { AnnouncementModule } from './announcement/announcement.module';
 import { StudentModule } from './student/student.module';
 import { QuestionModule } from './question/question.module';
+import { ReviewTeacherModule } from './review-teacher/review-teacher.module';
+import { ReviewCourseModule } from './review-course/review-course.module';
 
 @Module({
 	imports: [
@@ -62,7 +64,9 @@ import { QuestionModule } from './question/question.module';
         MessengerModule,
         StudentModule,
         AnnouncementModule,
-        QuestionModule
+        QuestionModule,
+        ReviewTeacherModule,
+        ReviewCourseModule
 	],
 	providers: [
 		{

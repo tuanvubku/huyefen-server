@@ -9,6 +9,8 @@ import { HistoryModule } from '@/history/history.module';
 import { AuthorModule } from '@/author/author.module';
 import { TeacherModule } from '@/teacher/teacher.module';
 import { StudentModule } from '@/student/student.module';
+import { ReviewTeacherModule } from '@/review-teacher/review-teacher.module';
+import { ReviewCourseModule } from '@/review-course/review-course.module';
 
 @Module({
 	imports: [
@@ -20,7 +22,9 @@ import { StudentModule } from '@/student/student.module';
 		ChapterModule,
 		AuthorModule,
 		TeacherModule,
-		StudentModule
+		StudentModule,
+		ReviewTeacherModule,
+		ReviewCourseModule
 	],
 	providers: [CourseService],
 	controllers: [CourseController],
