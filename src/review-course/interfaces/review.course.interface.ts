@@ -1,7 +1,7 @@
 import {Document} from 'mongoose';
 import { Role } from '@/config/constants';
 
-interface IOwner extends Document {
+export interface IOwner extends Document {
     ownerType: Role,
     owner: string
 }

@@ -1,7 +1,7 @@
 import { Role } from '@/config/constants';
 import { Schema } from 'mongoose';
 
-const OwnerSchema = new Schema({
+const LikeOwnerSchema = new Schema({
     ownerType: {
         type: String,
         enum: [Role.Teacher, Role.User],
@@ -9,7 +9,20 @@ const OwnerSchema = new Schema({
     },
     owner: {
         type: Schema.Types.ObjectId,
-        refPath: 'ownerType',
+        refPath: 'likes.ownerType',
+        required: true
+    }
+})
+
+const DisLikeOwnerSchema = new Schema({
+    ownerType: {
+        type: String,
+        enum: [Role.Teacher, Role.User],
+        required: true
+    },
+    owner: {
+        type: Schema.Types.ObjectId,
+        refPath: 'dislikes.ownerType',
         required: true
     }
 })
@@ -56,11 +69,11 @@ export const ReviewCourseSchema = new Schema({
         required: true
     },
     likes: {
-        type: [OwnerSchema],
+        type: [LikeOwnerSchema],
         default: []
     },
     dislikes: {
-        type: [OwnerSchema],
+        type: [DisLikeOwnerSchema],
         default: []
     },
     answers: {

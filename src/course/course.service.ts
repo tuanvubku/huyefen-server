@@ -519,7 +519,7 @@ export class CourseService {
         };
     }
 
-    async fetchReviewInstructor(courseId: string, userId: string) {
+    async fetchReviewInstructor(courseId: string, userId: string): Promise<any> {
         const teachersInfo = await this.authorService
             .fetchAuthorsByCourseId(courseId);
         const teacherIds = _.map(teachersInfo, '_id');

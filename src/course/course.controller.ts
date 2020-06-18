@@ -37,6 +37,9 @@ import { StudentService } from '@/student/student.service';
 import { userInfo } from 'os';
 import { ReviewTeacherService } from '@/review-teacher/review-teacher.service';
 import { ReviewCourseService } from '@/review-course/review-course.service';
+import { IReviewCourse } from '@/review-course/interfaces/review.course.interface';
+import { Validate } from 'class-validator';
+import { ReviewCourseDto } from './dtos/review.course.dto';
 
 @Controller('api/courses')
 export class CourseController {
@@ -727,32 +730,32 @@ export class CourseController {
     @Get('/:id/review')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
-    async fetchMyReview(
+    async fetchMyReviewCourse(
         @User() user,
         @Param('id') courseId: string
-    ) {
+    ): Promise<IResponse<IReviewCourse[]>> {
         const userId = user._id;
-        const isValidUser = await this.studentService.validateUserCourse(userId, courseId);
-        if (!isValidUser)
+        const reviews = await this.reviewCourseService.fetchReviews(userId, courseId);
+        if (!reviews) 
             throw new ForbiddenException("You don\'t have permission to access this course!");
-        
+        return new ResponseSuccess<IReviewCourse[]>("FETCH_REVIEWS_COURSE_OK", reviews);
     }
 
     @Post('/:id/review')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
-    async createReview(
+    async createReviewCourse(
         @User() user,
-        @Body('starRaing', ParseIntPipe) starRaing: number,
-        @Body('comment') comment: string,
+        @Body() body: ReviewCourseDto,
         @Param('id') courseId: string
-    ) {
+    ): Promise<IResponse<Boolean>> {
         const userId = user._id;
+        const {starRating, comment} = body
         const isValidUser = await this.studentService.validateUserCourse(userId, courseId);
         if (!isValidUser)
             throw new ForbiddenException("You don\'t have permission to access this course!");
-        const review = await this.reviewCourseService.createReview(userId, courseId, starRaing, comment);
-        return new ResponseSuccess("", review);
+        const review = await this.reviewCourseService.createReview(userId, courseId, starRating, comment);
+        return new ResponseSuccess<Boolean>("CREATE_REVIEW_COURSE_OK", review);
     }
 
     @Put('/:id/review/instructors')

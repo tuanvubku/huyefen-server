@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IReviewTeacher } from './interfaces/review.teacher.interface';
-import { use } from 'passport';
 
 @Injectable()
 export class ReviewTeacherService {
@@ -17,7 +16,7 @@ export class ReviewTeacherService {
         comment: string
     ) {
         const reviewFromDb = await this.reviewTeacherModule
-            .findOneAndUpdate({
+            .findOneAndUpdate({  
                 user: userId,
                 teacher: teacherId
             }, {
