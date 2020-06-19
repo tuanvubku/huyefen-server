@@ -193,7 +193,7 @@ export class QuestionService {
     }
 
     async answer(userId: string, userRole: Role, questionId: string, content: string): Promise<any> {
-        const answer: IAnswer = new this.answerModel({
+        let answer: IAnswer = new this.answerModel({
             owner: userId,
             ownerType: userRole,
             question: questionId,
@@ -206,6 +206,7 @@ export class QuestionService {
                     numOfAnswers: 1
                 }
             });
+        answer = await this.answerModel.findById(answer._id).populate('owner', 'name avatar');
         return {
             ..._.pick(answer, ['_id', 'owner', 'ownerType', 'createdAt', 'content']),
             isVoted: false,
@@ -300,13 +301,98 @@ export class QuestionService {
                                 },
                                 0
                             ]
+                        },
+                        user: {
+                            $cond: [
+                                {
+                                    $eq: ['$ownerType', 'User'],
+                                },
+                                '$owner',
+                                null
+                            ]
+                        },
+                        teacher: {
+                            $cond: [
+                                {
+                                    $eq: ['$ownerType', 'Teacher'],
+                                },
+                                '$owner',
+                                null
+                            ]
                         }
                     }
                 },
                 {
+                    $lookup: {
+                        from: 'users',
+                        let: { userId: '$user' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $eq: ['$_id', '$$userId']
+                                    }
+                                }
+                            },
+                            {
+                                $project: {
+                                    _id: 1,
+                                    name: 1,
+                                    avatar: 1
+                                }
+                            }
+                        ],
+                        as: 'user'
+                    }
+                },
+                {
+                    $lookup: {
+                        from: 'teachers',
+                        let: { userId: '$teacher' },
+                        pipeline: [
+                            {
+                                $match: {
+                                    $expr: {
+                                        $eq: ['$_id', '$$userId']
+                                    }
+                                }
+                            },
+                            {
+                                $project: {
+                                    _id: 1,
+                                    name: 1,
+                                    avatar: 1
+                                }
+                            }
+                        ],
+                        as: 'teacher'
+                    }
+                },
+                {
+                    $addFields: {
+                        owner: {
+                            $cond: [
+                                {
+                                    $eq: ['$ownerType', 'User']
+                                },
+                                '$user',
+                                '$teacher'
+                            ]
+                        },
+                        user: '$$REMOVE',
+                        teacher: '$$REMOVE'
+                    }
+                },
+                {
                     $project: {
-                        'votes': 0,
-                        'question': 0
+                        owner: {
+                            $arrayElemAt: ['$owner', 0]
+                        },
+                        ownerType: 1,
+                        content: 1,
+                        createdAt: 1,
+                        numOfVotes: 1,
+                        isVoted: 1
                     }
                 }
             ]);

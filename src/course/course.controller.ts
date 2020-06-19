@@ -380,6 +380,31 @@ export class CourseController {
         return new ResponseSuccess('DELETE_LECTURE_OK', data);
     }
 
+    @Get('/:id/chapters/detail')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher, Role.User)
+    async fetchChaptersDetail(
+        @Req() req,
+        @Param('id') courseId: string
+    ): Promise<IResponse<any>> {
+        const { 
+            _id: userId,
+            role: userRole
+        } = req.user;
+        if (userRole === Role.User) {
+            const checkStatus: boolean = await this.studentService.validateUserCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        else {
+            const checkStatus: boolean = await this.authorService.validateTeacherCourse(userId, courseId);
+            if (!checkStatus)
+                throw new ForbiddenException('You do not have permission!');
+        }
+        const chaptersDetail = await this.chapterService.fetchChapters(courseId);
+        return new ResponseSuccess<any>('FETCH_OK', chaptersDetail);
+    }
+
     @Get('/:id/landing')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
