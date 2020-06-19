@@ -1,15 +1,15 @@
-import { Injectable, Inject, HttpStatus, ConflictException, BadRequestException } from '@nestjs/common';
-import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
-import { ConfigService } from '@nestjs/config';
-import * as _ from 'lodash';
-import * as bcrypt from 'bcryptjs';
-import { UpdateDto } from './dtos/update.dto'
-import { ITeacher } from './interfaces/teacher.interface';
-import { Role } from '@/config/constants';
-import { UpdateSocialsDto } from './dtos/socials.dto';
 import { AuthorService } from '@/author/author.service';
+import { INotification } from '@/teacher/interfaces/notification.interface';
 import { UserService } from '@/user/user.service';
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import { InjectModel } from '@nestjs/mongoose';
+import * as bcrypt from 'bcryptjs';
+import * as _ from 'lodash';
+import { Model } from 'mongoose';
+import { UpdateSocialsDto } from './dtos/socials.dto';
+import { UpdateDto } from './dtos/update.dto';
+import { ITeacher } from './interfaces/teacher.interface';
 
 @Injectable()
 export class TeacherService {
@@ -227,5 +227,44 @@ export class TeacherService {
         if (!teacher)
             return { status: false };
         return { status: true };
+    }
+
+    async fetchNotifications(teacherId: string, skip: number, limit: number): Promise<{ hasMore: boolean, list: INotification[] }> {
+        const teacher = await this.teacherModel
+            .findById(teacherId)
+            .select('notifications')
+            .populate('notifications.owner', 'name avatar')
+            .lean()
+            .exec()
+        const hasMore: boolean = skip + limit < _.size(teacher.notifications);
+        return {
+            hasMore,
+            list: _.slice(teacher.notifications, skip, skip + limit)
+        }
+    }
+
+    async seen(teacherId: string, notificationId: string): Promise<boolean> {
+        try {
+            const teacher: ITeacher = await this.teacherModel.findById(teacherId);
+            const index = _.indexOf(_.map(teacher.notifications, notification => notification._id.toString()), notificationId);
+            if (index == -1)
+                return false;
+            teacher.notifications[index].seen = true;
+            await teacher.save();
+            return true;
+        } catch (e) {
+            return false;
+        }
+    }
+
+    async allSeen(teacherId: string): Promise<void> {
+        await this.teacherModel
+            .findByIdAndUpdate(teacherId, {
+                $set: {
+                    'notifications.$[].seen': true
+                }
+            }), {
+            runValidators: true
+        }
     }
 }

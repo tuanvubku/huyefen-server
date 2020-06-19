@@ -1,4 +1,4 @@
-import { Controller, Put, UseGuards, Body, Post, Get, Req, NotFoundException, ConflictException, Param } from '@nestjs/common';
+import { Controller, Put, UseGuards, Body, Post, Get, Req, NotFoundException, ConflictException, Param, Query, ParseIntPipe } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
@@ -12,12 +12,16 @@ import { IResponse } from '@/utils/interfaces/response.interface';
 import { ITeacher } from './interfaces/teacher.interface';
 import { TeacherService } from './teacher.service';
 import { ResponseSuccess } from '@/utils/utils';
+import { User } from '@/utils/decorators/user.decorator';
+import { userInfo } from 'os';
+import { INotification } from '@/teacher/interfaces/notification.interface';
+import { use } from 'passport';
 
 @Controller('api/teachers')
 export class TeacherController {
-    constructor (
+    constructor(
         private readonly teacherService: TeacherService
-    ) {}
+    ) { }
 
     @Post('/test/create')
     async create(@Body() body): Promise<IResponse<ITeacher>> {
@@ -125,4 +129,39 @@ export class TeacherController {
         return new ResponseSuccess('FOLLOW_OK', null, status === 1 ? 0 : 1);
     }
 
+    @Get('/notifications')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchNotification(
+        @User() teacher,
+        @Query('skip', ParseIntPipe) skip: number,
+        @Query('limit', ParseIntPipe) limit: number
+    ): Promise<IResponse<{ hasMore: boolean, list: INotification[] }>> {
+        const teacherId = teacher._id;
+        const notifications = await this.teacherService.fetchNotifications(teacherId, skip, limit);
+        return new ResponseSuccess<{hasMore: boolean, list: INotification[]}>("FETCH_NOTIES_OK", notifications);
+    }
+
+    @Put('/notifications/:id/seen')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async seenNotification(
+        @User() teacher,
+        @Param('id') notificationId: string
+    ): Promise<IResponse<boolean>> {
+        const teacherId = teacher._id;
+        const status: boolean = await this.teacherService.seen(teacherId, notificationId);
+        return new ResponseSuccess<boolean>("SEEN_OK", status);
+    }
+
+    @Put('/notifications/all-seen')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async seenAllNotifications(
+        @User() teacher
+    ) {
+        const teacherId = teacher._id;
+        await this.teacherService.allSeen(teacherId);
+        return new ResponseSuccess("SEEN_ALL_OK");
+    }
 }
