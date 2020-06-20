@@ -71,6 +71,7 @@ export class AuthorService {
                 teacher: teacherId,
                 course: courseId
             });
+        if (!author) return null;
         const isOwner = author.isOwner;
         let permission = false;
         switch (typePermission) {
@@ -139,16 +140,20 @@ export class AuthorService {
         return res;
     }
 
-    async fetchPermission(teacherId: string, courseId: string, type: string): Promise<Number> {
+    async fetchPermission(teacherId: string, courseId: string, type: string): Promise<any> {
         const author: IAuthor = await this.authorModel
             .findOne({
                 teacher: teacherId,
                 course: courseId
             });
         const isOwner = author.isOwner;
-        if (isOwner)
-            return 2;
-        return author.permission[type] ? 1 : 0;
+        if (type === 'settings') {
+            return {
+                privacy: isOwner ? 2 : author.permission['privacy'] ? 1 : 0,
+                members: isOwner ? 2 : author.permission['members'] ? 1 : 0,
+            };
+        }
+        return isOwner ? 2 : author.permission[type] ? 1 : 0;
     }
 
     async fetchAuthorsByCourseId(courseId: string) {

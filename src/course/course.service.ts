@@ -4,7 +4,7 @@ import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { ILecture } from '@/chapter/interfaces/lecture.interface';
 import { Lecture, Price, Privacy, ProgressBase, TeacherCoursesSort as Sort } from '@/config/constants';
 import { TeacherService } from '@/teacher/teacher.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as _ from 'lodash';
 import { Model } from 'mongoose';
@@ -537,5 +537,10 @@ export class CourseService {
             }
         })
         return result;
+    }
+
+    async fetchCourseTitleById(courseId: string): Promise<string> {
+        const course =  await this.courseModel.findById(courseId);
+        return course.title;
     }
 }

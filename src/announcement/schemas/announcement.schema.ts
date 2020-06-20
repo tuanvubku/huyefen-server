@@ -18,7 +18,7 @@ export const AnnouncementSchema = new Schema({
     },
     createdAt: {
         type: Date,
-        default: Date.now()
+        default: Date.now
     },
     comments: {
         type: [CommentSchema],

@@ -3,49 +3,54 @@ import { IAnnouncement } from './interfaces/announcement.interface';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as _ from 'lodash';
+import { Role } from '@/config/constants';
+import { IComment } from './interfaces/comment.interface';
 
 @Injectable()
 export class AnnouncementService {
     constructor(
-        @InjectModel('Announcement') private readonly announcementModel: Model<IAnnouncement>
+        @InjectModel('Announcement') private readonly announcementModel: Model<IAnnouncement>,
+        @InjectModel('Comment') private readonly commentModel: Model<IComment>
     ) { }
 
-    async createAnnouncement(teacherId: string, courseId: string, content: string): Promise<IAnnouncement> {
-        const announcement: IAnnouncement = new this.announcementModel({
+    async createAnnouncement(teacherId: string, courseId: string, content: string): Promise<any> {
+        let announcement: IAnnouncement = new this.announcementModel({
             content: content,
             course: courseId,
             teacher: teacherId
-        })
+        });
         await announcement.save();
-        let res = await this.announcementModel
+        announcement = await this.announcementModel
             .findById(announcement._id)
-            .populate({
-                path: 'teacher',
-                select: {
-                    _id: 1,
-                    name: 1,
-                    avatar: 1
-                }
-            })
-            .select({
-                _id: 0,
-                __v: 0,
-                course: 0
-            })
-            .lean().exec() as any;
-        _.set(res, 'user', res.teacher);
-        _.unset(res, 'teacher');
-        res = {
-            _id: _.uniqueId('announce_'),
-            moreComments: false,
+            .populate('teacher', 'name avatar');
+        return {
+            ..._.pick(announcement, ['_id', 'teacher', 'createdAt', 'comments', 'content']),
             commentsLoading: false,
-            ...res,
+            moreComments: false
         }
-        return res;
     }
 
-    async createComment(announcement: IAnnouncement) {
-        await announcement.save();
+    async createComment(user: any, userRole: Role, announceId: string, content: string): Promise<IComment> {
+        const comment: IComment = new this.commentModel({
+            owner: user._id,
+            ownerType: userRole,
+            content
+        });
+        await this.announcementModel
+            .findByIdAndUpdate(announceId, {
+                $push: {
+                    comments: {
+                        $each: [comment],
+                        $position: 0
+                    }
+                }
+            }, {
+                runValidators: true
+            });
+        return {
+            ..._.pick(comment, ['_id', 'createdAt', 'ownerType', 'content']),
+            owner: user
+        } as IComment;
     }
 
     async findAnnouncementById(announceId: string): Promise<IAnnouncement> {
@@ -69,9 +74,8 @@ export class AnnouncementService {
         return announce;
     }
     async fetchAnnouncements(courseId: string, page: number, limit: number) {
-        const length = await this.announcementModel.count({});
-        console.log(length)
-        const hasMore = (page * limit) < length ? true : false;
+        const length = await this.announcementModel.find({ course: courseId }).count();
+        const hasMore = (page * limit) < length;
         let announcements = await this.announcementModel
             .find({ course: courseId })
             .sort({
@@ -79,37 +83,22 @@ export class AnnouncementService {
             })
             .skip((page - 1) * limit)
             .limit(limit)
-            .populate({
-                path: "teacher",
-                select: {
-                    _id: 1,
-                    name: 1,
-                    avatar: 1
-                }
-            })
-            .populate({
-                path: "comments.owner",
-                select: {
-                    _id: 1,
-                    name: 1,
-                    avatar: 1
-                }
-            })
+            .populate('teacher', 'name avatar')
+            .populate('comments.owner', 'name avatar')
             .lean()
             .exec();
-        announcements = announcements.map(a => {
-            const comments = a.comments.slice(0, 5);
+        announcements = announcements.map(announce => {
+            const comments = announce.comments.slice(0, 5);
             return {
-                ...a,
+                ...announce,
                 comments,
                 commentsLoading: false,
-                moreComments: _.size(a.comments) > 5 ? true : false
-            }
-        })
-        const res = {
+                moreComments: _.size(announce.comments) > 5
+            };
+        });
+        return {
             hasMore,
             list: _.keyBy(announcements, "_id")
-        }
-        return res;
+        };
     }
 }

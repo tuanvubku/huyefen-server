@@ -592,26 +592,14 @@ export class CourseController {
         @Param('courseId') courseId: string
     ) {
         const teacherId = teacher._id;
-        const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
-        if (!check)
-            throw new ForbiddenException('Forbidden. You can not access this course');
         const hasPermission = await this.authorService.checkPermission(teacherId, courseId, Permission.Invite);
         if (!hasPermission)
-            throw new ForbiddenException("You are not authorized to edit this course!");
-        const coTeacher = await this.teacherService.findTeacherByEmail(email);
-        if (!coTeacher)
-            throw new NotFoundException('Teacher doesn\'t existed!');
-        const courseName = await this.courseService.getCourseName(courseId);
-        const notification = {
-            user: teacherId,
-            content: `Mời bạn tham gia phát triển khoá học ${courseName}`,
-            type: 1
-        }
-        const { status } = await this.teacherService.updateNotification(coTeacher._id, notification);
-        // notificaition to user
+            throw new ForbiddenException("You are do not have permission!");
+        const courseTitle: string = await this.courseService.fetchCourseTitleById(courseId)
+        const status = await this.teacherService.invite(teacherId, courseTitle, email);
         if (!status)
-            throw new NotFoundException('Invalid teacher!!');
-        return new ResponseSuccess('UPDATE_NOTIFICATION_OK', status);
+            throw new NotFoundException('Invalid teacher');
+        return new ResponseSuccess('UPDATE_NOTIFICATION_OK', null);
     }
 
     @Delete('/:courseId/member/:memberId')
@@ -675,13 +663,13 @@ export class CourseController {
         @User() teacher,
         @Query("type") type: string,
         @Param('courseId') courseId: string
-    ): Promise<IResponse<Number>> {
+    ): Promise<IResponse<any>> {
         const teacherId = teacher._id;
         const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!check)
             throw new ForbiddenException('Forbidden. You can not access this course');
         const result = await this.authorService.fetchPermission(teacherId, courseId, type);
-        return new ResponseSuccess<Number>("FETCH_OK", result);
+        return new ResponseSuccess<any>("FETCH_OK", result);
     }
 
     @Get('/:courseId/overview/public')

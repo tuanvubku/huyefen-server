@@ -14,6 +14,7 @@ import { IAnnouncement } from './interfaces/announcement.interface';
 import { IComment } from './interfaces/comment.interface';
 import { UserService } from '@/user/user.service';
 import * as _ from 'lodash';
+import { StudentService } from '@/student/student.service';
 
 @Controller('api/announcements')
 export class AnnouncementController {
@@ -22,7 +23,8 @@ export class AnnouncementController {
         private readonly announcementService: AnnouncementService,
         private readonly authorService: AuthorService,
         private readonly teacherService: TeacherService,
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        private readonly studentService: StudentService
     ) { }
 
     @Post()
@@ -31,14 +33,14 @@ export class AnnouncementController {
     async createAnnouncement(
         @User() user,
         @Body() body: CreateDto
-    ): Promise<IResponse<IAnnouncement>> {
+    ): Promise<IResponse<any>> {
         const teacherId = user._id;
         const { content, courseId } = body;
         const hasPermission = this.authorService.checkPermission(teacherId, courseId, Permission.Announcement);
         if (!hasPermission)
             throw new ForbiddenException("You are not authorized to create ANNOUNCEMENT this course!");
         const announcement = await this.announcementService.createAnnouncement(teacherId, courseId, content);
-        return new ResponseSuccess<IAnnouncement>("CREATE_ANNOUNCEMENT_OK", announcement);
+        return new ResponseSuccess<any>("CREATE_ANNOUNCEMENT_OK", announcement);
     }
 
     @Get()
@@ -75,36 +77,27 @@ export class AnnouncementController {
             .findAnnouncementById(announceId);
         if (!announcement)
             throw new NotFoundException("Not Found Announcement");
-        let isValid = false;
-        let ownerType = "";
-        let owner = null;
-        const { _id, role } = user;
         const courseId = announcement.course;
-        if (role === Role.Teacher) {
-            isValid = await this.authorService.validateTeacherCourse(_id, courseId);
-            ownerType = Comment.Teacher;
-            owner = await this.teacherService.fetchIdAvatarNameById(_id);
-        } else {
-            //check isValid user
-            ownerType = Comment.User;
-            owner = await this.userService.fetchIdAvatarNameById(_id);
+        const userRole: Role = user.role;
+        const userId: string = user._id;
+        let userInfo: any;
+        if (userRole === Role.Teacher) {
+            user = await this.teacherService.fetchIdAvatarNameById(userId);
+        }
+        else {
+            user = await this.userService.fetchIdAvatarNameById(userId);
+        }
+        let isValid: boolean = true;
+        if (userRole === Role.Teacher) {
+            isValid = await this.authorService.validateTeacherCourse(userId, courseId);
+        }
+        else {
+            isValid = await this.studentService.validateUserCourse(userId, courseId);
         }
         if (!isValid)
             throw new ForbiddenException("Forbidden to access this course");
-        const comment = {
-            content: content,
-            owner: _id,
-            ownerType: ownerType,
-            createdAt: Date.now().toString()
-        } as IComment;
-        announcement.comments.unshift(comment);
-        await this.announcementService.createComment(announcement);
-        const res = {
-            _id: 'new',
-            ...comment,
-            owner
-        }
-        return new ResponseSuccess("CREATE_COMMENT_OK", res);
+        const comment = await this.announcementService.createComment(user, userRole, announceId, content);
+        return new ResponseSuccess("CREATE_COMMENT_OK", comment);
     }
 
     @Get(':announceId/comments')
@@ -126,12 +119,12 @@ export class AnnouncementController {
         if (role === Role.Teacher) {
             isValid = await this.authorService.validateTeacherCourse(_id, courseId);
         } else {
-            //check isValid user
+            isValid = await this.studentService.validateUserCourse(_id, courseId);
         }
         if (!isValid)
             throw new ForbiddenException("Forbidden to access this course");
         const comments = announcement.comments;
-        const hasMore = page * limit < _.size(comments) ? true : false;
+        const hasMore = page * limit < _.size(comments);
         const list = _.slice(comments, (page - 1) * limit, page * limit);
         const res = {
             hasMore,

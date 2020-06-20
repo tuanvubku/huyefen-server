@@ -10,14 +10,22 @@ import { Model } from 'mongoose';
 import { UpdateSocialsDto } from './dtos/socials.dto';
 import { UpdateDto } from './dtos/update.dto';
 import { ITeacher } from './interfaces/teacher.interface';
+import { Role, Notification, Push } from '@/config/constants';
+import { UpdateSocialsDto } from './dtos/socials.dto';
+import { AuthorService } from '@/author/author.service';
+import { UserService } from '@/user/user.service';
+import { INotification } from '@/user/interfaces/notification.interface';
+import { MessagingService } from '@/firebase/messaging.service';
 
 @Injectable()
 export class TeacherService {
     constructor(
         @InjectModel('Teacher') private readonly teacherModel: Model<ITeacher>,
+        @InjectModel('Notification') private readonly notificationModel: Model<INotification>,
         private readonly authorService: AuthorService,
         private readonly userService: UserService,
-        private readonly configService: ConfigService
+        private readonly configService: ConfigService,
+        private readonly messagingService: MessagingService
     ) { }
 
     async create(body): Promise<ITeacher> {
@@ -76,10 +84,9 @@ export class TeacherService {
     async findTeacherByEmail(email: string): Promise<ITeacher> {
         const teacher = await this.teacherModel
             .findOne({ email })
-        if (!teacher)
-            return null;
         return teacher;
     }
+
     async fetchIdAvatarNameById(teacherId: string): Promise<ITeacher> {
         const teacher: any = await this.teacherModel
             .findById(teacherId)
@@ -90,8 +97,6 @@ export class TeacherService {
             })
             .lean()
             .exec();
-        if (!teacher)
-            return null;
         return teacher;
     }
 
@@ -266,5 +271,48 @@ export class TeacherService {
             }), {
             runValidators: true
         }
+    }
+
+    async invite(teacherId: string, courseTitle: string, email: string): Promise<boolean> {
+        const notificationData = {
+            type: Notification.Invite,
+            owner: teacherId,
+            ownerType: Role.Teacher,
+            content: `đã mời bạn tham gia phát triển khoá học ${courseTitle}`
+        };
+        const notification: INotification = new this.notificationModel(notificationData);
+        const teacher = await this.teacherModel
+            .findOneAndUpdate({
+                email
+            }, {
+                $push: {
+                    notifications: {
+                        $each: [notification],
+                        $position: 0
+                    }
+                }
+            });
+        if (!teacher) return false;
+        if (teacher.fcmToken) {
+            const owner = await this.fetchIdAvatarNameById(teacherId);
+            await this.messagingService.send(teacher.fcmToken, {
+                notification: {
+                    title: `Mời tham gia phát triển`,
+                    body: `${owner.name} mời bạn tham gia phát triển khoá học ${courseTitle}.`
+                },
+                data: {
+                    _id: notification._id.toString(),
+                    createdAt: notification.createdAt.toString(),
+                    ownerType: Role.Teacher,
+                    ownerId: teacherId,
+                    ownerName: owner.name,
+                    ...(owner.avatar ? { ownerAvatar: owner.avatar } : {}),
+                    pushType: Push.Notification,
+                    type: Notification.Friend,
+                    content: `đã mời bạn tham gia phát triển khoá học ${courseTitle}.`,
+                }
+            });
+        }
+        return true;
     }
 }

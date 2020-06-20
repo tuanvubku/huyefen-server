@@ -103,7 +103,8 @@ export enum Comment {
 
 export enum Notification {
     Friend = 'friend',
-    Recommend = 'recommend'
+    Recommend = 'recommend',
+    Invite = 'Invite'
 };
 
 export enum Push {
