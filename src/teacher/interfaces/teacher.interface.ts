@@ -1,5 +1,5 @@
 import { Document } from 'mongoose';
-import { INotification } from '@/teacher/interfaces/notification.interface';
+import { INotification } from './notification.interface';
 
 
 export interface ITeacher extends Document {

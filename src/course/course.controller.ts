@@ -636,7 +636,7 @@ export class CourseController {
         const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!check)
             throw new ForbiddenException('Forbidden. You can not access this course');
-        const allAuthors = await this.authorService.fetchAllAuthors();
+        const allAuthors = await this.authorService.fetchAllAuthors(courseId);
         return new ResponseSuccess<IAuthor[]>("FETCH_OK", allAuthors);
     }
 

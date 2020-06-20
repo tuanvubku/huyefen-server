@@ -14,14 +14,14 @@ import { Role, Notification, Push } from '@/config/constants';
 import { UpdateSocialsDto } from './dtos/socials.dto';
 import { AuthorService } from '@/author/author.service';
 import { UserService } from '@/user/user.service';
-import { INotification } from '@/user/interfaces/notification.interface';
+import { INotification } from './interfaces/notification.interface';
 import { MessagingService } from '@/firebase/messaging.service';
 
 @Injectable()
 export class TeacherService {
     constructor(
         @InjectModel('Teacher') private readonly teacherModel: Model<ITeacher>,
-        @InjectModel('Notification') private readonly notificationModel: Model<INotification>,
+        @InjectModel('TeacherNotification') private readonly notificationModel: Model<INotification>,
         private readonly authorService: AuthorService,
         private readonly userService: UserService,
         private readonly configService: ConfigService,
@@ -234,43 +234,18 @@ export class TeacherService {
         return { status: true };
     }
 
-    async fetchNotifications(teacherId: string, skip: number, limit: number): Promise<{ hasMore: boolean, list: INotification[] }> {
-        const teacher = await this.teacherModel
-            .findById(teacherId)
-            .select('notifications')
-            .populate('notifications.owner', 'name avatar')
-            .lean()
-            .exec()
-        const hasMore: boolean = skip + limit < _.size(teacher.notifications);
-        return {
-            hasMore,
-            list: _.slice(teacher.notifications, skip, skip + limit)
-        }
-    }
-
-    async seen(teacherId: string, notificationId: string): Promise<boolean> {
-        try {
-            const teacher: ITeacher = await this.teacherModel.findById(teacherId);
-            const index = _.indexOf(_.map(teacher.notifications, notification => notification._id.toString()), notificationId);
-            if (index == -1)
-                return false;
-            teacher.notifications[index].seen = true;
-            await teacher.save();
-            return true;
-        } catch (e) {
-            return false;
-        }
-    }
-
-    async allSeen(teacherId: string): Promise<void> {
-        await this.teacherModel
+    async updateFCMToken(teacherId: string, token: string): Promise<any> {
+        this.messagingService.sayHello(token);
+        return await this.teacherModel
             .findByIdAndUpdate(teacherId, {
                 $set: {
-                    'notifications.$[].seen': true
+                    fcmToken: token
                 }
-            }), {
-            runValidators: true
-        }
+            }, {
+                new: true,
+                runValidators: true
+            })
+            .select('fcmToken -_id');
     }
 
     async invite(teacherId: string, courseTitle: string, email: string): Promise<boolean> {
@@ -308,7 +283,7 @@ export class TeacherService {
                     ownerName: owner.name,
                     ...(owner.avatar ? { ownerAvatar: owner.avatar } : {}),
                     pushType: Push.Notification,
-                    type: Notification.Friend,
+                    type: Notification.Invite,
                     content: `đã mời bạn tham gia phát triển khoá học ${courseTitle}.`,
                 }
             });

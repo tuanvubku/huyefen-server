@@ -117,27 +117,18 @@ export class AuthorService {
         return { status: true };
     }
 
-    async fetchAllAuthors(): Promise<any> {
+    async fetchAllAuthors(courseId: string): Promise<any> {
         const allAuthors = await this.authorModel
-            .find({})
-            .populate({
-                path: "teacher",
-                select: "_id name avatar"
-            })
-            .select({
-                _id: 0,
-                course: 0
-            })
+            .find({ course: courseId })
+            .populate('teacher', '-_id name avatar')
+            .select('-course')
             .lean()
             .exec();
-        const res = allAuthors.map(({ teacher, ...other }) => {
-            const teacher_ = teacher as Object;
-            return {
-                ...teacher_,
-                ...other
-            }
-        })
-        return res;
+        return _.map(allAuthors, author => ({
+            ..._.omit(author, ['teacher']),
+            name: (author.teacher as any).name,
+            avatar: (author.teacher as any).avatar
+        }))
     }
 
     async fetchPermission(teacherId: string, courseId: string, type: string): Promise<any> {

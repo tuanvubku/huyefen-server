@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { Role } from '@/config/constants';
+import { UpdateFCMDto } from './dtos/fcm.dto';
 import { UpdateDto } from './dtos/update.dto';
 import { UpdateSocialsDto } from './dtos/socials.dto';
 import { UpdateAvatarDto } from './dtos/avatar.dto';
@@ -10,13 +11,14 @@ import { ChangePasswordDto } from './dtos/password.dto';
 import { FetchTeacherParamDto } from './dtos/fetch.dto';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ITeacher } from './interfaces/teacher.interface';
-import { INotification } from '@/user/interfaces/notification.interface';
+import { INotification } from './interfaces/notification.interface';
 import { TeacherService } from './teacher.service';
 import { ResponseSuccess } from '@/utils/utils';
 import { User } from '@/utils/decorators/user.decorator';
 import { userInfo } from 'os';
 import { INotification } from '@/teacher/interfaces/notification.interface';
 import { use } from 'passport';
+
 
 @Controller('api/teachers')
 export class TeacherController {
@@ -88,6 +90,54 @@ export class TeacherController {
         return new ResponseSuccess(message, true, errorCode);
     }
 
+    @Put('/update/token')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateFCMToken(@Req() req, @Body() body: UpdateFCMDto): Promise<IResponse<any>> {
+        const teacherId: string = req.user._id;
+        const token = body.token;
+        const teacher: any = await this.teacherService.updateFCMToken(teacherId, token);
+        if (!teacher)
+            throw new NotFoundException('User doesn\'t existed!');
+        return new ResponseSuccess('USER_UPDATE_FCM_OK', teacher);
+    }
+
+    @Get('/notifications')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchNotification(
+        @Req() req,
+        @Query('skip', ParseIntPipe) skip: number,
+        @Query('limit', ParseIntPipe) limit: number
+    ): Promise<IResponse<{ hasMore: boolean, list: INotification[] }>> {
+        const userId: string = req.user._id;
+        const notifications: { hasMore: boolean, list: INotification[] } = await this.teacherService.fetchNotifications(userId, skip, limit);
+        return new ResponseSuccess<{ hasMore: boolean, list: INotification[] }>('FETCH_NOTIFS_OK', notifications);
+    }
+
+    @Put('/notifications/:id/seen')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async seenNotification(
+        @Req() req,
+        @Param('id') notificationId: string
+    ): Promise<IResponse<boolean>> {
+        const userId: string = req.user._id;
+        const status: boolean = await this.teacherService.seen(userId, notificationId);
+        return new ResponseSuccess<boolean>('SEEN_OK', status);
+    }
+
+    @Put('/notifications/all-seen')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async seenAllNotification(
+        @Req() req
+    ): Promise<IResponse<null>> {
+        const userId: string = req.user._id;
+        await this.teacherService.allSeen(userId);
+        return new ResponseSuccess('SEEN_ALL_OK');
+    }
+
     @Get('/:id')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
@@ -128,38 +178,5 @@ export class TeacherController {
         const status = await this.teacherService.unfollow(userId, teacherId);
         if (status === 0) throw new NotFoundException('Invalid teacher!');
         return new ResponseSuccess('FOLLOW_OK', null, status === 1 ? 0 : 1);
-    }
-
-    @Get('/notifications')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    async fetchNotification(
-        @Req() req,
-        @Query('skip', ParseIntPipe) skip: number,
-        @Query('limit', ParseIntPipe) limit: number
-    ): Promise<IResponse<{ hasMore: boolean, list: INotification[] }>> {
-        const userId: string = req.user._id;
-        const notifications: { hasMore: boolean, list: INotification[] } = await this.teacherService.fetchNotifications(userId, skip, limit);
-        return new ResponseSuccess<{ hasMore: boolean, list: INotification[] }>('FETCH_NOTIFS_OK', notifications);
-    }
-
-    @Put('/notifications/:id/seen')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    async seenNotification(
-        @Req() req,
-        @Param('id') notificationId: string
-    ): Promise<IResponse<boolean>> {
-        const userId: string = req.user._id;
-        const status: boolean = await this.teacherService.seen(userId, notificationId);
-        return new ResponseSuccess<boolean>('SEEN_OK', status);
-    }
-
-    @Put('/notifications/all-seen')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    async seenAllNotification(
-        @Req() req
-    ): Promise<IResponse<null>> {
-        const userId: string = req.user._id;
-        await this.teacherService.allSeen(userId);
-        return new ResponseSuccess('SEEN_ALL_OK');
     }
 }

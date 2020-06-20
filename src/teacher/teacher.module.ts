@@ -5,13 +5,13 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TeacherSchema } from './schemas/teacher.schema';
 import { AuthorModule } from '@/author/author.module';
 import { UserModule } from '@/user/user.module';
-import { NotificationSchema } from '@/user/schemas/notification.schema';
+import { TeacherNotificationSchema } from './schemas/notification.schema';
 
 @Module({
 	imports: [
 		MongooseModule.forFeature([
 			{ name: 'Teacher', schema: TeacherSchema },
-			{ name: 'Notification', schema: NotificationSchema }
+			{ name: 'TeacherNotification', schema: TeacherNotificationSchema }
 		]),
 		AuthorModule,
 		UserModule

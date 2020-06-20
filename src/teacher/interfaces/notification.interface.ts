@@ -1,14 +1,12 @@
-export interface INotification {
+import { Document } from 'mongoose';
+import { Notification } from '@/config/constants';
+
+export interface INotification extends Document {
     _id: string,
-    type: number,
-	content: string,
-	avatar: string,
-    owner: {
-		_id: string,
-		avatar: string,
-		name: string
-    },
+    type: Notification,
+    content: string,
     ownerType: string,
+    owner: string,
     createdAt: Date,
     seen: boolean
 };
