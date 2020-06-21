@@ -451,19 +451,20 @@ export class CourseService {
         return course.title;
     }
 
-    async deleteAuthor(teacherId: string, courseId: string) {
+    async deleteAuthor(memberId: string, courseId: string) {
+        const author = await this.authorService
+            .deleteById(memberId);
+        if (!author) return false;
+        const teacherId: string = author.teacher;
         const course: ICourse = await this.courseModel
             .findByIdAndUpdate(courseId, {
                 $pull: {
                     authors: teacherId
                 }
             }, {
-                new: true,
                 runValidators: true
             });
-        if (!course)
-            return { status: false };
-        return { status: true };
+        return true;
     }
 
     async fetchCourseOverview(courseId: string): Promise<Object> {

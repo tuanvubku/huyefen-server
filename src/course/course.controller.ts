@@ -602,7 +602,7 @@ export class CourseController {
         return new ResponseSuccess('UPDATE_NOTIFICATION_OK', null);
     }
 
-    @Delete('/:courseId/member/:memberId')
+    @Delete('/:courseId/members/:memberId')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     async removeCoTeacher(
@@ -611,17 +611,13 @@ export class CourseController {
         @Param('memberId') memberId: string
     ) {
         const teacherId = teacher._id;
-        const check = await this.authorService.validateTeacherCourse(teacherId, courseId);
-        if (!check)
-            throw new ForbiddenException('Forbidden. You can not access this course');
         const hasPermission = await this.authorService.checkPermission(teacherId, courseId, Permission.Default);
         if (!hasPermission)
-            throw new ForbiddenException("You are not authorized to edit this course!");
-        const { status } = await this.authorService.deleteAuthor(memberId, courseId);
+            throw new ForbiddenException("You do not have permission to access this course!");
+        const status = await this.courseService.deleteAuthor(memberId, courseId);
         if (!status)
             throw new NotFoundException('Invalid author and course!!');
-        const result = await this.courseService.deleteAuthor(memberId, courseId);
-        return new ResponseSuccess("DELETE_OK", result);
+        return new ResponseSuccess("DELETE_OK", true);
 
     }
 

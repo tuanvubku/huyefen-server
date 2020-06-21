@@ -92,17 +92,15 @@ export class AuthorService {
     }
 
     async updatePermission(courseId: string, permissionList: Object): Promise<boolean> {
-        for (const memberId in permissionList) {
-            const author = await this.authorModel
-                .findOneAndUpdate({
-                    course: courseId,
-                    teacher: memberId
-                }, {
+        await Promise.all(_.map(_.keys(permissionList), async memberId => {
+            await this.authorModel
+                .findByIdAndUpdate(memberId, {
                     $set: {
                         permission: permissionList[memberId]
                     }
                 });
-        }
+            })
+        );
         return true;
     }
 
@@ -190,5 +188,10 @@ export class AuthorService {
             .lean()
             .exec();
         return _.map(authors, 'teacher');
-	}
+    }
+    
+    async deleteById(memberId: string): Promise<any> {
+        return await this.authorModel
+            .findByIdAndDelete(memberId);
+    }
 }
