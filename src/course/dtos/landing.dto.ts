@@ -1,5 +1,5 @@
 import { IsMongoId, IsString, MaxLength, IsEnum, IsOptional, IsArray, IsUrl } from 'class-validator';
-import { Level } from '@/config/constants';
+import { Level, Language } from '@/config/constants';
 
 export class FetchLandingDto {
     @IsMongoId()
@@ -28,8 +28,8 @@ export class UpdateLandingDto {
     description: string;
 
     @IsOptional()
-    @IsMongoId()
-    language: string;
+    @IsEnum(Language)
+    language: Language;
 
     @IsOptional()
     @IsEnum(Level)

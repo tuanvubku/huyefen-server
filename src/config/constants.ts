@@ -83,7 +83,8 @@ export enum HistorySort {
 export enum ValidateStatus {
     OK = 0,
     InvalidCourse = 1,
-    InvalidTeacher = 2
+    InvalidTeacher = 2,
+    InvalidUser = 2
 };
 
 export enum Permission {
@@ -122,4 +123,9 @@ export enum QuestionType {
     Following = 'following',
     Asked = 'asked',
     NoResponse = 'noResponse'
+};
+
+export enum Language {
+    English = 'english',
+    Vietnamese = 'vietnamese'
 };

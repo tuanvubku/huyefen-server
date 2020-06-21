@@ -1,5 +1,5 @@
 import { Schema } from 'mongoose';
-import { Level, Privacy, Price } from '@/config/constants';
+import { Level, Privacy, Price, Language } from '@/config/constants';
 import { WhatLearnSchema } from './whatLearn.schema';
 import { RequirementSchema } from './requirement.schema';
 import { TargetStudentSchema } from './targetStudent.schema';
@@ -33,8 +33,8 @@ export const CourseSchema = new Schema({
         default: null
     },
     language: {
-        type: Schema.Types.ObjectId,
-        ref: 'Language',
+        type: String,
+        enum: [Language.English, Language.Vietnamese],
         default: null
     },
     level: {

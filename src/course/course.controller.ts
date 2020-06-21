@@ -803,5 +803,23 @@ export class CourseController {
         return new ResponseSuccess("FETCH_REVIEW_OK", reviews);
     }
 
-
+    @Get('/:id/validate/user')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async validateForUser(
+        @User() user,
+        @Param() params: ValidateParamDto
+    ): Promise<IResponse<ValidateStatus>> {
+        const userId: string = user._id;
+        const courseId: string = params.id;
+        let status: ValidateStatus = ValidateStatus.OK;
+        const checkCourse = await this.courseService.validateCourse(courseId);
+        if (!checkCourse)
+            status = ValidateStatus.InvalidCourse;
+        else {
+            const checkStudent: boolean = await this.studentService.validateUserCourse(userId, courseId);
+            if (!checkStudent) status = ValidateStatus.InvalidUser;
+        }
+        return new ResponseSuccess<ValidateStatus>('VALIDATE_OK', status);
+    }
 }

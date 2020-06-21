@@ -57,7 +57,7 @@ export class AnnouncementController {
             isValid = await this.authorService.validateTeacherCourse(user._id, courseId);
         }
         else {
-            console.log("Validate User Course");
+            isValid = await this.studentService.validateUserCourse(user._id, courseId);
         }
         if (!isValid)
             throw new ForbiddenException("Forbidden to access this course");

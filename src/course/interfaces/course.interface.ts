@@ -1,5 +1,5 @@
 import { Document } from 'mongoose';
-import { Level, Privacy, Price } from '@/config/constants';
+import { Level, Privacy, Price, Language } from '@/config/constants';
 import { IWhatLearn } from './whatLearn.interface';
 import { IRequirement } from './requirement.interface';
 import { ITargetStudent } from './targetStudent.interface';
@@ -11,7 +11,7 @@ export interface ICourse extends Document {
     authors: string[];
     numOfStudents: number;
     description: string;
-    language: string;
+    language: Language;
     level: Level;
     area: string;
     category: string;
