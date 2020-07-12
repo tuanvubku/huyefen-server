@@ -5,6 +5,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { TeacherSchema } from './schemas/teacher.schema';
 import { AuthorModule } from '@/author/author.module';
 import { UserModule } from '@/user/user.module';
+import { CourseModule } from '@/course/course.module';
 import { TeacherNotificationSchema } from './schemas/notification.schema';
 
 @Module({
@@ -14,6 +15,7 @@ import { TeacherNotificationSchema } from './schemas/notification.schema';
 			{ name: 'TeacherNotification', schema: TeacherNotificationSchema }
 		]),
 		AuthorModule,
+		//CourseModule,
 		UserModule
 	],
 	controllers: [TeacherController],

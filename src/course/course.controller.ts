@@ -596,7 +596,7 @@ export class CourseController {
         if (!hasPermission)
             throw new ForbiddenException("You are do not have permission!");
         const courseTitle: string = await this.courseService.fetchCourseTitleById(courseId)
-        const status = await this.teacherService.invite(teacherId, courseTitle, email);
+        const status = await this.teacherService.invite(teacherId, courseId, courseTitle, email);
         if (!status)
             throw new NotFoundException('Invalid teacher');
         return new ResponseSuccess('UPDATE_NOTIFICATION_OK', null);
@@ -678,7 +678,7 @@ export class CourseController {
         return new ResponseSuccess<Object>("FETCH_OVERVIEW_OK", overview);
     }
 
-    @Get(':courseId/instructors/public')
+    @Get('/:courseId/instructors/public')
     async fetchInstructorsPublic(
         @Param('courseId') courseId
     ): Promise<IResponse<Object>> {

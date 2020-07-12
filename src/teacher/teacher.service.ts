@@ -16,6 +16,7 @@ import { AuthorService } from '@/author/author.service';
 import { UserService } from '@/user/user.service';
 import { INotification } from './interfaces/notification.interface';
 import { MessagingService } from '@/firebase/messaging.service';
+import { CourseService } from '@/course/course.service';
 
 @Injectable()
 export class TeacherService {
@@ -25,7 +26,8 @@ export class TeacherService {
         private readonly authorService: AuthorService,
         private readonly userService: UserService,
         private readonly configService: ConfigService,
-        private readonly messagingService: MessagingService
+        private readonly messagingService: MessagingService,
+        //private readonly courseService: CourseService
     ) { }
 
     async create(body): Promise<ITeacher> {
@@ -248,12 +250,13 @@ export class TeacherService {
             .select('fcmToken -_id');
     }
 
-    async invite(teacherId: string, courseTitle: string, email: string): Promise<boolean> {
+    async invite(teacherId: string, courseId: string, courseTitle: string, email: string): Promise<boolean> {
         const notificationData = {
             type: Notification.Invite,
             owner: teacherId,
             ownerType: Role.Teacher,
-            content: `đã mời bạn tham gia phát triển khoá học ${courseTitle}`
+            content: `đã mời bạn tham gia phát triển khoá học ${courseTitle}`,
+            course: courseId
         };
         const notification: INotification = new this.notificationModel(notificationData);
         const teacher = await this.teacherModel
@@ -328,5 +331,29 @@ export class TeacherService {
             }, {
                 runValidators: true
             });
+    }
+
+    async fetchInvitation(teacherId: string, notificationId: string): Promise<{ status: -1 | 0 | 1, invitation: any }> {
+        const teacher: ITeacher = await this.teacherModel
+            .findById(teacherId, {
+                notifications: {
+                    $elemMatch: {
+                        _id: notificationId
+                    }
+                }
+            })
+            .populate('notifications.owner', 'name avatar')
+            .populate('notifications.course', 'title')
+            .select('notifications._id notifications.owner notifications.ownerType notifications.course notifications.createdAt');
+        if (!teacher || _.isEmpty(teacher.notifications)) {
+            return { status: -1, invitation: null };
+        }
+        let notification: INotification = teacher.notifications[0];
+        if (!notification.course)
+            return { status: 0, invitation: null };
+        return {
+            status: 1,
+            invitation: notification
+        };
     }
 }

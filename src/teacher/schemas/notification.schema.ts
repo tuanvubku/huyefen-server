@@ -16,6 +16,11 @@ export const TeacherNotificationSchema = new Schema({
 		type: String,
 		required: true,
 	},
+	course: {
+		type: Schema.Types.ObjectId,
+		ref: 'Course',
+		default: null
+	},
 	content: {
 		type: String,
 		required: true,

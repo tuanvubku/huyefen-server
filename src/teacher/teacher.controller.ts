@@ -1,4 +1,4 @@
-import { Controller, Put, UseGuards, Body, Post, Get, Req, NotFoundException, ConflictException, Param, Query, ParseIntPipe } from '@nestjs/common';
+import { Controller, Put, UseGuards, Body, Post, Get, Req, NotFoundException, ConflictException, Param, Query, ParseIntPipe, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { Roles } from '@/utils/decorators/roles.decorator';
@@ -136,6 +136,24 @@ export class TeacherController {
         const userId: string = req.user._id;
         await this.teacherService.allSeen(userId);
         return new ResponseSuccess('SEEN_ALL_OK');
+    }
+
+    @Get('/invitation/:id')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchInvitation(
+        @Req() req,
+        @Param('id') notificationId: string
+    ): Promise<IResponse<any>> {
+        const teacherId: string = req.user._id;
+        const { status, invitation } = await this.teacherService.fetchInvitation(teacherId, notificationId);
+        if (status === -1) {         //Notification doesn't belong to teacher
+            throw new ForbiddenException('You don\'t have permission');
+        }
+        else if (status === 0) {            //Notification is not invitation type
+            throw new NotFoundException('The invitation is invalid!');
+        }
+        return new ResponseSuccess('FETCH_OK', invitation);
     }
 
     @Get('/:id')

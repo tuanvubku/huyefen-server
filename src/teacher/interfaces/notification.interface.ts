@@ -7,6 +7,7 @@ export interface INotification extends Document {
     content: string,
     ownerType: string,
     owner: string,
+    course?: string,
     createdAt: Date,
     seen: boolean
 };
