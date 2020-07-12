@@ -18,8 +18,8 @@ export class AuthorService {
             course: courseId,
             isOwner: falsly,
             permission: {
-                announcement: falsly,
-                review: falsly,
+                announcements: falsly,
+                reviews: falsly,
                 privacy: falsly,
                 messenger: falsly,
                 invite: falsly
@@ -76,7 +76,7 @@ export class AuthorService {
         let permission = false;
         switch (typePermission) {
             case Permission.Announcement:
-                permission = author.permission.announcement;
+                permission = author.permission.announcements;
                 break;
             case Permission.Invite:
                 permission = author.permission.invite;
@@ -139,7 +139,7 @@ export class AuthorService {
         if (type === 'settings') {
             return {
                 privacy: isOwner ? 2 : author.permission['privacy'] ? 1 : 0,
-                members: isOwner ? 2 : author.permission['members'] ? 1 : 0,
+                members: isOwner ? 2 : author.permission['invite'] ? 1 : 0,
             };
         }
         return isOwner ? 2 : author.permission[type] ? 1 : 0;

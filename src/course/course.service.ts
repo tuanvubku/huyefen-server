@@ -456,6 +456,7 @@ export class CourseService {
             .deleteById(memberId);
         if (!author) return false;
         const teacherId: string = author.teacher;
+        await this.teacherService.removeCourse(teacherId, courseId);
         const course: ICourse = await this.courseModel
             .findByIdAndUpdate(courseId, {
                 $pull: {

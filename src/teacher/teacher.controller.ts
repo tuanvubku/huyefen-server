@@ -14,10 +14,6 @@ import { ITeacher } from './interfaces/teacher.interface';
 import { INotification } from './interfaces/notification.interface';
 import { TeacherService } from './teacher.service';
 import { ResponseSuccess } from '@/utils/utils';
-import { User } from '@/utils/decorators/user.decorator';
-import { userInfo } from 'os';
-import { INotification } from '@/teacher/interfaces/notification.interface';
-import { use } from 'passport';
 
 
 @Controller('api/teachers')

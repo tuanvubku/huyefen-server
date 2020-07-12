@@ -16,11 +16,11 @@ export const AuthorSchema = new Schema({
         default: false
     },
     permission: {
-        announcement: {
+        announcements: {
             type: Boolean,
             default: false
         },
-        review: {
+        reviews: {
             type: Boolean,
             default: false
         },

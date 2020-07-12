@@ -6,8 +6,8 @@ export interface IAuthor extends Document {
     teacher: string;
     isOwner: boolean;
     permission: {
-        announcement: boolean,
-        review: boolean,
+        announcements: boolean,
+        reviews: boolean,
         privacy: boolean,
         messenger: boolean,
         invite: boolean

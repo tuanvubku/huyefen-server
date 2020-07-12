@@ -1,5 +1,6 @@
 import { Injectable, Inject, HttpStatus, ConflictException, BadRequestException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import * as _ from 'lodash';
 import { Model } from 'mongoose';
@@ -7,7 +8,6 @@ import { UpdateSocialsDto } from './dtos/socials.dto';
 import { UpdateDto } from './dtos/update.dto';
 import { ITeacher } from './interfaces/teacher.interface';
 import { Role, Notification, Push } from '@/config/constants';
-import { UpdateSocialsDto } from './dtos/socials.dto';
 import { AuthorService } from '@/author/author.service';
 import { UserService } from '@/user/user.service';
 import { INotification } from './interfaces/notification.interface';
@@ -425,5 +425,16 @@ export class TeacherService {
         await this.courseService.addAuthor(courseId, teacherId);
         await this.authorService.create(teacherId, courseId, false);
         return 1;           //OK
+    }
+
+    async removeCourse(teacherId: string, courseId: string): Promise<void> {
+        await this.teacherModel
+            .updateOne({
+                _id: teacherId
+            }, {
+                $pull: {
+                    courses: courseId
+                }
+            });
     }
 }
