@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { CourseController } from './course.controller';
 import { SearchModule } from '@/search/search.module';
@@ -20,8 +20,8 @@ import { ReviewCourseModule } from '@/review-course/review-course.module';
 		SearchModule,
 		HistoryModule,
 		ChapterModule,
+		forwardRef(() => TeacherModule),
 		AuthorModule,
-		TeacherModule,
 		StudentModule,
 		ReviewTeacherModule,
 		ReviewCourseModule

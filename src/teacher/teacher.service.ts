@@ -1,8 +1,4 @@
-import { AuthorService } from '@/author/author.service';
-import { INotification } from '@/teacher/interfaces/notification.interface';
-import { UserService } from '@/user/user.service';
-import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Injectable, Inject, HttpStatus, ConflictException, BadRequestException, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
 import * as _ from 'lodash';
@@ -27,7 +23,7 @@ export class TeacherService {
         private readonly userService: UserService,
         private readonly configService: ConfigService,
         private readonly messagingService: MessagingService,
-        //private readonly courseService: CourseService
+        private courseService: CourseService
     ) { }
 
     async create(body): Promise<ITeacher> {
@@ -344,16 +340,90 @@ export class TeacherService {
             })
             .populate('notifications.owner', 'name avatar')
             .populate('notifications.course', 'title')
-            .select('notifications._id notifications.owner notifications.ownerType notifications.course notifications.createdAt');
         if (!teacher || _.isEmpty(teacher.notifications)) {
             return { status: -1, invitation: null };
         }
         let notification: INotification = teacher.notifications[0];
-        if (!notification.course)
+        if (!notification.course || notification.type !== Notification.Invite)
             return { status: 0, invitation: null };
         return {
             status: 1,
             invitation: notification
         };
+    }
+
+    async acceptInvitation(teacherId: string, notificationId: string): Promise<number> {
+        let teacher: ITeacher = await this.teacherModel
+            .findById(teacherId, {
+                notifications: {
+                    $elemMatch: {
+                        _id: notificationId
+                    }
+                }
+            })
+            .populate('notifications.course', 'title');
+        if (!teacher || _.isEmpty(teacher.notifications)) return -1;
+        let notification: INotification = teacher.notifications[0];
+        if (!notification.course || notification.type !== Notification.Invite) return 0;
+        const targetTeacherId: string = notification.owner;
+        //@ts-ignore
+        const { _id: courseId, title: courseTitle } = notification.course;
+        
+        //SEND NOTIFICATION TO TEACHER OWNER
+        const notificationData = {
+            type: Notification.AcceptInvitation,
+            owner: teacherId,
+            ownerType: Role.Teacher,
+            content: `đã đồng ý tham gia phát triển khoá học ${courseTitle}`,
+            course: courseId
+        };
+        const newNotification: INotification = new this.notificationModel(notificationData);
+        const targetTeacher = await this.teacherModel
+            .findByIdAndUpdate(targetTeacherId, {
+                $push: {
+                    notifications: {
+                        $each: [newNotification],
+                        $position: 0
+                    }
+                }
+            });
+        if (!targetTeacher) return -1;
+        teacher = await this.fetchIdAvatarNameById(teacherId);
+        if (targetTeacher.fcmToken) {
+            await this.messagingService.send(targetTeacher.fcmToken, {
+                notification: {
+                    title: `Đồng ý tham gia phát triển khoá học`,
+                    body: `${teacher.name} đã đồng ý tham gia phát triển khoá học ${courseTitle}.`
+                },
+                data: {
+                    _id: newNotification._id.toString(),
+                    createdAt: newNotification.createdAt.toString(),
+                    ownerType: Role.Teacher,
+                    ownerId: teacherId,
+                    ownerName: teacher.name,
+                    ...(teacher.avatar ? { ownerAvatar: teacher.avatar } : {}),
+                    pushType: Push.Notification,
+                    type: Notification.AcceptInvitation,
+                    content: `đã đồng ý tham gia phát triển khoá học ${courseTitle}.`,
+                }
+            });
+        }
+
+        //UPDATE AUTHOR
+        await this.teacherModel.updateOne({
+            _id: teacherId
+        }, {
+            $push: {
+                courses: courseId
+            },
+            $pull: {
+                notifications: {
+                    _id: notificationId
+                }
+            }
+        });
+        await this.courseService.addAuthor(courseId, teacherId);
+        await this.authorService.create(teacherId, courseId, false);
+        return 1;           //OK
     }
 }

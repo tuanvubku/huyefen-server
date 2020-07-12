@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TeacherController } from './teacher.controller';
 import { TeacherService } from './teacher.service';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -15,7 +15,7 @@ import { TeacherNotificationSchema } from './schemas/notification.schema';
 			{ name: 'TeacherNotification', schema: TeacherNotificationSchema }
 		]),
 		AuthorModule,
-		//CourseModule,
+		forwardRef(() => CourseModule),
 		UserModule
 	],
 	controllers: [TeacherController],

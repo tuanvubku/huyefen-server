@@ -105,7 +105,8 @@ export enum Comment {
 export enum Notification {
     Friend = 'friend',
     Recommend = 'recommend',
-    Invite = 'invite'
+    Invite = 'invite',
+    AcceptInvitation = 'acceptInvitation'
 };
 
 export enum Push {

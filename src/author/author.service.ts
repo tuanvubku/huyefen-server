@@ -12,17 +12,17 @@ export class AuthorService {
         @InjectModel('Author') private readonly authorModel: Model<IAuthor>
     ) { }
 
-    async create(teacherId: string, courseId: string): Promise<void> {
+    async create(teacherId: string, courseId: string, falsly: boolean = true): Promise<void> {
         const author: IAuthor = new this.authorModel({
             teacher: teacherId,
             course: courseId,
-            isOwner: true,
+            isOwner: falsly,
             permission: {
-                announcement: true,
-                review: true,
-                privacy: true,
-                messenger: true,
-                invite: true
+                announcement: falsly,
+                review: falsly,
+                privacy: falsly,
+                messenger: falsly,
+                invite: falsly
             }
         });
         await author.save();

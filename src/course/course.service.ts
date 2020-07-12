@@ -4,7 +4,7 @@ import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { ILecture } from '@/chapter/interfaces/lecture.interface';
 import { Lecture, Price, Privacy, ProgressBase, TeacherCoursesSort as Sort } from '@/config/constants';
 import { TeacherService } from '@/teacher/teacher.service';
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as _ from 'lodash';
 import { Model } from 'mongoose';
@@ -26,7 +26,7 @@ export class CourseService {
         @InjectModel('Course') private readonly courseModel: Model<ICourse>,
         private readonly authorService: AuthorService,
         private readonly chapterService: ChapterService,
-        private readonly teacherService: TeacherService,
+        @Inject(forwardRef(() => TeacherService)) private teacherService: TeacherService,
         private readonly reviewTeacherService: ReviewTeacherService,
     ) { }
 
@@ -543,5 +543,15 @@ export class CourseService {
     async fetchCourseTitleById(courseId: string): Promise<string> {
         const course =  await this.courseModel.findById(courseId);
         return course.title;
+    }
+
+    async addAuthor(courseId: string, teacherId: string): Promise<void> {
+        await this.courseModel.updateOne({
+            _id: courseId
+        }, {
+            $push: {
+                authors: teacherId
+            }
+        });
     }
 }

@@ -14,7 +14,6 @@ export const CourseSchema = new Schema({
     subTitle: {
         type: String,
         maxlength: 150,
-        minlength: 20,
         default: null
     },
     authors: {
@@ -35,7 +34,7 @@ export const CourseSchema = new Schema({
     language: {
         type: String,
         enum: [Language.English, Language.Vietnamese],
-        default: null
+        default: Language.English 
     },
     level: {
         type: String,
