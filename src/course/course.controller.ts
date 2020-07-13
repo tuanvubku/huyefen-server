@@ -736,7 +736,7 @@ export class CourseController {
         return new ResponseSuccess('FETCH_INSTRUCTOR_OK', instructors);
     }
 
-    @Get('/:id/review')
+    @Get('/:id/reviews')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
     async fetchMyReviewCourse(
@@ -750,21 +750,21 @@ export class CourseController {
         return new ResponseSuccess<IReviewCourse[]>("FETCH_REVIEWS_COURSE_OK", reviews);
     }
 
-    @Post('/:id/review')
+    @Post('/:id/reviews')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
     async createReviewCourse(
         @User() user,
         @Body() body: ReviewCourseDto,
         @Param('id') courseId: string
-    ): Promise<IResponse<Boolean>> {
+    ): Promise<IResponse<any>> {
         const userId = user._id;
         const {starRating, comment} = body
         const isValidUser = await this.studentService.validateUserCourse(userId, courseId);
         if (!isValidUser)
             throw new ForbiddenException("You don\'t have permission to access this course!");
-        const review = await this.reviewCourseService.createReview(userId, courseId, starRating, comment);
-        return new ResponseSuccess<Boolean>("CREATE_REVIEW_COURSE_OK", review);
+        const review: any = await this.reviewCourseService.createReview(userId, courseId, starRating, comment);
+        return new ResponseSuccess<any>("CREATE_REVIEW_COURSE_OK", review);
     }
 
     @Put('/:id/review/instructors')

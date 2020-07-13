@@ -3,7 +3,9 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IReviewCourse } from './interfaces/review.course.interface';
 import { IOwner } from './interfaces/review.course.interface'
-import * as mongoose from 'mongoose'
+import * as mongoose from 'mongoose';
+import * as _ from 'lodash';
+
 @Injectable()
 export class ReviewCourseService {
     constructor(
@@ -15,15 +17,19 @@ export class ReviewCourseService {
         courseId: string,
         starRating: number,
         comment: string
-    ): Promise<Boolean> {
-        const review = new this.reviewCourseModel({
+    ): Promise<any> {
+        let review = new this.reviewCourseModel({
             course: courseId,
             user: userId,
             starRating,
             comment
         });
-        await review.save();
-        return true;
+        review = await review.save();
+        return {
+            ..._.pick(review, ['_id', 'comment', 'starRating', 'createdAt']),
+            likes: 0,
+            dislikes: 0
+        }
     }
 
     async fetchReviews(userId: string, courseId: string): Promise<IReviewCourse[]> {
