@@ -12,7 +12,7 @@ import { User } from '@/utils/decorators/user.decorator';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ResponseSuccess } from '@/utils/utils';
-import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, MethodNotAllowedException, NotFoundException, Param, Post, Put, Query, Req, UseGuards, Res, ParseIntPipe, Inject, forwardRef } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, MethodNotAllowedException, NotFoundException, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { CourseService } from './course.service';
 import { CreateDto } from './dtos/create.dto';
@@ -773,7 +773,7 @@ export class CourseController {
     async updateReviewInstructor(
         @User() user,
         @Body('instructorId') instructorId: string,
-        @Body('starRating', ParseIntPipe) starRating: number,
+        @Body('starRating') starRating: string,
         @Body('comment') comment: string,
         @Param('id') courseId: string
     ): Promise<IResponse<Boolean>> {
@@ -784,7 +784,7 @@ export class CourseController {
         const isValidUser = await this.studentService.validateUserCourse(userId, courseId);
         if (!isValidUser)
             throw new ForbiddenException("You don\'t have permission to access this course!");
-        const status = await this.reviewTeacherService.updateReviewInstructor(userId, instructorId, starRating, comment);
+        const status = await this.reviewTeacherService.updateReviewInstructor(userId, instructorId, parseFloat(starRating), comment);
         return new ResponseSuccess<Boolean>("UPDATE_REVIEW_OK", status);
     }
 
