@@ -767,7 +767,7 @@ export class CourseController {
         return new ResponseSuccess<any>("CREATE_REVIEW_COURSE_OK", review);
     }
 
-    @Put('/:id/review/instructors')
+    @Put('/:id/reviews/instructor')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
     async updateReviewInstructor(
@@ -788,7 +788,7 @@ export class CourseController {
         return new ResponseSuccess<Boolean>("UPDATE_REVIEW_OK", status);
     }
 
-    @Get('/:id/review/instructors')
+    @Get('/:id/reviews/instructor')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
     async fetchReviewInstructor(

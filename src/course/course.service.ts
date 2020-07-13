@@ -527,18 +527,23 @@ export class CourseService {
         const teacherIds = _.map(teachersInfo, '_id');
         const reviews = await this.reviewTeacherService
             .fetchReview(userId, teacherIds) as any;
-        const result = teachersInfo.map((teacher, i) => {
-            delete teacher.headline;
-            delete teacher.biography;
-            delete teacher.numOfReviews;
-            const review = reviews[i]
-            return {
-                ...teacher,
-                starRating: review ? review.rating.value : 3.5,
-                ratingContent: review ? review.rating.comment : null
+        const teachersInfoData = _.keyBy(teachersInfo, '_id');
+        const reviewsData = _.keyBy(reviews, 'teacher');
+        return _.map(teacherIds, teacherId => {
+            const finalReview = {
+                starRating: 3.5,
+                ratingContent: ''
+            };
+            if (reviewsData[teacherId]) {
+                finalReview.ratingContent = reviewsData[teacherId].rating.comment;
+                finalReview.starRating = reviewsData[teacherId].rating.value;
             }
-        })
-        return result;
+            
+            return {
+                ..._.pick(teachersInfoData[teacherId], ['_id', 'name', 'avatar', 'numOfCourse', 'numOfStudents']),
+                ...finalReview
+            };
+        });
     }
 
     async fetchCourseTitleById(courseId: string): Promise<string> {

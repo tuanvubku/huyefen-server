@@ -29,7 +29,6 @@ export class ReviewTeacherService {
                 }
             })
         if (!reviewFromDb) {
-            console.log("Created review");
             const newReview = new this.reviewTeacherModule({
                 user: userId,
                 teacher: teacherId,
@@ -51,11 +50,9 @@ export class ReviewTeacherService {
                     $in: teachersId
                 }
             })
-            .select('rating')
+            .select('rating teacher')
             .lean()
             .exec();
-        if (!reviews)
-            return null;
-        return reviews;
+        return reviews || [];
     }
 }
