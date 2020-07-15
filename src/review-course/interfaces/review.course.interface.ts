@@ -1,9 +1,10 @@
 import {Document} from 'mongoose';
-import { Role } from '@/config/constants';
+import { Role, ReviewStatus } from '@/config/constants';
 
-export interface IOwner extends Document {
+export interface IStatus extends Document {
     ownerType: Role,
-    owner: string
+    owner: string,
+    type: ReviewStatus
 }
 interface IAnswer extends Document {
     content: string,
@@ -14,10 +15,9 @@ export interface IReviewCourse extends Document {
     _id: string,
     course: string,
     user: string,
-    createdAt: string,
+    createdAt: Date,
     comment: string,
     starRating: number,
-    likes: IOwner[],
-    dislikes: IOwner[],
+    statuses: IStatus[],
     answers: IAnswer[]
 }

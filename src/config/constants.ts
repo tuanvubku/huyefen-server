@@ -130,3 +130,8 @@ export enum Language {
     English = 'english',
     Vietnamese = 'vietnamese'
 };
+
+export enum ReviewStatus {
+    Like = 'like',
+    Dislike = 'dislike'
+};
