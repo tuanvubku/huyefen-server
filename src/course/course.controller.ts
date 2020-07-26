@@ -889,12 +889,12 @@ export class CourseController {
     @Roles(Role.User)
     async fetchMyCourses(
       @User() user,
-      @Query('page', ParseIntPipe) page: number,
+      @Query('skip', ParseIntPipe) skip: number,
       @Query('limit', ParseIntPipe) limit: number,
       @Query('sortBy') sortBy: MyCourseSortType
     ): Promise<IResponse<any>> {
         const userId: string = user._id;
-        const result = await this.studentService.fetchMyCourses(userId, page, limit, sortBy);
+        const result = await this.studentService.fetchMyCourses(userId, skip, limit, sortBy);
         return new ResponseSuccess('FETCH_OK', result);
     }
 

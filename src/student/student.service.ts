@@ -38,7 +38,7 @@ export class StudentService {
         await this.studentModel.insertMany(studentItems);
     }
 
-    async fetchMyCourses(userId: string, page: number, limit: number, sortBy: MyCourseSortType): Promise<any> {
+    async fetchMyCourses(userId: string, skip: number, limit: number, sortBy: MyCourseSortType): Promise<any> {
         let students: any = await this.studentModel
           .find({ user: userId })
           .populate({
@@ -74,10 +74,11 @@ export class StudentService {
         else if (sortBy === MyCourseSortType.RecentlyEnrolled) {
             courses = _.orderBy(courses, ['registerTime', 'title', 'progress'], ['desc', 'asc', 'desc']);
         }
-        const hasMore = page * limit < _.size(courses);
+        const hasMore = (limit !== -1) && skip + limit < _.size(courses);
+        const list = limit === -1 ? _.slice(courses, skip) : _.slice(courses, skip, skip + limit);
         return {
             hasMore,
-            list: _.slice(courses, (page - 1) * limit, page * limit)
+            list
         };
     }
 }
