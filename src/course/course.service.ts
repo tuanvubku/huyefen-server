@@ -617,4 +617,19 @@ export class CourseService {
         }));
         return courseInfos;
     }
+
+    async buyItems(userId: string, items: Array<any>): Promise<void> {
+        const courseItemIds = _.map(_.filter(items, item => item.type === 'course'), '_id');
+        await this.courseModel
+          .updateMany({
+              _id: {
+                  $in: courseItemIds
+              }
+          }, {
+              $inc: {
+                  numOfStudents: 1
+              }
+          });
+        await this.studentService.createMany(userId, courseItemIds);
+    }
 }

@@ -920,4 +920,23 @@ export class CourseController {
         const itemInfos = await this.courseService.fetchInfosForCart(items);
         return new ResponseSuccess('FETCH_OK', itemInfos);
     }
+
+    @Post('/cart')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async buyItems(
+      @User() user,
+      @Query('items') itemsQuery: string
+    ): Promise<IResponse<string>> {
+        const items: Array<any> = itemsQuery.split('-').map(itemStr => {
+            const itemArr = itemStr.split(',');
+            return {
+                _id: itemArr[0],
+                type: itemArr[1]
+            };
+        });
+        const userId: string = user._id;
+        await this.courseService.buyItems(userId, items);
+        return new ResponseSuccess<string>('FETCH_OK', 'OK');
+    }
 }

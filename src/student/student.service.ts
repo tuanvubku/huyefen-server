@@ -25,4 +25,14 @@ export class StudentService {
             });
         return !!student;
     }
+
+    async createMany(userId, courseIds: string[]): Promise<void> {
+        const studentItems = courseIds.map(courseId => {
+            return new this.studentModel({
+                course: courseId,
+                user: userId
+            });
+        });
+        await this.studentModel.insertMany(studentItems);
+    }
 }
