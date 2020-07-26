@@ -14,8 +14,7 @@ export const StatusSchema = new Schema({
     },
     type: {
         type: String,
-        enum: [ReviewStatus.Like, ReviewStatus.Dislike],
-        required: true
+        enum: [ReviewStatus.Like, ReviewStatus.Dislike, null]
     }
 });
 
@@ -26,7 +25,7 @@ export const AnswerSchema = new Schema({
     },
     createdAt: {
         type: Date,
-        default: Date.now()
+        default: Date.now
     },
     teacher: {
         type: Schema.Types.ObjectId,

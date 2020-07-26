@@ -165,13 +165,13 @@ export class AuthorService {
             return null;
         const _authors = _.map(authors, ({ teacher }) => {
             const _teacher = teacher as Object as ITeacher;
-            const numOfCourse = _.size(_teacher.courses);
+            const numOfCourses = _.size(_teacher.courses);
             const numOfStudents = _.sum(_.map(_teacher.courses, 'numOfStudents'));
             const numOfReviews = 0;
             delete _teacher.courses;
             return {
                 ..._teacher,
-                numOfCourse,
+                numOfCourses,
                 numOfStudents,
                 numOfReviews
             }

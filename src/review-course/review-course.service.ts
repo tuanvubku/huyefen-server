@@ -6,12 +6,14 @@ import { IStatus } from './interfaces/review.course.interface'
 import * as mongoose from 'mongoose';
 import * as _ from 'lodash';
 import { Role } from '@/config/constants';
+import { IAnswer } from '@/question/interfaces/answer.interface';
 
 @Injectable()
 export class ReviewCourseService {
     constructor(
         @InjectModel('ReviewCourse') private readonly reviewCourseModel: Model<IReviewCourse>,
-        @InjectModel('ReviewStatus') private readonly reviewStatusModel: Model<IStatus>
+        @InjectModel('ReviewStatus') private readonly reviewStatusModel: Model<IStatus>,
+        @InjectModel('ReviewAnswer') private readonly reviewAnswerModel: Model<IAnswer>
     ) { }
 
     async createReview(
@@ -110,8 +112,8 @@ export class ReviewCourseService {
         return true;
     }
 
-    async fetchPublicReviews(user: any = null, courseId: string, page: number, limit: number): Promise<{ hasMore: boolean, list: IReviewCourse[] }> {
-        let reviewsData: IReviewCourse[] = await this.reviewCourseModel
+    async fetchPublicReviews(user: any = null, courseId: string, page: number, limit: number): Promise<{ hasMore: boolean, list: any }> {
+        let reviewsData: any = await this.reviewCourseModel
             .aggregate([
                 {
                     $match: {
@@ -141,55 +143,37 @@ export class ReviewCourseService {
                     }
                 },
                 {
-                    $addFields: {
-                        numOfLikes: {
-                            $size: "$likes"
-                        },
-                        numOfDislikes: {
-                            $size: "$dislikes"
-                        },
-                        status: {
-                            $cond: {
-                                if: {
-                                    $in: [
-                                        {
-                                            owner: mongoose.Types.ObjectId(user && user._id),
-                                            ownerType: user && user.role,
-                                            type: "like"
-                                        },
-                                        "$statuses"
-                                    ]
-                                },
-                                then: 1,
-                                else: {
-                                    $cond: {
-                                        if: {
-                                            $in: [
-                                                {
-                                                    owner: mongoose.Types.ObjectId(user && user._id),
-                                                    ownerType: user && user.role,
-                                                    type: "dislike"
-                                                },
-                                                "$statuses"
-                                            ]
-                                        },
-                                        then: -1,
-                                        else: 0
-                                    }
-                                }
-                            }
-                        }
-                    }
-                },
-                {
                     $project: {
-                        likes: 0,
-                        dislikes: 0,
                         course: 0,
                         statuses: 0
                     }
                 }
             ]);
+        reviewsData = _.map(reviewsData, review => {
+            let status = 0;
+            if (user) {
+                //@ts-ignore
+                _.forEach(review.likes, likeItem => {
+                    if (likeItem.owner.toString() === user._id && likeItem.ownerType === user.role) {
+                        status = 1;
+                    }
+                });
+
+                if (status === 0) {
+                    //@ts-ignore
+                    _.forEach(review.dislikes, dislikeItem => {
+                        if (dislikeItem.owner.toString() === user._id && dislikeItem.ownerType === user.role)
+                            status = -1;
+                    });
+                }
+            }
+            return {
+                ..._.omit(review, ['likes', 'dislikes']),
+                numOfLikes: review.likes.length,
+                numOfDislikes: review.dislikes.length,
+                status
+            };
+        });
         reviewsData.sort(function (left: IReviewCourse, right: IReviewCourse): number {
             const countScore = (item: IReviewCourse): number => {
                 //@ts-ignore
@@ -215,10 +199,36 @@ export class ReviewCourseService {
     }
 
     async fetchOne(courseId: string, reviewId: string): Promise<IReviewCourse> {
-        return null;
+        const review = await this.reviewCourseModel
+          .findOne({
+              course: courseId,
+              _id: reviewId
+          })
+          .populate('user', 'name avatar')
+          .populate('answers.teacher', 'name avatar')
+          .select('-course -statuses');
+        return review;
     }
 
-    async answer(teacherId: string, reviewId: string, answerContent: string): Promise<boolean> {
-        return false;
+    async answer(teacherId: string, courseId: string, reviewId: string, answerContent: string): Promise<any> {
+        let answer = new this.reviewAnswerModel({
+            content: answerContent,
+            teacher: teacherId
+        });
+        const review = await this.reviewCourseModel
+          .findOneAndUpdate({
+              _id: reviewId,
+              course: courseId
+          }, {
+              $push: {
+                  //@ts-ignore
+                  answers: answer
+              }
+          }, {
+              runValidators: true,
+          });
+        if (!review) return null;
+        answer = await this.reviewAnswerModel.populate(answer, { path: 'teacher', select: 'name avatar'});
+        return answer;
     }
 }

@@ -38,6 +38,7 @@ import { ReviewCourseService } from '@/review-course/review-course.service';
 import { ReviewCourseDto } from '../course/dtos/review.course.dto';
 import { IReviewCourse } from '@/review-course/interfaces/review.course.interface';
 import { AnswerReviewDto } from './dtos/answerReview.dto';
+import { RelaxGuard } from '@/utils/guards/relaxAuth.guard';
 
 @Controller('api/courses')
 export class CourseController {
@@ -767,14 +768,15 @@ export class CourseController {
     }
 
     @Get('/:id/reviews/public')
+    @UseGuards(RelaxGuard)
     async fetchReviews(
         @Req() req,
         @Param('id') courseId: string,
         @Query('page', ParseIntPipe) page: number,
         @Query('limit', ParseIntPipe) limit: number
-    ): Promise<IResponse<{ hasMore: boolean, list: IReviewCourse[] }>> {
+    ): Promise<IResponse<{ hasMore: boolean, list: any }>> {
         const result = await this.reviewCourseService.fetchPublicReviews(req.user, courseId, page, limit);
-        return new ResponseSuccess<{ hasMore: boolean, list: IReviewCourse[] }>("FETCH_REVIEWS_COURSE_OK", result);
+        return new ResponseSuccess<{ hasMore: boolean, list: any }>("FETCH_REVIEWS_COURSE_OK", result);
     }
 
     @Get('/:id/reviews/:reviewId')
@@ -817,16 +819,16 @@ export class CourseController {
         @Param('id') courseId: string,
         @Param('reviewId') reviewId: string,
         @Body() body: AnswerReviewDto
-    ): Promise<IResponse<string>> {
+    ): Promise<IResponse<any>> {
         const teacherId: string = user._id;
         const hasPermission = this.authorService.checkPermission(teacherId, courseId, Permission.Review);
         if (!hasPermission)
             throw new ForbiddenException('Forbidden. You can not answer review');
         const { answer } = body;
-        const status = await this.reviewCourseService.answer(teacherId, reviewId, answer);
-        if (!status)
+        const newAnswer = await this.reviewCourseService.answer(teacherId, courseId, reviewId, answer);
+        if (!newAnswer)
             throw new NotFoundException('Not found review');
-        return new ResponseSuccess<string>('ANSWER_OK', 'OK');
+        return new ResponseSuccess<any>('ANSWER_OK', newAnswer);
     }
 
     @Put('/:id/reviews/instructor')
