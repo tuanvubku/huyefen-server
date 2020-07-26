@@ -231,4 +231,8 @@ export class ReviewCourseService {
         answer = await this.reviewAnswerModel.populate(answer, { path: 'teacher', select: 'name avatar'});
         return answer;
     }
+
+    async countNumRatings(courseId: string): Promise<number> {
+        return (await this.reviewCourseModel.find({ course: courseId })).length;
+    }
 }

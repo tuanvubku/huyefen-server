@@ -39,6 +39,8 @@ import { ReviewCourseDto } from '../course/dtos/review.course.dto';
 import { IReviewCourse } from '@/review-course/interfaces/review.course.interface';
 import { AnswerReviewDto } from './dtos/answerReview.dto';
 import { RelaxGuard } from '@/utils/guards/relaxAuth.guard';
+import * as admin from 'firebase-admin';
+import Auth = admin.auth.Auth;
 
 @Controller('api/courses')
 export class CourseController {
@@ -867,6 +869,21 @@ export class CourseController {
         return new ResponseSuccess("FETCH_REVIEW_OK", reviews);
     }
 
+    @Get('/:id/info/public')
+    @UseGuards(RelaxGuard)
+    async fetchPublicInfo(
+        @Req() req,
+        @Param('id') courseId: string
+    ): Promise<IResponse<any>> {
+        let user = req.user;
+        if (user.role !== Role.User)
+            user = null;
+        const courseInfo = await this.courseService.fetchPublicInfo(courseId, user);
+        if (!courseInfo)
+            throw new NotFoundException('Invalid course!');
+        return new ResponseSuccess("FETCH_INFO_OK", courseInfo);
+    }
+
     @Get('/:id/validate/user')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
@@ -885,5 +902,22 @@ export class CourseController {
             if (!checkStudent) status = ValidateStatus.InvalidUser;
         }
         return new ResponseSuccess<ValidateStatus>('VALIDATE_OK', status);
+    }
+
+    @Get('/cart')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchInfoItemsForCart(
+      @Query('items') itemsQuery: string
+    ): Promise<IResponse<Array<any>>> {
+        const items: Array<any> = itemsQuery.split('-').map(itemStr => {
+            const itemArr = itemStr.split(',');
+            return {
+                _id: itemArr[0],
+                type: itemArr[1]
+            };
+        });
+        const itemInfos = await this.courseService.fetchInfosForCart(items);
+        return new ResponseSuccess('FETCH_OK', itemInfos);
     }
 }

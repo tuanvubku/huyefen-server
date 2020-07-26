@@ -2,7 +2,7 @@ import { AuthorService } from '@/author/author.service';
 import { ChapterService } from '@/chapter/chapter.service';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { ILecture } from '@/chapter/interfaces/lecture.interface';
-import { Lecture, Price, Privacy, ProgressBase, TeacherCoursesSort as Sort } from '@/config/constants';
+import { Lecture, Price, Privacy, ProgressBase, Role, TeacherCoursesSort as Sort } from '@/config/constants';
 import { TeacherService } from '@/teacher/teacher.service';
 import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -15,6 +15,8 @@ import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { ReviewTeacherService } from '@/review-teacher/review-teacher.service';
+import { ReviewCourseService } from '@/review-course/review-course.service';
+import { StudentService } from '@/student/student.service';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -28,6 +30,8 @@ export class CourseService {
         private readonly chapterService: ChapterService,
         @Inject(forwardRef(() => TeacherService)) private teacherService: TeacherService,
         private readonly reviewTeacherService: ReviewTeacherService,
+        private readonly reviewCourseService: ReviewCourseService,
+        private readonly studentService: StudentService
     ) { }
 
     async create(teacherId: string, area: string, title: string): Promise<ICourse> {
@@ -568,5 +572,49 @@ export class CourseService {
                 authors: teacherId
             }
         });
+    }
+
+    async fetchPublicInfo(courseId: string, user: { _id: string, role: Role }): Promise<any> {
+        const course = await this.courseModel
+          .findById(courseId)
+          .populate('primaryTopic')
+          .populate('area', 'title')
+          .populate('authors', 'name')
+          .select('-whatLearns -requirements -targetStudents -lastUpdated -category -topics -description -privacy -password -progress -messages -createdAt')
+          .lean()
+          .exec();
+        if (!course) return null;
+        const numOfRatings: number = await this.reviewCourseService.countNumRatings(courseId);
+        let checkRegistered: boolean = false;
+        if (user && user.role === Role.User)
+            checkRegistered = await this.studentService.validateUserCourse(user._id, courseId);
+        return {
+            ...course,
+            numOfRatings,
+            isRegistered: checkRegistered,
+            refundable: false,                          //TODO: Refund
+            realPrice: course.price                     //TODO: discount
+        };
+    }
+
+    async fetchInfosForCart(items: Array<any>): Promise<Array<any>> {
+        const courseItemIds = _.map(_.filter(items, item => item.type === 'course'), '_id');
+        let courseInfos = await this.courseModel
+          .find({
+              _id: {
+                  $in: courseItemIds
+              }
+          })
+          .populate('authors', 'name')
+          .select('title avatar price authors')
+          .lean()
+          .exec();
+        //TODO: bundle
+        courseInfos = _.map(courseInfos, courseInfo => ({
+            ...courseInfo,
+            type: 'course',
+            realPrice: courseInfo.price
+        }));
+        return courseInfos;
     }
 }

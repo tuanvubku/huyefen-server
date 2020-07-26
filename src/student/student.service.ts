@@ -25,5 +25,4 @@ export class StudentService {
             });
         return !!student;
     }
-
 }
