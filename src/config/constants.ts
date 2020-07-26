@@ -135,3 +135,11 @@ export enum ReviewStatus {
     Like = 'like',
     Dislike = 'dislike'
 };
+
+export enum MyCourseSortType {
+    AtoZ = 'a-z',
+    ZtoA = 'z-a',
+    RecentlyEnrolled = 'recent-enroll',
+    NonToComplete = 'non-complete',
+    CompleteToNon = 'complete-non'
+}

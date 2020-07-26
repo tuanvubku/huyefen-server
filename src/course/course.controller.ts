@@ -2,7 +2,7 @@ import { AuthorService } from '@/author/author.service';
 import { ChapterService } from '@/chapter/chapter.service';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { ILecture } from '@/chapter/interfaces/lecture.interface';
-import { HistoryType, Permission, Price, Privacy, Role, ValidateStatus } from '@/config/constants';
+import { HistoryType, MyCourseSortType, Permission, Price, Privacy, Role, ValidateStatus } from '@/config/constants';
 import { HistoryService } from '@/history/history.service';
 import { IHistory } from '@/history/interfaces/history.interface';
 import { SearchService } from '@/search/search.service';
@@ -882,6 +882,20 @@ export class CourseController {
         if (!courseInfo)
             throw new NotFoundException('Invalid course!');
         return new ResponseSuccess("FETCH_INFO_OK", courseInfo);
+    }
+
+    @Get('/mine')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchMyCourses(
+      @User() user,
+      @Query('page', ParseIntPipe) page: number,
+      @Query('limit', ParseIntPipe) limit: number,
+      @Query('sortBy') sortBy: MyCourseSortType
+    ): Promise<IResponse<any>> {
+        const userId: string = user._id;
+        const result = await this.studentService.fetchMyCourses(userId, page, limit, sortBy);
+        return new ResponseSuccess('FETCH_OK', result);
     }
 
     @Get('/:id/validate/user')

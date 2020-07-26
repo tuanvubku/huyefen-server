@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IStudent } from './interfaces/student.interface';
+import { MyCourseSortType } from '@/config/constants';
+import * as _ from 'lodash';
 
 @Injectable()
 export class StudentService {
@@ -34,5 +36,48 @@ export class StudentService {
             });
         });
         await this.studentModel.insertMany(studentItems);
+    }
+
+    async fetchMyCourses(userId: string, page: number, limit: number, sortBy: MyCourseSortType): Promise<any> {
+        let students: any = await this.studentModel
+          .find({ user: userId })
+          .populate({
+              path: 'course',
+              select: 'title authors avatar',
+              populate: {
+                  path: 'authors',
+                  select: 'name'
+              }
+          })
+          .lean()
+          .exec();
+        let courses = _.map(students, student => ({
+            _id: student.course._id,
+            progress: student.progress,
+            registerTime: student.createdAt,
+            authors: _.map(student.course.authors, 'name'),
+            title: student.course.title,
+            avatar: student.course.avatar
+        }));
+        if (sortBy === MyCourseSortType.AtoZ) {
+            courses = _.orderBy(courses, ['title', 'progress', 'registerTime'], ['asc', 'desc', 'desc']);
+        }
+        else if (sortBy === MyCourseSortType.ZtoA) {
+            courses = _.orderBy(courses, ['title', 'progress', 'registerTime'], ['desc', 'desc', 'desc']);
+        }
+        else if (sortBy === MyCourseSortType.CompleteToNon) {
+            courses = _.orderBy(courses, ['progress', 'registerTime', 'title'], ['desc', 'desc', 'asc']);
+        }
+        else if (sortBy === MyCourseSortType.NonToComplete) {
+            courses = _.orderBy(courses, ['progress', 'registerTime', 'title'], ['asc', 'desc', 'asc']);
+        }
+        else if (sortBy === MyCourseSortType.RecentlyEnrolled) {
+            courses = _.orderBy(courses, ['registerTime', 'title', 'progress'], ['desc', 'asc', 'desc']);
+        }
+        const hasMore = page * limit < _.size(courses);
+        return {
+            hasMore,
+            list: _.slice(courses, (page - 1) * limit, page * limit)
+        };
     }
 }
