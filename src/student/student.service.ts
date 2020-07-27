@@ -91,4 +91,31 @@ export class StudentService {
             list
         };
     }
+
+    async fetchFriendCourses(friendId: string, skip: number, limit: number, hashMap: { [p: string]: boolean }) {
+        let students: any = await this.studentModel
+          .find({ user: friendId })
+          .populate({
+              path: 'course',
+              select: 'title avatar starRating authors',
+              populate: {
+                  path: 'authors',
+                  select: 'name'
+              }
+          })
+          .sort('-createdAt')
+          .lean()
+          .exec();
+        const hasMore = (limit !== -1) && (skip + limit < students.length);
+        students = limit === -1 ? _.slice(students, skip) : _.slice(students, skip, skip + limit);
+        let courses = _.map(students, student => ({
+            ...student.course,
+            authors: _.map(student.course.authors, 'name'),
+            isRegistered: Boolean(hashMap[student.course._id.toString()])
+        }));
+        return {
+            hasMore,
+            list: courses
+        }
+    }
 }

@@ -8,11 +8,15 @@ import { IResponse } from '@/utils/interfaces/response.interface';
 import { IFriend } from './interfaces/friend.interface';
 import { ResponseSuccess } from '@/utils/utils';
 import { FetchFriendParamDto } from './dtos/fetch.dto';
+import { RelaxGuard } from '@/utils/guards/relaxAuth.guard';
+import { User } from '@/utils/decorators/user.decorator';
+import { StudentService } from '@/student/student.service';
 
 @Controller('api/friends')
 export class FriendController {
     constructor (
-        private readonly userService: UserService
+        private readonly userService: UserService,
+        private readonly studentService: StudentService
     ) {}
 
     @Get('/me')
@@ -153,5 +157,25 @@ export class FriendController {
         const status: 0 | 1 | -1 = await this.userService.unfriend(userId, friendId);
         if (status === 0) throw new NotFoundException('Invalid friend');
         return new ResponseSuccess<null>('ACCEPT_FRIEND', null, 1 ? 0 : 1);
+    }
+
+    @Get('/:id/courses')
+    @UseGuards(RelaxGuard)
+    async fetchCoursesOfFriend(
+      @Param('id') friendId: string,
+      @Query('skip', ParseIntPipe) skip: number,
+      @Query('limit', ParseIntPipe) limit: number,
+      @User() user
+    ): Promise<IResponse<any>> {
+        const friend = await this.userService.findById(friendId);
+        if (!friend) {
+            throw new NotFoundException('Invalid friend');
+        }
+        let hashMap = {};
+        if (user && user.role === Role.User) {
+            hashMap = await this.studentService.getMyCoursesHashMap(user._id);
+        }
+        const result = await this.studentService.fetchFriendCourses(friendId, skip, limit, hashMap);
+        return new ResponseSuccess('FETCH_OK', result);
     }
 }
