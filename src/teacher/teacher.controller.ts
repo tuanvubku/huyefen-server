@@ -14,12 +14,18 @@ import { ITeacher } from './interfaces/teacher.interface';
 import { INotification } from './interfaces/notification.interface';
 import { TeacherService } from './teacher.service';
 import { ResponseSuccess } from '@/utils/utils';
+import { RelaxGuard } from '@/utils/guards/relaxAuth.guard';
+import { User } from '@/utils/decorators/user.decorator';
+import { AuthorService } from '@/author/author.service';
+import { StudentService } from '@/student/student.service';
 
 
 @Controller('api/teachers')
 export class TeacherController {
     constructor(
-        private readonly teacherService: TeacherService
+        private readonly teacherService: TeacherService,
+        private readonly authorService: AuthorService,
+        private readonly studentService: StudentService
     ) { }
 
     @Post('/test/create')
@@ -210,5 +216,21 @@ export class TeacherController {
         const status = await this.teacherService.unfollow(userId, teacherId);
         if (status === 0) throw new NotFoundException('Invalid teacher!');
         return new ResponseSuccess('FOLLOW_OK', null, status === 1 ? 0 : 1);
+    }
+
+    @Get('/:id/courses')
+    @UseGuards(RelaxGuard)
+    async fetchTeacherCourses(
+      @User() user,
+      @Query('skip', ParseIntPipe) skip: number,
+      @Query('limit', ParseIntPipe) limit: number,
+      @Param('id') teacherId: string
+    ): Promise<IResponse<any>> {
+        let hashMap = {};
+        if (user && user.role === Role.User) {
+            hashMap = await this.studentService.getMyCoursesHashMap(user._id);
+        }
+        const result = await this.authorService.fetchCoursesDataOfTeacher(teacherId, skip, limit, hashMap);
+        return new ResponseSuccess('FETCH_OK', result);
     }
 }

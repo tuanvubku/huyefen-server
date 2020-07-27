@@ -34,6 +34,35 @@ export class AuthorService {
         return _.map(authorsData, 'course');
     }
 
+    async fetchCoursesDataOfTeacher(teacherId: string, skip: number, limit: number, hashMap: { [p: string]: boolean }): Promise<any> {
+        let authors: any = await this.authorModel
+          .find({ teacher: teacherId })
+          .populate({
+              path: 'course',
+              select: 'authors title avatar starRating numOfStudents price',
+              populate: {
+                  path: 'authors',
+                  select: 'name'
+              }
+          })
+          .lean()
+          .exec();
+        let courses = _.map(authors, author => ({
+            ...author.course,
+            realPrice: 'tier3',
+            authors: _.map(author.course.authors, 'name'),
+            isRegistered: Boolean(hashMap[author.course._id.toString()]),
+            createdTime: author.createdAt
+        }));
+        courses = _.orderBy(courses, ['numOfStudents', 'starRating', 'createdTime'], ['desc', 'desc', 'desc']);
+        const hasMore = (limit !== -1) && (skip + limit < courses.length);
+        courses = limit === -1 ? _.slice(courses, skip) : _.slice(courses, skip, skip + limit);
+        return {
+            hasMore,
+            list: courses
+        }
+    }
+
     async validateTeacherCourse(teacherId: string, courseId: string): Promise<boolean> {
         const author: IAuthor = await this.authorModel
             .findOne({

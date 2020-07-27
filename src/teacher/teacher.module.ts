@@ -7,6 +7,7 @@ import { AuthorModule } from '@/author/author.module';
 import { UserModule } from '@/user/user.module';
 import { CourseModule } from '@/course/course.module';
 import { TeacherNotificationSchema } from './schemas/notification.schema';
+import { StudentModule } from '@/student/student.module';
 
 @Module({
 	imports: [
@@ -16,7 +17,8 @@ import { TeacherNotificationSchema } from './schemas/notification.schema';
 		]),
 		AuthorModule,
 		forwardRef(() => CourseModule),
-		UserModule
+		UserModule,
+		StudentModule
 	],
 	controllers: [TeacherController],
 	providers: [TeacherService],

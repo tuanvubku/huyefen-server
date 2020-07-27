@@ -38,6 +38,16 @@ export class StudentService {
         await this.studentModel.insertMany(studentItems);
     }
 
+    async getMyCoursesHashMap(userId: string): Promise<{ [p: string]: boolean }> {
+        const studentItems = await this.studentModel.find({ user: userId });
+        const courseIds = _.map(studentItems, 'course');
+        let hashMap = {};
+        _.forEach(courseIds, courseId => {
+            hashMap[courseId] = true
+        });
+        return hashMap;
+    }
+
     async fetchMyCourses(userId: string, skip: number, limit: number, sortBy: MyCourseSortType): Promise<any> {
         let students: any = await this.studentModel
           .find({ user: userId })
