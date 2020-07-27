@@ -157,6 +157,24 @@ export class UserService {
             .select('avatar');
     }
 
+    async fetchFriendsForRecommend(userId: string, skip: number, limit: number): Promise<any> {
+        const user = await this.userModel
+          .findById(userId)
+          .populate('relationships.friend', 'name avatar')
+          .select('relationships')
+          .lean()
+          .exec();
+        const allFriendRelationships = _.filter(
+          user.relationships,
+          ['status', FriendStatuses.Friend]
+        );
+        const friendsData = _.map(allFriendRelationships, 'friend');
+        return {
+            total: friendsData.length,
+            list: friendsData
+        };
+    }
+
     async fetchFriends(userId: string, page: number, limit: number): Promise<{ hasMore: boolean, list: IFriend[] }> {
         const user = await this.userModel
             .findById(userId)

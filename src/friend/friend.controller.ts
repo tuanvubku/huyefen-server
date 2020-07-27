@@ -19,6 +19,19 @@ export class FriendController {
         private readonly studentService: StudentService
     ) {}
 
+    @Get('/me/lite')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchFriendsForRecommend(
+      @User() user,
+      @Query('skip', ParseIntPipe) skip: number,
+      @Query('limit', ParseIntPipe) limit: number
+    ): Promise<IResponse<any>> {
+        const userId: string = user._id;
+        const friendsData = await this.userService.fetchFriendsForRecommend(userId, skip, limit);
+        return new ResponseSuccess<{ hasMore: boolean, list: IFriend[] }>('FETCH_FRIENDS_OK', friendsData);
+    }
+
     @Get('/me')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
