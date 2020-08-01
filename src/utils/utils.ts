@@ -30,3 +30,16 @@ export enum Resolution {
 	R720p = "1280x720",
 	R1080p = "1920x1080" 
 }
+
+export const mapKeyToPrice = priceKey => {
+	switch (priceKey) {
+		case 'tier1':
+			return 19.99;
+		case 'tier2':
+			return 24.99;
+		case 'tier3':
+			return 29.99;
+		default:
+			return 0;
+	}
+}

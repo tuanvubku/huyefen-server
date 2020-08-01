@@ -2,7 +2,15 @@ import { AuthorService } from '@/author/author.service';
 import { ChapterService } from '@/chapter/chapter.service';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { ILecture } from '@/chapter/interfaces/lecture.interface';
-import { Lecture, Price, Privacy, ProgressBase, Role, TeacherCoursesSort as Sort } from '@/config/constants';
+import {
+    Lecture,
+    Price,
+    Privacy,
+    ProgressBase,
+    PurchaseItemType,
+    Role,
+    TeacherCoursesSort as Sort,
+} from '@/config/constants';
 import { TeacherService } from '@/teacher/teacher.service';
 import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -17,6 +25,10 @@ import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { ReviewTeacherService } from '@/review-teacher/review-teacher.service';
 import { ReviewCourseService } from '@/review-course/review-course.service';
 import { StudentService } from '@/student/student.service';
+import { MessagingService } from '@/firebase/messaging.service';
+import { UserService } from '@/user/user.service';
+import { PurchaseHistoryService } from '@/purchase-history/purchase-history.service';
+import { mapKeyToPrice } from '@/utils/utils';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -31,7 +43,9 @@ export class CourseService {
         @Inject(forwardRef(() => TeacherService)) private teacherService: TeacherService,
         private readonly reviewTeacherService: ReviewTeacherService,
         private readonly reviewCourseService: ReviewCourseService,
-        private readonly studentService: StudentService
+        private readonly studentService: StudentService,
+        private readonly userService: UserService,
+        private readonly purchaseHistoryService: PurchaseHistoryService
     ) { }
 
     async create(teacherId: string, area: string, title: string): Promise<ICourse> {
@@ -619,7 +633,20 @@ export class CourseService {
     }
 
     async buyItems(userId: string, items: Array<any>): Promise<void> {
+        let totalPrice: number = 0;
         const courseItemIds = _.map(_.filter(items, item => item.type === 'course'), '_id');
+        const coursePrice: number = _.sum(_.map(_.map(
+          await this.courseModel
+            .find({
+                _id: {
+                    $in: courseItemIds
+                }
+            })
+            .lean()
+            .exec(),
+          'price'
+        ), price => mapKeyToPrice(price)));
+        totalPrice += coursePrice;
         await this.courseModel
           .updateMany({
               _id: {
@@ -631,5 +658,12 @@ export class CourseService {
               }
           });
         await this.studentService.createMany(userId, courseItemIds);
+        await this.purchaseHistoryService.createOne(userId, items, totalPrice);
+    }
+
+    async recommendCoursesForFriends(userId: string, courseId: string, friendIds: string[]): Promise<number> {
+        const courseInfo = await this.courseModel.findById(courseId).select('title');
+        if (!courseInfo) return -1;
+        return await this.userService.sendNotificationRecommendCourse(userId, courseInfo, friendIds);
     }
 }

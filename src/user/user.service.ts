@@ -642,4 +642,66 @@ export class UserService {
                 runValidators: true
             });
     }
+
+    async sendNotificationRecommendCourse(userId: string, courseInfo, friendIds: string[]): Promise<number> {
+        const userInfo = await this.userModel
+          .findById(userId)
+          .select('name avatar')
+          .lean()
+          .exec();
+        const friends = await this.userModel
+          .find({
+              _id: {
+                  $in: friendIds
+              }
+          })
+          .select('fcmToken')
+          .lean()
+          .exec();
+        if (friends.length < friendIds.length) return 0;
+        const friendTokens = _.filter(_.map(friends, 'fcmToken'), token => !!token);
+        const newNotification = new this.notificationModel({
+            owner: userId,
+            ownerType: Role.User,
+            type: Notification.Recommend,
+            course: courseInfo._id,
+            content: `đã mời bạn mua khoá học ${courseInfo.title}`
+        });
+        await this.userModel
+          .updateMany({
+              _id: {
+                  $in: friendIds
+              }
+          }, {
+              $push: {
+                  notifications: {
+                      $each: [newNotification],
+                      $position: 0
+                  }
+              }
+          }, {
+              runValidators: true
+          });
+        if (!_.isEmpty(friendTokens)) {
+            await this.messagingService.sendMulticast(friendTokens, {
+                notification: {
+                    title: `Mời bạn mua khoá học`,
+                    body: `${userInfo.name} đã mời bạn mua một khoá học.`
+                },
+                data: {
+                    _id: newNotification._id.toString(),
+                    createdAt: newNotification.createdAt.toString(),
+                    ownerType: Role.User,
+                    ownerId: userId,
+                    ownerName: userInfo.name,
+                    ...(userInfo.avatar ? { ownerAvatar: userInfo.avatar } : {}),
+                    pushType: Push.Notification,
+                    type: Notification.Recommend,
+                    courseId: courseInfo._id.toString(),
+                    content: `đã mời bạn mua khoá học ${courseInfo.title}.`,
+                }
+            });
+        }
+        return 1;
+    }
 }

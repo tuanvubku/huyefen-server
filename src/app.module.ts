@@ -31,6 +31,7 @@ import { StudentModule } from './student/student.module';
 import { QuestionModule } from './question/question.module';
 import { ReviewTeacherModule } from './review-teacher/review-teacher.module';
 import { ReviewCourseModule } from './review-course/review-course.module';
+import { PurchaseHistoryModule } from './purchase-history/purchase-history.module';
 
 @Module({
 	imports: [
@@ -66,7 +67,8 @@ import { ReviewCourseModule } from './review-course/review-course.module';
         AnnouncementModule,
         QuestionModule,
         ReviewTeacherModule,
-        ReviewCourseModule
+        ReviewCourseModule,
+        PurchaseHistoryModule
 	],
 	providers: [
 		{

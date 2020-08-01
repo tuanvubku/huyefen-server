@@ -953,4 +953,26 @@ export class CourseController {
         await this.courseService.buyItems(userId, items);
         return new ResponseSuccess<string>('FETCH_OK', 'OK');
     }
+
+    @Put('/:id/recommend')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async recommendCoursesForFriends(
+        @User() user,
+        @Param('id') courseId: string,
+        @Body('friendIds') friendIds: string[]
+    ): Promise<IResponse<any>> {
+        const userId = user._id;
+        const isValid = await this.studentService.validateUserCourse(userId, courseId);
+        if (!isValid)
+            throw new ForbiddenException(`You don\'t have permission to access this course!`);
+        const status: number = await this.courseService.recommendCoursesForFriends(userId, courseId, friendIds);
+        if (status === -1) {
+            throw new NotFoundException('Invalid course');
+        }
+        else if (status === 0) {
+            throw new NotFoundException('Invalid some friend!');
+        }
+        return new ResponseSuccess('OK');
+    }
 }

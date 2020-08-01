@@ -12,6 +12,10 @@ export const NotificationSchema = new Schema({
 		enum: [Role.Admin, Role.Teacher, Role.User],
 		required: true
 	},
+	course: {
+		type: Schema.Types.ObjectId,
+		default: null
+	},
 	type: {
 		type: String,
 		required: true,

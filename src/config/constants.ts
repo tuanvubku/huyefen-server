@@ -142,4 +142,14 @@ export enum MyCourseSortType {
     RecentlyEnrolled = 'recent-enroll',
     NonToComplete = 'non-complete',
     CompleteToNon = 'complete-non'
-}
+};
+
+export enum PaymentWay {
+    Credit = 'credit',
+    Paypal = 'paypal'
+};
+
+export enum PurchaseItemType {
+    Course = 'Course',
+    Bundle = 'Bundle'
+};

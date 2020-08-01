@@ -11,6 +11,9 @@ import { TeacherModule } from '@/teacher/teacher.module';
 import { StudentModule } from '@/student/student.module';
 import { ReviewTeacherModule } from '@/review-teacher/review-teacher.module';
 import { ReviewCourseModule } from '@/review-course/review-course.module';
+import { UserModule } from '@/user/user.module';
+import { FirebaseModule } from '@/firebase/firebase.module';
+import { PurchaseHistoryModule } from '@/purchase-history/purchase-history.module';
 
 @Module({
 	imports: [
@@ -24,7 +27,9 @@ import { ReviewCourseModule } from '@/review-course/review-course.module';
 		AuthorModule,
 		StudentModule,
 		ReviewTeacherModule,
-		ReviewCourseModule
+		ReviewCourseModule,
+		UserModule,
+		PurchaseHistoryModule
 	],
 	providers: [CourseService],
 	controllers: [CourseController],

@@ -31,4 +31,20 @@ export class MessagingService {
             console.log(e.message);
         }
     }
+
+    async sendMulticast(tokens: string[], message: any): Promise<void> {
+        try {
+            await this.messaging.sendMulticast({
+                data: message.data,
+                notification: {
+                    ...message.notification,
+                    imageUrl: 'https://i.ibb.co/WtcZtGw/logo-transparent-background.png'
+                },
+                tokens
+            });
+        }
+        catch (e) {
+            console.log(e.message);
+        }
+    }
 }
