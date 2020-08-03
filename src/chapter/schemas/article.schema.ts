@@ -3,14 +3,14 @@ import { Schema } from 'mongoose';
 export const ArticleSchema = new Schema({
     estimateHour: {
         type: Number,
-        required: true
+        default: 0
     },
     estimateMinute: {
         type: Number,
-        required: true
+        default: 0
     },
     content: {
         type: Object,
         default: null
     }
-})
+});

@@ -23,7 +23,7 @@ export const LectureSchema = new Schema({
     },
     content: {
         type: Schema.Types.ObjectId,
-        refPath: 'type',
+        refPath: 'lectures.type',
         default: null
     },
     isPreviewed: {

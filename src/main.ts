@@ -3,6 +3,7 @@ import { AppModule } from './app.module';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
+import * as bodyParser from 'body-parser';
 
 declare const module: any;
 
@@ -21,6 +22,8 @@ async function bootstrap() {
       credentials: true
     }
   });
+  app.use(bodyParser.json({ limit: '50mb' }));
+  app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
   const configService = app.get(ConfigService);
   await app.listen(configService.get<string>('HTTPS_PORT'));
   if (module.hot) {

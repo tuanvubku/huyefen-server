@@ -1,15 +1,17 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { IChapter } from './interfaces/chapter.interface';
 import * as _ from 'lodash';
 import { Lecture } from '@/config/constants';
 import { ILecture } from './interfaces/lecture.interface';
+import { IArticle } from '@/chapter/interfaces/article.interface';
 
 @Injectable()
 export class ChapterService {
     constructor (
-        @InjectModel('Chapter') private readonly chapterModel: Model<IChapter>
+        @InjectModel('Chapter') private readonly chapterModel: Model<IChapter>,
+        @InjectModel('Article') private readonly articleModel: Model<IArticle>
     ) {}
 
     async fetchSyllabus(courseId: string): Promise<IChapter[]> {
@@ -117,6 +119,13 @@ export class ChapterService {
         title: string,
         type: Lecture
     ): Promise<{ status: boolean, data: ILecture }> {
+        let contentResource = null;
+        if (type === Lecture.Article) {
+            contentResource = new this.articleModel();
+        }
+        else {
+            //TODO: Create content resource when type lecture is video.
+        }
         let chapter: IChapter = await this.chapterModel
             .findOneAndUpdate({
                 _id: chapterId,
@@ -127,13 +136,14 @@ export class ChapterService {
                         title,
                         type,
                         owner: teacherId,
-                        content: null
+                        content: contentResource && contentResource._id
                     } as ILecture
                 }
             }, {
                 runValidators: true
             });
         if (!chapter) return { status: false, data: null };
+        await contentResource.save();
         chapter = await this.chapterModel
             .findById(chapterId, {
                 lectures: {
@@ -246,5 +256,92 @@ export class ChapterService {
             totalTime: 2,
             numOfLectures
         };
+    }
+
+    async fetchArticleLectureByTeacher(courseId: string, chapterId: string, lectureId: string): Promise<any> {
+        let chapter = await this.chapterModel
+          .findOne({
+              _id: chapterId,
+              course: courseId,
+              lectures: {
+                  $elemMatch: {
+                      _id: lectureId,
+                      type: Lecture.Article
+                  }
+              }
+          }, {
+              lectures: {
+                  $elemMatch: { _id: lectureId }
+              }
+          })
+          .populate('lectures.content')
+          .populate('lectures.owner', 'avatar name')
+          .select('-lectures.resources -lectures.description')
+          .lean()
+          .exec();
+        if (!chapter) return null;
+        const lecture = chapter.lectures[0];
+        return {
+            ..._.pick(lecture, ['_id', 'title', 'owner', 'type', 'updatedAt', 'isPreviewed']),
+            //@ts-ignore
+            ...lecture.content,
+            chapter: _.pick(chapter, ['_id', 'title'])
+        }
+    }
+
+    async updateArticleContent(courseId: string, chapterId: string, lectureId: string, newContent: any): Promise<boolean> {
+        let chapter = await this.chapterModel
+          .findOne({
+              _id: chapterId,
+              course: courseId,
+              lectures: {
+                  $elemMatch: {
+                      _id: lectureId,
+                      type: Lecture.Article
+                  }
+              }
+          }, {
+              lectures: {
+                  $elemMatch: { _id: lectureId }
+              }
+          })
+          .lean()
+          .exec();
+        if (!chapter) return false;
+        const contentResourceId = chapter.lectures[0] && chapter.lectures[0].content;
+        if (!contentResourceId) return false;
+        await this.articleModel
+          .updateOne({
+              _id: contentResourceId
+          }, {
+              $set: {
+                  content: newContent
+              }
+          }, {
+              runValidators: true
+          });
+        return true;
+    }
+
+    async updateArticleLecturePreview(courseId: string, chapterId: string, lectureId: string, previewVal: boolean): Promise<boolean> {
+        let chapter = await this.chapterModel
+          .findOne({
+              _id: chapterId,
+              course: courseId,
+              lectures: {
+                  $elemMatch: {
+                      _id: lectureId,
+                      type: Lecture.Article
+                  }
+              }
+          }, {
+              lectures: {
+                  $elemMatch: { _id: lectureId }
+              }
+          })
+        if (!chapter) return false;
+        chapter.lectures[0].isPreviewed = previewVal;
+        await chapter.save();
+        return true;
     }
 }
