@@ -57,7 +57,6 @@ export class UpdateAvatarParamDto {
 }
 
 export class UpdateAvatarDto {
-    @IsUrl()
     @IsOptional()
     url: string;
 }

@@ -57,8 +57,8 @@ export class CloudController {
         {
             storage: diskStorage({
                 destination: (req, file, cb) => {
-                    const { courseId } = req.body;
-                    const filePath = `./public/Courses/avatars/${courseId}`;
+                    const { id: courseId } = req.params;
+                    const filePath = `./public/courses/avatars/${courseId}`;
                     if (!fs.existsSync(filePath)) {
                         fs.mkdirSync(filePath, { recursive: true });
                     }
@@ -77,9 +77,7 @@ export class CloudController {
         const isCourseOfTeacher = await this.authorService.validateTeacherCourse(user['_id'], courseId);
         if (!isCourseOfTeacher)
             throw new ForbiddenException("COURSE_NOT_MATCH_TEACHER");
-        const url = `${this.configService.get<string>('PUBLIC_URL')}\/image/Teachers/${user['_id']}/${file.filename}`;
-        console.log(url);
-        console.log(this.configService.get<string>('PUBLIC_URL'));
+        const url = `${this.configService.get<string>('HOST')}/courses/avatars/${courseId}/${file.filename}`;
         const res = { url };
         return new ResponseSuccess<any>("UPLOAD.SUCCESS", res);
     }
