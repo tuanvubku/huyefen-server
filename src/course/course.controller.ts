@@ -411,7 +411,6 @@ export class CourseController {
       @Body('content') newContent: any
     ): Promise<IResponse<string>> {
         const teacherId: string = user._id;
-        console.log(teacherId);
         const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!isValidTeacher)
             throw new ForbiddenException("Teacher don\'t have permission to access this course!");
@@ -433,11 +432,32 @@ export class CourseController {
       @Body('value') value: boolean
     ): Promise<IResponse<string>> {
         const teacherId: string = user._id;
-        console.log(teacherId);
         const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
         if (!isValidTeacher)
             throw new ForbiddenException("Teacher don\'t have permission to access this course!");
         const status = await this.chapterService.updateArticleLecturePreview(courseId, chapterId, lectureId, value);
+        if (!status) {
+            throw new NotFoundException('Invalid lecture');
+        }
+        return new ResponseSuccess('UPDATE_OK', 'OK');
+    }
+
+    @Put('/:courseId/:chapterId/article/:lectureId/estimate-time')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateArticleLectureEstimateTime(
+      @User() user,
+      @Param('courseId') courseId: string,
+      @Param('chapterId') chapterId: string,
+      @Param('lectureId') lectureId: string,
+      @Body('hour') hour: number,
+      @Body('minute') minute: number
+    ): Promise<IResponse<string>> {
+        const teacherId: string = user._id;
+        const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!isValidTeacher)
+            throw new ForbiddenException("Teacher don\'t have permission to access this course!");
+        const status = await this.chapterService.updateArticleLectureEstimateTime(courseId, chapterId, lectureId, hour, minute);
         if (!status) {
             throw new NotFoundException('Invalid lecture');
         }

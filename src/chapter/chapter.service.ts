@@ -344,4 +344,34 @@ export class ChapterService {
         await chapter.save();
         return true;
     }
+
+    async updateArticleLectureEstimateTime(courseId: string, chapterId: string, lectureId: string, hour: number, minute: number): Promise<boolean> {
+      let chapter = await this.chapterModel
+        .findOne({
+          _id: chapterId,
+          course: courseId,
+          lectures: {
+            $elemMatch: {
+              _id: lectureId,
+              type: Lecture.Article
+            }
+          }
+        }, {
+          lectures: {
+            $elemMatch: { _id: lectureId }
+          }
+        })
+      if (!chapter) return false;
+      const contentResourceId = chapter.lectures[0].content;
+      await this.articleModel
+        .updateOne({
+          _id: contentResourceId
+        }, {
+          $set: {
+            estimateHour: hour,
+            estimateMinute: minute
+          }
+        });
+      return true;
+    }
 }
