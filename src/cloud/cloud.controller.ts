@@ -14,7 +14,8 @@ import { Roles } from '@/utils/decorators/roles.decorator';
 import { Role, SIZE_LIMIT } from '@/config/constants';
 import { AuthorService } from '@/author/author.service';
 import * as path from 'path'
-@Controller('cloud')
+import { lowerCase } from 'lodash';
+@Controller('api/cloud')
 export class CloudController {
 
     constructor(
@@ -24,7 +25,7 @@ export class CloudController {
         @InjectQueue('video') private videoQueue: Queue
     ) { }
 
-    @Post('/upload')
+    @Post('/upload/avatar')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher, Role.User)
     @UseInterceptors(FileInterceptor('avatar',
@@ -32,7 +33,7 @@ export class CloudController {
             storage: diskStorage({
                 destination: (req, file, cb) => {
                     const role = `${req.user["role"]}s`;
-                    const filePath = `./public/${role}/${req.user["_id"]}`;
+                    const filePath = `./public/${lowerCase(role)}/${req.user["_id"]}`;
                     if (!fs.existsSync(filePath)) {
                         fs.mkdirSync(filePath, { recursive: true });
                     }
@@ -44,11 +45,10 @@ export class CloudController {
             })
         }))
     async uploadAvatar(@UploadedFile() file, @User() user) {
-        const url = `${this.configService.get<string>('HOST')}\/${file.filename}`;
+        const url = `${this.configService.get<string>('HOST')}/teachers/${user['_id']}/${file.filename}`;
         const res = { url };
         return new ResponseSuccess<any>("UPLOAD.SUCCESS", res);
     }
-
 
     @Post('upload/course/:id/avatar')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -77,7 +77,9 @@ export class CloudController {
         const isCourseOfTeacher = await this.authorService.validateTeacherCourse(user['_id'], courseId);
         if (!isCourseOfTeacher)
             throw new ForbiddenException("COURSE_NOT_MATCH_TEACHER");
-        const url = `${this.configService.get<string>('HOST')}\/${file.filename}`;
+        const url = `${this.configService.get<string>('PUBLIC_URL')}\/image/Teachers/${user['_id']}/${file.filename}`;
+        console.log(url);
+        console.log(this.configService.get<string>('PUBLIC_URL'));
         const res = { url };
         return new ResponseSuccess<any>("UPLOAD.SUCCESS", res);
     }
@@ -198,9 +200,9 @@ export class CloudController {
         
         const cb = (jobId, result) => {
             console.log("Hello")
-            console.log(_jobId.id == jobId)
+            console.log(_jobId.id === jobId)
             // JobId when push to queue with jobId queue return
-            if (_jobId.id == jobId) {
+            if (_jobId.id === jobId) {
                 console.log(`Producer get: Job ${jobId} completed! Result: ${result}`);
                 res.send(`Producer get: Job ${jobId} completed! Result: ${result}`)
                 this.videoQueue.removeListener("global:completed", cb);

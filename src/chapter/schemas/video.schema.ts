@@ -29,15 +29,15 @@ const ResolutionSchema = new Schema({
 export const VideoSchema = new Schema({
     isDownloadable: {
         type: Boolean,
-        required: true
+        default: false
     },
     captions: {
         type: [CaptionSchema],
-        required: true
+        default: []
     },
     resolutions: {
         type: [ResolutionSchema],
-        required: true
+        default: []
     }
 })
 

@@ -6,12 +6,14 @@ import * as _ from 'lodash';
 import { Lecture } from '@/config/constants';
 import { ILecture } from './interfaces/lecture.interface';
 import { IArticle } from '@/chapter/interfaces/article.interface';
+import { IVideo } from '@/chapter/interfaces/video.interface';
 
 @Injectable()
 export class ChapterService {
     constructor (
         @InjectModel('Chapter') private readonly chapterModel: Model<IChapter>,
-        @InjectModel('Article') private readonly articleModel: Model<IArticle>
+        @InjectModel('Article') private readonly articleModel: Model<IArticle>,
+        @InjectModel('Video') private readonly videoModel: Model<IVideo>
     ) {}
 
     async fetchSyllabus(courseId: string): Promise<IChapter[]> {
@@ -124,7 +126,7 @@ export class ChapterService {
             contentResource = new this.articleModel();
         }
         else {
-            //TODO: Create content resource when type lecture is video.
+            contentResource = new this.videoModel();
         }
         let chapter: IChapter = await this.chapterModel
             .findOneAndUpdate({
