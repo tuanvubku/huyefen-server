@@ -82,16 +82,16 @@ export class CloudController {
         return new ResponseSuccess<any>("UPLOAD.SUCCESS", res);
     }
 
-    @Post('upload/course/:id/resource')
+    @Post('upload/course/:id/:lectureId/resource')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     @UseInterceptors(FileInterceptor('resource',
         {
             storage: diskStorage({
                 destination: (req, file, cb) => {
-                    const { lectureId } = req.body;
+                    const { lectureId } = req.params;
                     const courseId = req.params.id;
-                    const filePath = `./public/Courses/videos/${courseId}/${lectureId}/resources`;
+                    const filePath = `./public/courses/videos/${courseId}/${lectureId}/resources`;
                     if (!fs.existsSync(filePath)) {
                         fs.mkdirSync(filePath, { recursive: true });
                     }
@@ -108,12 +108,13 @@ export class CloudController {
     async uploadResources(
         @UploadedFile() file,
         @User() user,
-        @Param('id') courseId: string
+        @Param('id') courseId: string,
+        @Param('lectureId') lectureId: string
     ) {
         const isCourseOfTeacher = await this.authorService.validateTeacherCourse(user['_id'], courseId);
         if (!isCourseOfTeacher)
             throw new ForbiddenException("COURSE_NOT_MATCH_TEACHER");
-        const url = `${this.configService.get<string>('HOST')}\/${file.filename}`;
+        const url = `${this.configService.get<string>('HOST')}/courses/videos/${courseId}/${lectureId}/resources/${file.filename}`;
         const res = { url };
         return new ResponseSuccess<any>("UPLOAD.SUCCESS", res);
     }

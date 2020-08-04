@@ -464,6 +464,48 @@ export class CourseController {
         return new ResponseSuccess('UPDATE_OK', 'OK');
     }
 
+    @Get('/:courseId/:chapterId/:lectureId/description')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async getLectureDescriptionForTeacher(
+      @User() user,
+      @Param('courseId') courseId: string,
+      @Param('chapterId') chapterId: string,
+      @Param('lectureId') lectureId: string,
+    ): Promise<IResponse<any>> {
+        const teacherId: string = user._id;
+        const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!isValidTeacher)
+            throw new ForbiddenException("Teacher don\'t have permission to access this course!");
+        const content = await this.chapterService.fetchLectureDescriptionForTeacher(courseId, chapterId, lectureId);
+        console.log(content);
+        if (content === false) {
+            throw new NotFoundException('Invalid lecture');
+        }
+        return new ResponseSuccess('FETCH_OK', content);
+    }
+
+    @Put('/:courseId/:chapterId/:lectureId/description')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateLectureDescription(
+      @User() user,
+      @Param('courseId') courseId: string,
+      @Param('chapterId') chapterId: string,
+      @Param('lectureId') lectureId: string,
+      @Body('content') content: string
+    ): Promise<IResponse<any>> {
+        const teacherId: string = user._id;
+        const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!isValidTeacher)
+            throw new ForbiddenException("Teacher don\'t have permission to access this course!");
+        const status = await this.chapterService.updateLectureDescription(courseId, chapterId, lectureId, content);
+        if (!status) {
+            throw new NotFoundException('Invalid lecture');
+        }
+        return new ResponseSuccess('FETCH_OK', 'OK');
+    }
+
     @Get('/:id/chapters/detail')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher, Role.User)

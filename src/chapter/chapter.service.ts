@@ -376,4 +376,44 @@ export class ChapterService {
         });
       return true;
     }
+
+    async fetchLectureDescriptionForTeacher(courseId: string, chapterId: string, lectureId: string): Promise<any> {
+      let chapter = await this.chapterModel
+        .findOne({
+          _id: chapterId,
+          course: courseId,
+          lectures: {
+            $elemMatch: {
+              _id: lectureId
+            }
+          }
+        }, {
+          lectures: {
+            $elemMatch: { _id: lectureId }
+          }
+        });
+      if (!chapter) return false;
+      return chapter.lectures[0].description || '';
+    }
+
+    async updateLectureDescription(courseId: string, chapterId: string, lectureId: string, newContent: string): Promise<boolean> {
+      let chapter = await this.chapterModel
+        .findOne({
+          _id: chapterId,
+          course: courseId,
+          lectures: {
+            $elemMatch: {
+              _id: lectureId
+            }
+          }
+        }, {
+          lectures: {
+            $elemMatch: { _id: lectureId }
+          }
+        })
+      if (!chapter) return false;
+      chapter.lectures[0].description = newContent;
+      await chapter.save();
+      return true;
+    }
 }
