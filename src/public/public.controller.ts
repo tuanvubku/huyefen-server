@@ -9,6 +9,7 @@ export class PublicController {
   //   @Res() res
   // ): Promise<any> {
   //   console.log(imagePath);
+  //   console.log("Test")
   //   return res.sendFile(imagePath, { root: join(__dirname, 'public') });
   // }
 }

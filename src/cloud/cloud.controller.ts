@@ -11,7 +11,7 @@ import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import { CloudService } from './cloud.service';
 import { Roles } from '@/utils/decorators/roles.decorator';
-import { Role, SIZE_LIMIT } from '@/config/constants';
+import { Role, SIZE_LIMIT, Lecture } from '@/config/constants';
 import { AuthorService } from '@/author/author.service';
 import * as path from 'path'
 import { lowerCase } from 'lodash';
@@ -45,7 +45,7 @@ export class CloudController {
             })
         }))
     async uploadAvatar(@UploadedFile() file, @User() user) {
-        const url = `${this.configService.get<string>('HOST')}/teachers/${user['_id']}/${file.filename}`;
+        const url = `${this.configService.get<string>('HOST')}/${lowerCase(user["role"])}s/${user['_id']}/${file.filename}`;
         const res = { url };
         return new ResponseSuccess<any>("UPLOAD.SUCCESS", res);
     }
@@ -69,7 +69,7 @@ export class CloudController {
                 }
             })
         }))
-    async uploadACourseAvatar(
+    async uploadCourseAvatar(
         @UploadedFile() file,
         @User() user,
         @Param('id') courseId: string
@@ -128,7 +128,7 @@ export class CloudController {
                 destination: (req, file, cb) => {
                     const { lectureId } = req.body;
                     const courseId = req.params.id;
-                    const filePath = `./public/Courses/videos/${courseId}/${lectureId}`
+                    const filePath = `./public/courses/videos/${courseId}/${lectureId}`
                     if (!fs.existsSync(filePath)) {
                         fs.mkdirSync(filePath, { recursive: true });
                     }
@@ -151,14 +151,15 @@ export class CloudController {
     async uploadCaptionVideo(
         @UploadedFile() file,
         @User() user,
-        @Param('id') courseId: string
+        @Param('id') courseId: string,
+        @Body('lectureId') lectureId: string
     ) {
         if (!file)
             throw new NotAcceptableException("Only .vtt extension is allowed");
         const isCourseOfTeacher = await this.authorService.validateTeacherCourse(user['_id'], courseId);
         if (!isCourseOfTeacher)
             throw new ForbiddenException("COURSE_NOT_MATCH_TEACHER");
-        const url = `${this.configService.get<string>('HOST')}\/${file.filename}`;
+        const url = `${this.configService.get<string>('HOST')}/courses/videos/${courseId}/${lectureId}/${file.filename}`;
         const res = { url };
         return new ResponseSuccess<any>("UPLOAD.SUCCESS", res)
     }
@@ -170,8 +171,9 @@ export class CloudController {
         {
             storage: diskStorage({
                 destination: (req, file, cb) => {
-                    const { courseId, lectureId } = req.body;
-                    const filePath = `./public/Courses/videos/${courseId}/${lectureId}`;
+                    const courseId = req.params.id;
+                    const { lectureId } = req.body;
+                    const filePath = `./public/courses/videos/${courseId}/${lectureId}`;
                     if (!fs.existsSync(filePath)) {
                         fs.mkdirSync(filePath, { recursive: true })
                     }
@@ -184,29 +186,23 @@ export class CloudController {
         }))
     async uploadCourseVideo(
         @UploadedFile() file,
-        @User() user, @Param('id') courseId: String,
+        @Param('id') courseId: String,
         @Body('lectureId') lectureId: String,
         @Res() res
     ) {
 
-        console.log(file)
         const _jobId = await this.videoQueue.add("video", {
-            video: file,
-            courseId,
-            lectureId
+            video: file
         })
 
-        
         const cb = (jobId, result) => {
-            console.log("Hello")
-            console.log(_jobId.id === jobId)
-            // JobId when push to queue with jobId queue return
             if (_jobId.id === jobId) {
                 console.log(`Producer get: Job ${jobId} completed! Result: ${result}`);
-                res.send(`Producer get: Job ${jobId} completed! Result: ${result}`)
-                this.videoQueue.removeListener("global:completed", cb);
+                // fire notification
+
             }
         }
-        this.videoQueue.addListener("global:completed", cb);
+        this.videoQueue.on("global:completed", cb);
+        res.send("Upload video success")
     }
 }

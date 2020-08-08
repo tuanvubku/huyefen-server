@@ -26,7 +26,7 @@ export enum Progressive {
 export enum Resolution {
 	R240p = "352x240",
 	R360p = "480x360",
-	R480p = "858x480",
+	R480p = "852x480",
 	R720p = "1280x720",
 	R1080p = "1920x1080" 
 }

@@ -2,6 +2,7 @@ import { Progressive, Resolution } from '@/utils/utils';
 import { OnQueueActive, OnQueueCompleted, OnQueueProgress, Process, Processor } from '@nestjs/bull';
 import { Job } from 'bull';
 import { join } from 'path';
+import * as _ from 'lodash'
 const ffmpeg = require('fluent-ffmpeg');
 
 @Processor('video')
@@ -10,76 +11,66 @@ export class VideoConsumer {
     @Process('video')
     async changeResolution(job: Job) {
 
-        console.log(job.data.video);
-        //const filePath = job.data.video.path;
-        const courseId = job.data.courseId;
-        const lectureId = job.data.lectureId;
+        const path = job.data.video.path;
+        const des = job.data.video.destination;
         const fileName = job.data.video.filename;
-        
-        console.log("XU ly")
-        //console.log(height);
-        const desPath = join(__dirname, `../../public/Courses/videos/${courseId}/${lectureId}/${fileName}`);
-        const des = join(__dirname, `../../public/Courses/videos/${courseId}/${lectureId}`);
-        console.log(desPath)
+
+        const desPath = join(__dirname, `../../${path}`)
+        const destination = join(__dirname, `../../${des}`)
+
         const height = await this.getHeight(desPath).then(height => parseInt(height)).catch(err => console.log(err));
-        console.log(height);
+        const result = []
+        result.push({
+            resolution: height,
+            src: desPath
+        })
+
         if (height > Progressive.P1080) {
             await Promise.all([
-                this.convertTo(Resolution.R1080p, desPath, desPath, fileName, Progressive.P1080),
-                this.convertTo(Resolution.R720p, desPath, desPath, fileName, Progressive.P720),
-                this.convertTo(Resolution.R480p, desPath, desPath, fileName, Progressive.P480),
-                this.convertTo(Resolution.R360p, desPath, desPath, fileName, Progressive.P360)
+                this.convertTo(Resolution.R1080p, desPath, destination, fileName, Progressive.P1080, job, result),
+                this.convertTo(Resolution.R720p, desPath, destination, fileName, Progressive.P720, job, result),
+                this.convertTo(Resolution.R480p, desPath, destination, fileName, Progressive.P480, job, result),
+                this.convertTo(Resolution.R360p, desPath, destination, fileName, Progressive.P360, job, result)
             ])
                 .then(data => {
                     console.log("Completed convert video!")
                 })
         } else if (height > Progressive.P720) {
             await Promise.all([
-                this.convertTo(Resolution.R720p, desPath, desPath, fileName, Progressive.P720),
-                this.convertTo(Resolution.R480p, desPath, desPath, fileName, Progressive.P480),
-                this.convertTo(Resolution.R360p, desPath, desPath, fileName, Progressive.P360)
+                this.convertTo(Resolution.R720p, desPath, destination, fileName, Progressive.P720, job, result),
+                this.convertTo(Resolution.R480p, desPath, destination, fileName, Progressive.P480, job, result),
+                this.convertTo(Resolution.R360p, desPath, destination, fileName, Progressive.P360, job, result)
             ])
                 .then(data => {
                     console.log("Completed convert video!")
-                    if (height == Progressive.P1080) {
-                        // copy
-                        
-                    }
                 })
         } else if (height > Progressive.P480) {
             await Promise.all([
-                this.convertTo(Resolution.R480p, desPath, des, fileName, Progressive.P480),
-                this.convertTo(Resolution.R360p, desPath, des, fileName, Progressive.P360)
+                this.convertTo(Resolution.R480p, desPath, destination, fileName, Progressive.P480, job, result),
+                this.convertTo(Resolution.R360p, desPath, destination, fileName, Progressive.P360, job, result)
             ])
                 .then(data => {
                     console.log("Completed convert video!")
-                    // if (height == Progressive.P720) {
-                    //     // copy
-                    //     fs.copyFile(srcFile, desFile, (err) => {
-                    //         if (err) console.log(err);
-                    //     });
-
-                    // }
                 })
         } else if (height > Progressive.P360) {
             await Promise.all([
-                this.convertTo(Resolution.R360p, desPath, desPath, fileName, Progressive.P360)
+                this.convertTo(Resolution.R360p, desPath, destination, fileName, Progressive.P360, job, result)
             ])
                 .then(data => {
                     console.log("Completed convert video!")
-                    if (height == Progressive.P480) {
-                        // copy
-                        
-                    }
                 })
-        } else if (height == Progressive.P360) {
-
-        } else {
+        } else if (height == Progressive.P360) { }
+        else {
+            // sleep 3s
+            await new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve()
+                }, 3000)
+            })
             console.log("Not support");
         }
 
-        console.log("Finished !")
-        return "Hello"
+        return _.keyBy(result, "resolution")
     }
 
     private getHeight(filePath): Promise<string> {
@@ -94,27 +85,29 @@ export class VideoConsumer {
         })
     }
 
-    private convertTo(resolutionTarget: string, filePath: string, desPath: string, fileName: string, progressive: Progressive) {
+    private convertTo(resolutionTarget: string, path: string, destination: string,
+        fileName: string, progressive: Progressive, job: Job, result) {
         const split = fileName.split(".");
         const newFileName = `${split[0]}${progressive}p.${split[1]}`;
         return new Promise((resolve, reject) => {
-            ffmpeg(filePath).size(resolutionTarget)
-                .videoCodec('libx264')
-                .audioCodec('libmp3lame')
+            ffmpeg(path).size(resolutionTarget)
                 .on('error', function (err) {
                     console.log('An error occurred: ' + err.message);
                     reject(err);
                 })
-                .on('progress', function(progress) {
-                    console.log(`Processing: ${resolutionTarget} === ` + progress.percent + '% done');
-                    //this.handlerProgress()
-                    
-                  })
+                .on('progress', function (progress) {
+                    console.log(`Processing ${job.id}: ${resolutionTarget} === ` + progress.percent + '% done');
+
+                })
                 .on('end', function () {
+                    result.push({
+                        resolution: progressive,
+                        src: join(destination, newFileName)
+                    });
                     console.log(`Processing to ${resolutionTarget} finished !`);
                     resolve()
                 })
-                .save(join(desPath, newFileName));
+                .save(join(destination, newFileName));
         })
     }
 
