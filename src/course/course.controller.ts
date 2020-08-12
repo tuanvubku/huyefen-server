@@ -1110,4 +1110,16 @@ export class CourseController {
         return new ResponseSuccess("SUCCESS", res);
     }
 
+    @Get('/suggest')
+    async getSuggestions(@Query() query ) {
+        let results = null;
+        await this.courseService.getSuggestions(query['keyword'])
+        .then(data => {
+            results = data
+        })
+        .catch(err => {
+            //console.log(err)
+        })
+        return new ResponseSuccess("SUCCESS", results);
+    }
 }

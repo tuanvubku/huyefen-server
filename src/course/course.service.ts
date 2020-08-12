@@ -7,12 +7,18 @@ import {
     Price,
     Privacy,
     ProgressBase,
-    PurchaseItemType,
+
     Role,
-    TeacherCoursesSort as Sort,
+    TeacherCoursesSort as Sort
 } from '@/config/constants';
+import { PurchaseHistoryService } from '@/purchase-history/purchase-history.service';
+import { ReviewCourseService } from '@/review-course/review-course.service';
+import { ReviewTeacherService } from '@/review-teacher/review-teacher.service';
+import { StudentService } from '@/student/student.service';
 import { TeacherService } from '@/teacher/teacher.service';
-import { Injectable, NotFoundException, Inject, forwardRef } from '@nestjs/common';
+import { UserService } from '@/user/user.service';
+import { mapKeyToPrice } from '@/utils/utils';
+import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as _ from 'lodash';
 import { Model } from 'mongoose';
@@ -22,14 +28,6 @@ import { ICourse } from './interfaces/course.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
-import { ReviewTeacherService } from '@/review-teacher/review-teacher.service';
-import { ReviewCourseService } from '@/review-course/review-course.service';
-import { StudentService } from '@/student/student.service';
-import { MessagingService } from '@/firebase/messaging.service';
-import { UserService } from '@/user/user.service';
-import { PurchaseHistoryService } from '@/purchase-history/purchase-history.service';
-import { mapKeyToPrice } from '@/utils/utils';
-import { result } from 'lodash';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -46,15 +44,15 @@ export class CourseService {
         private readonly reviewCourseService: ReviewCourseService,
         private readonly studentService: StudentService,
         private readonly userService: UserService,
-        private readonly purchaseHistoryService: PurchaseHistoryService
+        private readonly purchaseHistoryService: PurchaseHistoryService,
     ) {
 
         (this.courseModel as any).createMapping(function (err, mapping) {
             if (err) {
-                console.log('error creating mapping (you can safely ignore this)');
-                console.log(err);
+                //console.log('error creating mapping (you can safely ignore this)');
+                //console.log(err);
             } else {
-                console.log('mapping created!');
+                //console.log('mapping created!');
                 //console.log(mapping);
             }
         });
@@ -65,7 +63,7 @@ export class CourseService {
                 count++
             })
             stream.on('close', () => {
-                console.log(`Index ${count}`)
+                console.log(`Indexed completed ${count}`)
             })
             stream.on('error', (err) => {
                 console.log(err)
@@ -77,13 +75,14 @@ export class CourseService {
         let course: ICourse = new this.courseModel({
             area,
             title,
-            authors: [teacherId]
+            authors: [teacherId],
+            suggest: title
         });
 
         course = await course.save();
-        (course as ICourse as any).on("es-indexed", (err, res) => {
+        let _course = course as ICourse as any;
+        _course.on("es-indexed", (err, res) => {
             if (err) throw err;
-            console.log("index", result)
         })
         const courseId: string = course._id;
         await this.authorService.create(teacherId, courseId);
@@ -709,6 +708,28 @@ export class CourseService {
                         reject(err)
                     }
                     resolve(results.hits.hits)
+                })
+        })
+    }
+
+    async getSuggestions(keyword: string) {
+        console.log(keyword)
+        return new Promise((resolve, reject) => {
+            (this.courseModel as any).search(null, {
+                suggest: {
+                    "course-suggest": {
+                        "text": keyword,
+                        "completion": {
+                            "field": "suggest"
+                        }
+                    }
+                }
+            },
+                function (err, results) {
+                    if (err) {
+                        reject(err)
+                    }
+                    resolve(results)
                 })
         })
     }
