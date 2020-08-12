@@ -24,7 +24,17 @@ export class TeacherService {
         private readonly configService: ConfigService,
         private readonly messagingService: MessagingService,
         private courseService: CourseService
-    ) { }
+    ) {
+        // (this.teacherModel as any).createMapping(function(err, mapping) {
+        //     if (err) {
+        //       console.log('error creating mapping teacher model (you can safely ignore this)');
+        //       console.log(err);
+        //     } else {
+        //       console.log('mapping created!');
+        //       console.log(mapping);
+        //     }
+        //   });
+     }
 
     async create(body): Promise<ITeacher> {
         const saltRounds = parseInt(this.configService.get<string>('SALT_ROUNDS'));

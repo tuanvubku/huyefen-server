@@ -13,7 +13,7 @@ import { TeacherModule } from './teacher/teacher.module';
 import { CourseModule } from './course/course.module';
 // import { NotificationModule } from './notification/notification.module';
 // import { DeviceModule } from './device/device.module';
-import { SearchModule } from './search/search.module';
+//import { SearchModule } from './search/search.module';
 import { CONFIG_ENV_PATH } from '@/config/constants';
 import { MongooseConfig } from '@/config/mongoose.config';
 import { validationPipeConfig } from '@/config/validationPipe.config';
@@ -57,7 +57,7 @@ import { ChapterGateway } from './chapter/chapter.gateway';
 		CourseModule,
 		//NotificationModule,
 		//DeviceModule,
-		SearchModule,
+		//SearchModule,
 		HistoryModule,
 		ChapterModule,
 		TopicModule,
