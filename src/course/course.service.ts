@@ -29,6 +29,7 @@ import { MessagingService } from '@/firebase/messaging.service';
 import { UserService } from '@/user/user.service';
 import { PurchaseHistoryService } from '@/purchase-history/purchase-history.service';
 import { mapKeyToPrice } from '@/utils/utils';
+import { result } from 'lodash';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -46,7 +47,31 @@ export class CourseService {
         private readonly studentService: StudentService,
         private readonly userService: UserService,
         private readonly purchaseHistoryService: PurchaseHistoryService
-    ) { }
+    ) {
+
+        (this.courseModel as any).createMapping(function (err, mapping) {
+            if (err) {
+                console.log('error creating mapping (you can safely ignore this)');
+                console.log(err);
+            } else {
+                console.log('mapping created!');
+                //console.log(mapping);
+            }
+        });
+        (this.courseModel as any).esTruncate(function (err) {
+            let stream = (courseModel as any).synchronize();
+            let count = 0
+            stream.on('data', () => {
+                count++
+            })
+            stream.on('close', () => {
+                console.log(`Index ${count}`)
+            })
+            stream.on('error', (err) => {
+                console.log(err)
+            })
+        })
+    }
 
     async create(teacherId: string, area: string, title: string): Promise<ICourse> {
         let course: ICourse = new this.courseModel({
@@ -54,7 +79,12 @@ export class CourseService {
             title,
             authors: [teacherId]
         });
+
         course = await course.save();
+        (course as ICourse as any).on("es-indexed", (err, res) => {
+            if (err) throw err;
+            console.log("index", result)
+        })
         const courseId: string = course._id;
         await this.authorService.create(teacherId, courseId);
         await this.teacherService.addCourse(teacherId, courseId);
@@ -565,7 +595,7 @@ export class CourseService {
                 finalReview.ratingContent = reviewsData[teacherId].rating.comment;
                 finalReview.starRating = reviewsData[teacherId].rating.value;
             }
-            
+
             return {
                 ..._.pick(teachersInfoData[teacherId], ['_id', 'name', 'avatar', 'numOfCourse', 'numOfStudents']),
                 ...finalReview
@@ -574,7 +604,7 @@ export class CourseService {
     }
 
     async fetchCourseTitleById(courseId: string): Promise<string> {
-        const course =  await this.courseModel.findById(courseId);
+        const course = await this.courseModel.findById(courseId);
         return course.title;
     }
 
@@ -590,13 +620,13 @@ export class CourseService {
 
     async fetchPublicInfo(courseId: string, user: { _id: string, role: Role }): Promise<any> {
         const course = await this.courseModel
-          .findById(courseId)
-          .populate('primaryTopic')
-          .populate('area', 'title')
-          .populate('authors', 'name')
-          .select('-whatLearns -requirements -targetStudents -lastUpdated -category -topics -description -privacy -password -progress -messages -createdAt')
-          .lean()
-          .exec();
+            .findById(courseId)
+            .populate('primaryTopic')
+            .populate('area', 'title')
+            .populate('authors', 'name')
+            .select('-whatLearns -requirements -targetStudents -lastUpdated -category -topics -description -privacy -password -progress -messages -createdAt')
+            .lean()
+            .exec();
         if (!course) return null;
         const numOfRatings: number = await this.reviewCourseService.countNumRatings(courseId);
         let checkRegistered: boolean = false;
@@ -614,15 +644,15 @@ export class CourseService {
     async fetchInfosForCart(items: Array<any>): Promise<Array<any>> {
         const courseItemIds = _.map(_.filter(items, item => item.type === 'course'), '_id');
         let courseInfos = await this.courseModel
-          .find({
-              _id: {
-                  $in: courseItemIds
-              }
-          })
-          .populate('authors', 'name')
-          .select('title avatar price authors')
-          .lean()
-          .exec();
+            .find({
+                _id: {
+                    $in: courseItemIds
+                }
+            })
+            .populate('authors', 'name')
+            .select('title avatar price authors')
+            .lean()
+            .exec();
         //TODO: bundle
         courseInfos = _.map(courseInfos, courseInfo => ({
             ...courseInfo,
@@ -636,27 +666,27 @@ export class CourseService {
         let totalPrice: number = 0;
         const courseItemIds = _.map(_.filter(items, item => item.type === 'course'), '_id');
         const coursePrice: number = _.sum(_.map(_.map(
-          await this.courseModel
-            .find({
-                _id: {
-                    $in: courseItemIds
-                }
-            })
-            .lean()
-            .exec(),
-          'price'
+            await this.courseModel
+                .find({
+                    _id: {
+                        $in: courseItemIds
+                    }
+                })
+                .lean()
+                .exec(),
+            'price'
         ), price => mapKeyToPrice(price)));
         totalPrice += coursePrice;
         await this.courseModel
-          .updateMany({
-              _id: {
-                  $in: courseItemIds
-              }
-          }, {
-              $inc: {
-                  numOfStudents: 1
-              }
-          });
+            .updateMany({
+                _id: {
+                    $in: courseItemIds
+                }
+            }, {
+                $inc: {
+                    numOfStudents: 1
+                }
+            });
         await this.studentService.createMany(userId, courseItemIds);
         await this.purchaseHistoryService.createOne(userId, items, totalPrice);
     }
@@ -665,5 +695,21 @@ export class CourseService {
         const courseInfo = await this.courseModel.findById(courseId).select('title');
         if (!courseInfo) return -1;
         return await this.userService.sendNotificationRecommendCourse(userId, courseInfo, friendIds);
+    }
+
+    async searchCourse(query: string): Promise<any> {
+        return new Promise((resolve, reject) => {
+            (this.courseModel as any).search({
+                query_string: {
+                    query: query
+                }
+            },
+                function (err, results) {
+                    if (err) {
+                        reject(err)
+                    }
+                    resolve(results.hits.hits)
+                })
+        })
     }
 }
