@@ -14,6 +14,13 @@ export const CourseSchema = new Schema({
         default: null,
         es_indexed: true
     },
+    suggest: {
+        type: [String],
+        es_type: 'completion',
+        es_search_analyzer: 'simple',
+        es_analyzer: 'simple',
+        es_indexed: true
+    },
     subTitle: {
         type: String,
         maxlength: 150,
