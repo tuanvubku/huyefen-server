@@ -10,7 +10,7 @@ export const ArticleSchema = new Schema({
         default: 0
     },
     content: {
-        type: Object,
-        default: null
+        type: String,
+        default: ''
     }
 });

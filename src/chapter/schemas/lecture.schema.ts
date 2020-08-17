@@ -35,7 +35,7 @@ export const LectureSchema = new Schema({
         default: null
     },
     resources: {
-        type: ResourceSchema,
-        default: null
+        type: [ResourceSchema],
+        default: []
     }
 })

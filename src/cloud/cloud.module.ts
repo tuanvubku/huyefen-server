@@ -3,6 +3,7 @@ import { CloudService } from './cloud.service';
 import { CloudController } from './cloud.controller';
 import { BullModule } from '@nestjs/bull'
 import { AuthorModule } from '@/author/author.module';
+import { ChapterModule } from '@/chapter/chapter.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AuthorModule } from '@/author/author.module';
 			  port: 6379
 			}
 		}),
+		ChapterModule,
 	AuthorModule
   ],
   providers: [CloudService],

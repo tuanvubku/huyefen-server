@@ -22,7 +22,7 @@ export class VideoConsumer {
         const result = []
         result.push({
             resolution: height,
-            src: desPath
+            src: fileName
         })
 
         if (height > Progressive.P1080) {
@@ -102,7 +102,7 @@ export class VideoConsumer {
                 .on('end', function () {
                     result.push({
                         resolution: progressive,
-                        src: join(destination, newFileName)
+                        src: newFileName
                     });
                     console.log(`Processing to ${resolutionTarget} finished !`);
                     resolve()

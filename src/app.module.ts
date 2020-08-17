@@ -33,6 +33,7 @@ import { ReviewTeacherModule } from './review-teacher/review-teacher.module';
 import { ReviewCourseModule } from './review-course/review-course.module';
 import { PurchaseHistoryModule } from './purchase-history/purchase-history.module';
 import { PublicModule } from './public/public.module';
+import { ChapterGateway } from './chapter/chapter.gateway';
 
 @Module({
 	imports: [

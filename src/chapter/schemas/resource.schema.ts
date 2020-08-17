@@ -1,4 +1,5 @@
-import {Schema} from 'mongoose';
+import { Schema } from 'mongoose';
+import { ResourceType } from '@/config/constants';
 
 export const ResourceSchema = new Schema({
     name: {
@@ -7,10 +8,15 @@ export const ResourceSchema = new Schema({
     },
     extra: {
         type: String,
-        required: true
+        default: ''
     },
     url: {
         type: String,
         required: true
+    },
+    type: {
+        type: String,
+        enum: [ResourceType.Downloadable, ResourceType.External],
+        default: ResourceType.Downloadable
     }
 })

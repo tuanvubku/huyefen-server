@@ -1,6 +1,6 @@
 import { Schema } from 'mongoose';
 
-const CaptionSchema = new Schema({
+export const CaptionSchema = new Schema({
     srcLang: {
         type: String,
         required: true
@@ -15,7 +15,7 @@ const CaptionSchema = new Schema({
     }
 })
 
-const ResolutionSchema = new Schema({
+export const ResolutionSchema = new Schema({
     resolution: {
         type: Number,
         required: true

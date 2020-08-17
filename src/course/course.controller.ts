@@ -408,7 +408,7 @@ export class CourseController {
       @Param('courseId') courseId: string,
       @Param('chapterId') chapterId: string,
       @Param('lectureId') lectureId: string,
-      @Body('content') newContent: any
+      @Body('content') newContent: string
     ): Promise<IResponse<string>> {
         const teacherId: string = user._id;
         const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
@@ -442,6 +442,26 @@ export class CourseController {
         return new ResponseSuccess('UPDATE_OK', 'OK');
     }
 
+    @Get('/:courseId/:chapterId/video/:lectureId')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchVideoLectureByTeacher(
+      @User() user,
+      @Param('courseId') courseId: string,
+      @Param('chapterId') chapterId: string,
+      @Param('lectureId') lectureId: string
+    ): Promise<IResponse<any>> {
+        const teacherId: string = user._id;
+        const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!isValidTeacher)
+            throw new ForbiddenException("Teacher don\'t have permission to access this course!");
+        const data = await this.chapterService.fetchVideoLectureByTeacher(courseId, chapterId, lectureId);
+        if (!data) {
+            throw new NotFoundException('Invalid lecture');
+        }
+        return new ResponseSuccess('OK', data);
+    }
+
     @Put('/:courseId/:chapterId/article/:lectureId/estimate-time')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
@@ -464,6 +484,47 @@ export class CourseController {
         return new ResponseSuccess('UPDATE_OK', 'OK');
     }
 
+    @Post('/:courseId/:chapterId/:lectureId/resources')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async addResourceForLecture(
+      @User() user,
+      @Param('courseId') courseId: string,
+      @Param('chapterId') chapterId: string,
+      @Param('lectureId') lectureId: string,
+      @Body('resource') resource: any
+    ): Promise<IResponse<any>> {
+        const teacherId: string = user._id;
+        const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!isValidTeacher)
+            throw new ForbiddenException("Teacher don\'t have permission to access this course!");
+        const newResource = await this.chapterService.addResourceForLecture(courseId, chapterId, lectureId, resource);
+        if (!newResource) {
+            throw new NotFoundException('Invalid lecture');
+        }
+        return new ResponseSuccess('FETCHOK', newResource);
+    }
+
+    @Get('/:courseId/:chapterId/:lectureId/resources')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async fetchResourceLecture(
+      @User() user,
+      @Param('courseId') courseId: string,
+      @Param('chapterId') chapterId: string,
+      @Param('lectureId') lectureId: string
+    ): Promise<IResponse<any>> {
+        const teacherId: string = user._id;
+        const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!isValidTeacher)
+            throw new ForbiddenException("Teacher don\'t have permission to access this course!");
+        const resources = await this.chapterService.fetchResourcesLecture(courseId, chapterId, lectureId);
+        if (resources === false) {
+            throw new NotFoundException('Invalid lecture');
+        }
+        return new ResponseSuccess('OK', resources);
+    }
+
     @Get('/:courseId/:chapterId/:lectureId/description')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
@@ -478,7 +539,6 @@ export class CourseController {
         if (!isValidTeacher)
             throw new ForbiddenException("Teacher don\'t have permission to access this course!");
         const content = await this.chapterService.fetchLectureDescriptionForTeacher(courseId, chapterId, lectureId);
-        console.log(content);
         if (content === false) {
             throw new NotFoundException('Invalid lecture');
         }

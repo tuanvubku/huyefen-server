@@ -2,7 +2,19 @@ import { User } from '@/utils/decorators/user.decorator';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { generateFileName, ResponseSuccess } from '@/utils/utils';
 import { InjectQueue } from '@nestjs/bull';
-import { Body, Controller, Param, Post, Res, UploadedFile, UseGuards, UseInterceptors, ForbiddenException, NotAcceptableException } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Param,
+    Post,
+    Res,
+    UploadedFile,
+    UseGuards,
+    UseInterceptors,
+    ForbiddenException,
+    NotAcceptableException,
+    NotFoundException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -15,6 +27,10 @@ import { Role, SIZE_LIMIT, Lecture } from '@/config/constants';
 import { AuthorService } from '@/author/author.service';
 import * as path from 'path'
 import { lowerCase } from 'lodash';
+import { ChapterGateway } from '@/chapter/chapter.gateway';
+import * as _ from 'lodash';
+import { ChapterService } from '@/chapter/chapter.service';
+
 @Controller('api/cloud')
 export class CloudController {
 
@@ -22,7 +38,9 @@ export class CloudController {
         private readonly cloudService: CloudService,
         private readonly configService: ConfigService,
         private readonly authorService: AuthorService,
-        @InjectQueue('video') private videoQueue: Queue
+        @InjectQueue('video') private videoQueue: Queue,
+        private readonly chapterGateway: ChapterGateway,
+        private readonly chapterService: ChapterService
     ) { }
 
     @Post('/upload/avatar')
@@ -82,7 +100,7 @@ export class CloudController {
         return new ResponseSuccess<any>("UPLOAD.SUCCESS", res);
     }
 
-    @Post('upload/course/:id/:lectureId/resource')
+    @Post('upload/course/:id/:lectureId/resources')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     @UseInterceptors(FileInterceptor('resource',
@@ -128,7 +146,7 @@ export class CloudController {
                 destination: (req, file, cb) => {
                     const { lectureId } = req.body;
                     const courseId = req.params.id;
-                    const filePath = `./public/courses/videos/${courseId}/${lectureId}`
+                    const filePath = `./public/courses/videos/${courseId}/${lectureId}/captions`
                     if (!fs.existsSync(filePath)) {
                         fs.mkdirSync(filePath, { recursive: true });
                     }
@@ -159,12 +177,12 @@ export class CloudController {
         const isCourseOfTeacher = await this.authorService.validateTeacherCourse(user['_id'], courseId);
         if (!isCourseOfTeacher)
             throw new ForbiddenException("COURSE_NOT_MATCH_TEACHER");
-        const url = `${this.configService.get<string>('HOST')}/courses/videos/${courseId}/${lectureId}/${file.filename}`;
+        const url = `${this.configService.get<string>('HOST')}/courses/videos/${courseId}/${lectureId}/captions/${file.filename}`;
         const res = { url };
         return new ResponseSuccess<any>("UPLOAD.SUCCESS", res)
     }
 
-    @Post('upload/course/:id/video')
+    @Post('upload/course/:id/:chapterId/:lectureId/video')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     @UseInterceptors(FileInterceptor('video',
@@ -172,7 +190,7 @@ export class CloudController {
             storage: diskStorage({
                 destination: (req, file, cb) => {
                     const courseId = req.params.id;
-                    const { lectureId } = req.body;
+                    const { lectureId } = req.params;
                     const filePath = `./public/courses/videos/${courseId}/${lectureId}`;
                     if (!fs.existsSync(filePath)) {
                         fs.mkdirSync(filePath, { recursive: true })
@@ -185,21 +203,36 @@ export class CloudController {
             })
         }))
     async uploadCourseVideo(
+        @User() user,
         @UploadedFile() file,
-        @Param('id') courseId: String,
-        @Body('lectureId') lectureId: String,
+        @Param('id') courseId: string,
+        @Param('chapterId') chapterId: string,
+        @Param('lectureId') lectureId: string,
         @Res() res
     ) {
-
+        const teacherId: string = user._id;
+        const isCourseOfTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!isCourseOfTeacher)
+            throw new ForbiddenException("COURSE_NOT_MATCH_TEACHER");
         const _jobId = await this.videoQueue.add("video", {
             video: file
         })
 
-        const cb = (jobId, result) => {
+        const cb = async (jobId, result) => {
             if (_jobId.id === jobId) {
                 console.log(`Producer get: Job ${jobId} completed! Result: ${result}`);
-                // fire notification
-
+                const resolutionsObj = JSON.parse(result);
+                const resKeys = _.keys(resolutionsObj);
+                resKeys.forEach(key => {
+                    resolutionsObj[key].src = `${this.configService.get<string>('HOST')}/courses/videos/${courseId}/${lectureId}/${resolutionsObj[key].src}`;
+                });
+                const resArr = Object.values(resolutionsObj);
+                const status = await this.chapterService.addVideoResolutionsForLecture(courseId, chapterId, lectureId, resArr);
+                console.log(status);
+                if (!status) {
+                    throw new NotFoundException('Invalid lecture');
+                }
+                this.chapterGateway.notifyVideoUploadIsOk(teacherId, lectureId, resolutionsObj);
             }
         }
         this.videoQueue.on("global:completed", cb);

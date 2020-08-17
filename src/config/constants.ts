@@ -153,3 +153,8 @@ export enum PurchaseItemType {
     Course = 'Course',
     Bundle = 'Bundle'
 };
+
+export enum ResourceType {
+    Downloadable = 'downloadable',
+    External = 'external'
+};
