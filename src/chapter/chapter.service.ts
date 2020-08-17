@@ -6,7 +6,7 @@ import * as _ from 'lodash';
 import { Lecture, ResourceType } from '@/config/constants';
 import { ILecture } from './interfaces/lecture.interface';
 import { IArticle } from '@/chapter/interfaces/article.interface';
-import { IResolution, IVideo } from '@/chapter/interfaces/video.interface';
+import { ICaption, IResolution, IVideo } from '@/chapter/interfaces/video.interface';
 import { IResource } from '@/chapter/interfaces/resource.interface';
 
 @Injectable()
@@ -16,7 +16,8 @@ export class ChapterService {
         @InjectModel('Article') private readonly articleModel: Model<IArticle>,
         @InjectModel('Video') private readonly videoModel: Model<IVideo>,
         @InjectModel('Resource') private readonly resourceModel: Model<IResource>,
-        @InjectModel('Resolution') private readonly resolutionModel: Model<IResolution>
+        @InjectModel('Resolution') private readonly resolutionModel: Model<IResolution>,
+        @InjectModel('Caption') private readonly captionModel: Model<ICaption>
     ) {}
 
     async fetchSyllabus(courseId: string): Promise<IChapter[]> {
@@ -508,7 +509,8 @@ export class ChapterService {
           course: courseId,
           lectures: {
             $elemMatch: {
-              _id: lectureId
+              _id: lectureId,
+              type: Lecture.Video
             }
           }
         }, {
@@ -529,6 +531,73 @@ export class ChapterService {
         .findByIdAndUpdate(videoResourceId, {
           $set: {
             resolutions: resolutionItems
+          }
+        });
+      return true;
+    }
+
+    async updateVideoLectureCaption(courseId: string, chapterId: string, lectureId: string, lang: string, label: string, src: string): Promise<any> {
+      let chapter = await this.chapterModel
+        .findOne({
+          _id: chapterId,
+          course: courseId,
+          lectures: {
+            $elemMatch: {
+              _id: lectureId,
+              type: Lecture.Video
+            }
+          }
+        }, {
+          lectures: {
+            $elemMatch: { _id: lectureId }
+          }
+        })
+      if (!chapter) {
+        return false;
+      };
+      const newCaption = new this.captionModel({
+        srcLang: lang,
+        label: label,
+        src: src
+      });
+      const videoId = chapter.lectures[0].content;
+      await this.videoModel
+        .findByIdAndUpdate(videoId, {
+          $push: {
+            captions: newCaption
+          }
+        });
+      return newCaption;
+    }
+
+    async deleteVideoLectureCaption(courseId: string, chapterId: string, lectureId: string, captionId: string): Promise<any> {
+      let chapter = await this.chapterModel
+        .findOne({
+          _id: chapterId,
+          course: courseId,
+          lectures: {
+            $elemMatch: {
+              _id: lectureId,
+              type: Lecture.Video
+            }
+          }
+        }, {
+          lectures: {
+            $elemMatch: { _id: lectureId }
+          }
+        })
+      if (!chapter) {
+        return false;
+      };
+      const videoId = chapter.lectures[0].content;
+      await this.videoModel
+        .updateOne({
+          _id: videoId
+        }, {
+          $pull: {
+            captions: {
+              _id: captionId
+            }
           }
         });
       return true;

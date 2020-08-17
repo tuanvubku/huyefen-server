@@ -462,6 +462,50 @@ export class CourseController {
         return new ResponseSuccess('OK', data);
     }
 
+    @Post('/:courseId/:chapterId/video/:lectureId/captions')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateVideoLectureCaption(
+      @User() user,
+      @Param('courseId') courseId: string,
+      @Param('chapterId') chapterId: string,
+      @Param('lectureId') lectureId: string,
+      @Body('lang') lang: string,
+      @Body('label') label: string,
+      @Body('url') src: string
+    ): Promise<IResponse<any>> {
+        const teacherId: string = user._id;
+        const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!isValidTeacher)
+            throw new ForbiddenException("Teacher don\'t have permission to access this course!");
+        const data = await this.chapterService.updateVideoLectureCaption(courseId, chapterId, lectureId, lang, label, src);
+        if (!data) {
+            throw new NotFoundException('Invalid lecture');
+        }
+        return new ResponseSuccess('OK', data);
+    }
+
+    @Delete('/:courseId/:chapterId/video/:lectureId/captions/:captionId')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async deleteVideoLectureCaption(
+      @User() user,
+      @Param('courseId') courseId: string,
+      @Param('chapterId') chapterId: string,
+      @Param('lectureId') lectureId: string,
+      @Param('captionId') captionId: string
+    ): Promise<IResponse<any>> {
+        const teacherId: string = user._id;
+        const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!isValidTeacher)
+            throw new ForbiddenException("Teacher don\'t have permission to access this course!");
+        const data = await this.chapterService.deleteVideoLectureCaption(courseId, chapterId, lectureId, captionId);
+        if (!data) {
+            throw new NotFoundException('Invalid lecture');
+        }
+        return new ResponseSuccess('OK', true);
+    }
+
     @Put('/:courseId/:chapterId/article/:lectureId/estimate-time')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)

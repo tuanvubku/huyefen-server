@@ -137,14 +137,14 @@ export class CloudController {
         return new ResponseSuccess<any>("UPLOAD.SUCCESS", res);
     }
 
-    @Post('upload/course/:id/caption')
+    @Post('upload/course/:id/:lectureId/captions')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     @UseInterceptors(FileInterceptor('caption',
         {
             storage: diskStorage({
                 destination: (req, file, cb) => {
-                    const { lectureId } = req.body;
+                    const { lectureId } = req.params;
                     const courseId = req.params.id;
                     const filePath = `./public/courses/videos/${courseId}/${lectureId}/captions`
                     if (!fs.existsSync(filePath)) {
@@ -170,7 +170,7 @@ export class CloudController {
         @UploadedFile() file,
         @User() user,
         @Param('id') courseId: string,
-        @Body('lectureId') lectureId: string
+        @Param('lectureId') lectureId: string
     ) {
         if (!file)
             throw new NotAcceptableException("Only .vtt extension is allowed");
