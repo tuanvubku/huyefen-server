@@ -96,7 +96,7 @@ export class VideoConsumer {
                     reject(err);
                 })
                 .on('progress', function (progress) {
-                    console.log(`Processing ${job.id}: ${resolutionTarget} === ` + progress.percent + '% done');
+                        console.log(`Processing ${job.id}: ${resolutionTarget} === ` + progress.percent + '% done');
 
                 })
                 .on('end', function () {

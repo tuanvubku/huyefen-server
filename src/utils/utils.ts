@@ -1,6 +1,7 @@
 import { extname } from "path";
 import { IResponse } from "./interfaces/response.interface";
-
+import * as fs from 'fs'
+import * as path from 'path'
 export class ResponseSuccess<T> implements IResponse<T> {
 	constructor(
 		public message: string,
@@ -43,3 +44,10 @@ export const mapKeyToPrice = priceKey => {
 			return 0;
 	}
 }
+
+export const mkdirRecursive = dir => {
+	if (fs.existsSync(dir)) return
+	const dirname = path.dirname(dir)
+	mkdirRecursive(dirname);
+	fs.mkdirSync(dir);
+  }
