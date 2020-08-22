@@ -400,26 +400,6 @@ export class CourseController {
         return new ResponseSuccess('FETCH_OK', result);
     }
 
-    @Put('/:courseId/:chapterId/article/:lectureId')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.Teacher)
-    async updateArticleLectureContent(
-      @User() user,
-      @Param('courseId') courseId: string,
-      @Param('chapterId') chapterId: string,
-      @Param('lectureId') lectureId: string,
-      @Body('content') newContent: string
-    ): Promise<IResponse<string>> {
-        const teacherId: string = user._id;
-        const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
-        if (!isValidTeacher)
-            throw new ForbiddenException("Teacher don\'t have permission to access this course!");
-        const status = await this.chapterService.updateArticleContent(courseId, chapterId, lectureId, newContent);
-        if (!status) {
-            throw new NotFoundException('Invalid lecture');
-        }
-        return new ResponseSuccess('FETCH_OK', 'OK');
-    }
 
     @Put('/:courseId/:chapterId/article/:lectureId/preview')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -609,6 +589,28 @@ export class CourseController {
         }
         return new ResponseSuccess('FETCH_OK', 'OK');
     }
+
+    @Put('/:courseId/:chapterId/article/:lectureId')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.Teacher)
+    async updateArticleLectureContent(
+      @User() user,
+      @Param('courseId') courseId: string,
+      @Param('chapterId') chapterId: string,
+      @Param('lectureId') lectureId: string,
+      @Body('content') newContent: string
+    ): Promise<IResponse<string>> {
+        const teacherId: string = user._id;
+        const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
+        if (!isValidTeacher)
+            throw new ForbiddenException("Teacher don\'t have permission to access this course!");
+        const status = await this.chapterService.updateArticleContent(courseId, chapterId, lectureId, newContent);
+        if (!status) {
+            throw new NotFoundException('Invalid lecture');
+        }
+        return new ResponseSuccess('FETCH_OK', 'OK');
+    }
+
 
     @Get('/:id/chapters/detail')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -998,6 +1000,42 @@ export class CourseController {
         return new ResponseSuccess<any>("CREATE_REVIEW_COURSE_OK", review);
     }
 
+    @Put('/:id/reviews/instructor')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async updateReviewInstructor(
+      @User() user,
+      @Body('instructorId') instructorId: string,
+      @Body('starRating') starRating: string,
+      @Body('comment') comment: string,
+      @Param('id') courseId: string
+    ): Promise<IResponse<Boolean>> {
+        const userId = user._id;
+        const isValidTeacher = await this.authorService.validateTeacherCourse(instructorId, courseId);
+        if (!isValidTeacher)
+            throw new ForbiddenException("Teachere don\'t have permission to access this course!");
+        const isValidUser = await this.studentService.validateUserCourse(userId, courseId);
+        if (!isValidUser)
+            throw new ForbiddenException("You don\'t have permission to access this course!");
+        const status = await this.reviewTeacherService.updateReviewInstructor(userId, instructorId, parseFloat(starRating), comment);
+        return new ResponseSuccess<Boolean>("UPDATE_REVIEW_OK", status);
+    }
+
+    @Get('/:id/reviews/instructors')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchReviewInstructor(
+      @User() user,
+      @Param('id') courseId: string
+    ) {
+        const userId = user._id;
+        const isValid = await this.studentService.validateUserCourse(userId, courseId);
+        if (!isValid)
+            throw new ForbiddenException(`You don\'t have permission to access this course!`);
+        const reviews = await this.courseService.fetchReviewInstructor(courseId, userId);
+        return new ResponseSuccess("FETCH_REVIEW_OK", reviews);
+    }
+
     @Get('/:id/reviews/public')
     @UseGuards(RelaxGuard)
     async fetchReviews(
@@ -1062,41 +1100,7 @@ export class CourseController {
         return new ResponseSuccess<any>('ANSWER_OK', newAnswer);
     }
 
-    @Put('/:id/reviews/instructor')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.User)
-    async updateReviewInstructor(
-        @User() user,
-        @Body('instructorId') instructorId: string,
-        @Body('starRating') starRating: string,
-        @Body('comment') comment: string,
-        @Param('id') courseId: string
-    ): Promise<IResponse<Boolean>> {
-        const userId = user._id;
-        const isValidTeacher = await this.authorService.validateTeacherCourse(instructorId, courseId);
-        if (!isValidTeacher)
-            throw new ForbiddenException("Teachere don\'t have permission to access this course!");
-        const isValidUser = await this.studentService.validateUserCourse(userId, courseId);
-        if (!isValidUser)
-            throw new ForbiddenException("You don\'t have permission to access this course!");
-        const status = await this.reviewTeacherService.updateReviewInstructor(userId, instructorId, parseFloat(starRating), comment);
-        return new ResponseSuccess<Boolean>("UPDATE_REVIEW_OK", status);
-    }
 
-    @Get('/:id/reviews/instructor')
-    @UseGuards(AuthGuard('jwt'), RolesGuard)
-    @Roles(Role.User)
-    async fetchReviewInstructor(
-        @User() user,
-        @Param('id') courseId: string
-    ) {
-        const userId = user._id;
-        const isValid = await this.studentService.validateUserCourse(userId, courseId);
-        if (!isValid)
-            throw new ForbiddenException(`You don\'t have permission to access this course!`);
-        const reviews = await this.courseService.fetchReviewInstructor(courseId, userId);
-        return new ResponseSuccess("FETCH_REVIEW_OK", reviews);
-    }
 
     @Get('/:id/info/public')
     @UseGuards(RelaxGuard)
@@ -1205,5 +1209,59 @@ export class CourseController {
         return new ResponseSuccess('OK');
     }
 
+    @Get('/:id/info/learner')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchInfoByLearner(
+      @User() user,
+      @Param('id') courseId: string
+    ): Promise<IResponse<any>> {
+        const userId = user._id;
+        const isValid = await this.studentService.validateUserCourse(userId, courseId);
+        if (!isValid)
+            throw new ForbiddenException(`You don\'t have permission to access this course!`);
+        const data = await this.courseService.fetchInfoByLearner(userId, courseId);
+        if (!data) {
+            throw new NotFoundException('Invalid course');
+        }
+        return new ResponseSuccess('OK', data);
+    }
 
+    @Get('/:courseId/:chapterId/article/:lectureId/user')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchArticleLectureByUser(
+      @User() user,
+      @Param('courseId') courseId: string,
+      @Param('chapterId') chapterId: string,
+      @Param('lectureId') lectureId: string
+    ): Promise<IResponse<any>> {
+        const userId: string = user._id;
+        const isValid = await this.studentService.validateUserCourse(userId, courseId);
+        if (!isValid)
+            throw new ForbiddenException(`You don\'t have permission to access this course!`);
+        const result = await this.chapterService.fetchArticleLectureByUser(courseId, chapterId, lectureId);
+        if (!result)
+            throw new NotFoundException('Invalid lecture');
+        return new ResponseSuccess('FETCH_OK', result);
+    }
+
+    @Get('/:courseId/:chapterId/video/:lectureId/user')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async fetchVideoLectureByUser(
+      @User() user,
+      @Param('courseId') courseId: string,
+      @Param('chapterId') chapterId: string,
+      @Param('lectureId') lectureId: string
+    ): Promise<IResponse<any>> {
+        const userId: string = user._id;
+        const isValid = await this.studentService.validateUserCourse(userId, courseId);
+        if (!isValid)
+            throw new ForbiddenException(`You don\'t have permission to access this course!`);
+        const result = await this.chapterService.fetchVideoLectureByUser(courseId, chapterId, lectureId);
+        if (!result)
+            throw new NotFoundException('Invalid lecture');
+        return new ResponseSuccess('FETCH_OK', result);
+    }
 }

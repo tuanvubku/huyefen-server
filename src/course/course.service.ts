@@ -562,12 +562,12 @@ export class CourseService {
                 ratingContent: ''
             };
             if (reviewsData[teacherId]) {
-                finalReview.ratingContent = reviewsData[teacherId].rating.comment;
-                finalReview.starRating = reviewsData[teacherId].rating.value;
+                finalReview.ratingContent = reviewsData[teacherId].rating.comment || '';
+                finalReview.starRating = reviewsData[teacherId].rating.value || 3.5;
             }
             
             return {
-                ..._.pick(teachersInfoData[teacherId], ['_id', 'name', 'avatar', 'numOfCourse', 'numOfStudents']),
+                ..._.pick(teachersInfoData[teacherId], ['_id', 'name', 'avatar', 'numOfCourses', 'numOfStudents']),
                 ...finalReview
             };
         });
@@ -665,5 +665,19 @@ export class CourseService {
         const courseInfo = await this.courseModel.findById(courseId).select('title');
         if (!courseInfo) return -1;
         return await this.userService.sendNotificationRecommendCourse(userId, courseInfo, friendIds);
+    }
+
+    async fetchInfoByLearner(userId: string, courseId: string): Promise<any> {
+        const courseInfo: any = await this.courseModel
+          .findById(courseId)
+          .populate('authors', 'name')
+          .select('title authors')
+          .lean()
+          .exec();
+        if (!courseInfo) return null;
+        courseInfo.authors = _.map(courseInfo.authors, 'name');
+        const chapters = await this.chapterService.fetchChapters(courseId);
+        courseInfo.syllabus = chapters;
+        return courseInfo;
     }
 }

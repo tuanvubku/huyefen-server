@@ -295,6 +295,73 @@ export class ChapterService {
         }
     }
 
+    async fetchArticleLectureByUser(courseId: string, chapterId: string, lectureId: string): Promise<any> {
+      let chapter = await this.chapterModel
+        .findOne({
+          _id: chapterId,
+          course: courseId,
+          lectures: {
+            $elemMatch: {
+              _id: lectureId,
+              type: Lecture.Article
+            }
+          }
+        })
+        .populate('lectures.owner', 'avatar name')
+        .lean()
+        .exec();
+      if (!chapter) return null;
+      const maxLength: number = chapter.lectures.length;
+      let lecture: any;
+      let prev: any;
+      let next: any;
+      let lectureIndex: number;
+      for (let i = 0; i < maxLength; ++i) {
+        if (chapter.lectures[i]._id.toString() === lectureId && chapter.lectures[i].type === Lecture.Article) {
+          lectureIndex = i;
+          lecture = chapter.lectures[i];
+          if (i === 0) {
+            prev = null;
+          }
+          else {
+            prev = _.pick(chapter.lectures[i - 1], ['_id', 'type']);
+          }
+          if (i === maxLength - 1) {
+            next = null;
+          }
+          else {
+            next = _.pick(chapter.lectures[i + 1], ['_id', 'type']);
+          }
+          break;
+        }
+      }
+      const contentResourceId = lecture.content;
+      const article = await this.articleModel
+        .findById(contentResourceId);
+      const resources = {
+        downloadable: [],
+        external: []
+      };
+      lecture.resources.forEach(item => {
+        if (item.type === 'downloadable') {
+          resources.downloadable.push(item);
+        }
+        else {
+          resources.external.push(item);
+        }
+      })
+      return {
+        ..._.pick(lecture, ['_id', 'title', 'owner', 'type', 'updatedAt', 'description']),
+        resources,
+        content: article.content,
+        duration: (article.estimateHour) * 60 + (article.estimateMinute),
+        prevLecture: prev,
+        nextLecture: next,
+        chapter: _.pick(chapter, ['_id', 'title']),
+        lectureIndex
+      }
+    }
+
     async fetchVideoLectureByTeacher(courseId: string, chapterId: string, lectureId: string) {
       let chapter = await this.chapterModel
         .findOne({
@@ -325,6 +392,74 @@ export class ChapterService {
         chapter: _.pick(chapter, ['_id', 'title'])
       }
     }
+
+  async fetchVideoLectureByUser(courseId: string, chapterId: string, lectureId: string) {
+    let chapter = await this.chapterModel
+      .findOne({
+        _id: chapterId,
+        course: courseId,
+        lectures: {
+          $elemMatch: {
+            _id: lectureId,
+            type: Lecture.Video
+          }
+        }
+      })
+      .populate('lectures.owner', 'avatar name')
+      .lean()
+      .exec();
+    if (!chapter) return null;
+    const maxLength: number = chapter.lectures.length;
+    let lecture: any;
+    let prev: any;
+    let next: any;
+    let lectureIndex: number;
+    for (let i = 0; i < maxLength; ++i) {
+      if (chapter.lectures[i]._id.toString() === lectureId && chapter.lectures[i].type === Lecture.Video) {
+        lectureIndex = i;
+        lecture = chapter.lectures[i];
+        if (i === 0) {
+          prev = null;
+        }
+        else {
+          prev = _.pick(chapter.lectures[i - 1], ['_id', 'type']);
+        }
+        if (i === maxLength - 1) {
+          next = null;
+        }
+        else {
+          next = _.pick(chapter.lectures[i + 1], ['_id', 'type']);
+        }
+        break;
+      }
+    }
+    const contentResourceId = lecture.content;
+    const video = await this.videoModel
+      .findById(contentResourceId)
+      .lean()
+      .exec();
+    const resources = {
+      downloadable: [],
+      external: []
+    };
+    lecture.resources.forEach(item => {
+      if (item.type === 'downloadable') {
+        resources.downloadable.push(item);
+      }
+      else {
+        resources.external.push(item);
+      }
+    })
+    return {
+      ..._.pick(lecture, ['_id', 'title', 'owner', 'type', 'updatedAt', 'description']),
+      resources,
+      ..._.pick(video, ['isDownloadable', 'captions', 'resolutions']),
+      prevLecture: prev,
+      nextLecture: next,
+      chapter: _.pick(chapter, ['_id', 'title']),
+      lectureIndex
+    }
+  }
 
     async updateArticleContent(courseId: string, chapterId: string, lectureId: string, newContent: string): Promise<boolean> {
         let chapter = await this.chapterModel
