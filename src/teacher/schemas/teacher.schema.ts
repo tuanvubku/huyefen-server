@@ -1,12 +1,14 @@
 import { Schema } from 'mongoose';
 import { TeacherNotificationSchema } from './notification.schema';
+var mongoosastic = require('mongoosastic')
 
 export const TeacherSchema = new Schema({
     name: {
         type: String,
         minlength: 8,
         maxlength: 50,
-        required: true
+        required: true,
+        es_indexed: true
     },
     password: {
         type: String,
@@ -15,7 +17,8 @@ export const TeacherSchema = new Schema({
     },
     avatar: {
         type: String,
-        default: null
+        default: null,
+        es_indexed: true
     },
     biography: {
         type: String,
@@ -76,3 +79,5 @@ export const TeacherSchema = new Schema({
         default: []
     }
 });
+
+TeacherSchema.plugin(mongoosastic)

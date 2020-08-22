@@ -19,17 +19,17 @@ import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { Queue } from 'bull';
-import * as fs from 'fs';
 import { diskStorage } from 'multer';
 import { CloudService } from './cloud.service';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { Role, SIZE_LIMIT, Lecture } from '@/config/constants';
 import { AuthorService } from '@/author/author.service';
 import * as path from 'path'
-import { lowerCase } from 'lodash';
+import { lowerCase, join } from 'lodash';
 import { ChapterGateway } from '@/chapter/chapter.gateway';
 import * as _ from 'lodash';
 import { ChapterService } from '@/chapter/chapter.service';
+import {mkdirRecursive} from '@/utils/utils'
 
 @Controller('api/cloud')
 export class CloudController {
@@ -52,9 +52,7 @@ export class CloudController {
                 destination: (req, file, cb) => {
                     const role = `${req.user["role"]}s`;
                     const filePath = `./public/${lowerCase(role)}/${req.user["_id"]}`;
-                    if (!fs.existsSync(filePath)) {
-                        fs.mkdirSync(filePath, { recursive: true });
-                    }
+                    mkdirRecursive(filePath)
                     cb(null, filePath);
                 },
                 filename: (req, file, cb) => {
@@ -77,9 +75,7 @@ export class CloudController {
                 destination: (req, file, cb) => {
                     const { id: courseId } = req.params;
                     const filePath = `./public/courses/avatars/${courseId}`;
-                    if (!fs.existsSync(filePath)) {
-                        fs.mkdirSync(filePath, { recursive: true });
-                    }
+                    mkdirRecursive(filePath)
                     cb(null, filePath);
                 },
                 filename: (req, file, cb) => {
@@ -110,9 +106,8 @@ export class CloudController {
                     const { lectureId } = req.params;
                     const courseId = req.params.id;
                     const filePath = `./public/courses/videos/${courseId}/${lectureId}/resources`;
-                    if (!fs.existsSync(filePath)) {
-                        fs.mkdirSync(filePath, { recursive: true });
-                    }
+                    mkdirRecursive(filePath);
+
                     cb(null, filePath);
                 },
                 filename: (req, file, cb) => {
@@ -147,9 +142,7 @@ export class CloudController {
                     const { lectureId } = req.params;
                     const courseId = req.params.id;
                     const filePath = `./public/courses/videos/${courseId}/${lectureId}/captions`
-                    if (!fs.existsSync(filePath)) {
-                        fs.mkdirSync(filePath, { recursive: true });
-                    }
+                    mkdirRecursive(filePath)
                     cb(null, filePath);
                 },
                 filename: (req, file, cb) => {
@@ -192,9 +185,7 @@ export class CloudController {
                     const courseId = req.params.id;
                     const { lectureId } = req.params;
                     const filePath = `./public/courses/videos/${courseId}/${lectureId}`;
-                    if (!fs.existsSync(filePath)) {
-                        fs.mkdirSync(filePath, { recursive: true })
-                    }
+                    mkdirRecursive(filePath);
                     cb(null, filePath);
                 },
                 filename: (req, file, cb) => {

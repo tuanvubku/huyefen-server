@@ -1,7 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { CourseService } from './course.service';
 import { CourseController } from './course.controller';
-import { SearchModule } from '@/search/search.module';
+//import { SearchModule } from '@/search/search.module';
 import { ChapterModule } from '@/chapter/chapter.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CourseSchema } from './schemas/course.schema';
@@ -14,13 +14,16 @@ import { ReviewCourseModule } from '@/review-course/review-course.module';
 import { UserModule } from '@/user/user.module';
 import { FirebaseModule } from '@/firebase/firebase.module';
 import { PurchaseHistoryModule } from '@/purchase-history/purchase-history.module';
+var mongoosastic = require('mongoosastic')
 
 @Module({
 	imports: [
 		MongooseModule.forFeature([
-			{ name: 'Course', schema: CourseSchema }
+			{
+				name: 'Course', schema: CourseSchema,
+			}
 		]),
-		SearchModule,
+		//SearchModule,
 		HistoryModule,
 		ChapterModule,
 		forwardRef(() => TeacherModule),
@@ -35,4 +38,4 @@ import { PurchaseHistoryModule } from '@/purchase-history/purchase-history.modul
 	controllers: [CourseController],
 	exports: [CourseService]
 })
-export class CourseModule {}
+export class CourseModule { }

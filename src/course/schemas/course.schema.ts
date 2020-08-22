@@ -3,25 +3,40 @@ import { Level, Privacy, Price, Language } from '@/config/constants';
 import { WhatLearnSchema } from './whatLearn.schema';
 import { RequirementSchema } from './requirement.schema';
 import { TargetStudentSchema } from './targetStudent.schema';
+import { TeacherSchema } from '../../teacher/schemas/teacher.schema'
+var mongoosastic = require('mongoosastic')
 
 export const CourseSchema = new Schema({
     title: {
         type: String,
         maxlength: 60,
         minlength: 8,
-        default: null
+        default: null,
+        es_indexed: true
+    },
+    suggest: {
+        type: [String],
+        es_type: 'completion',
+        es_search_analyzer: 'simple',
+        es_analyzer: 'simple',
+        es_indexed: true
     },
     subTitle: {
         type: String,
         maxlength: 150,
-        default: null
+        default: null,
+        es_indexed: true
     },
     authors: {
         type: [{
             type: Schema.Types.ObjectId,
-            ref: 'Teacher'
+            ref: 'Teacher',
+            es_schema: TeacherSchema,
+            es_select: 'name',
+            es_indexed: true,
         }],
-        default: []
+        default: [],
+
     },
     numOfStudents: {
         type: Number,
@@ -29,12 +44,13 @@ export const CourseSchema = new Schema({
     },
     description: {
         type: String,
-        default: null
+        default: null,
+        es_indexed: true
     },
     language: {
         type: String,
         enum: [Language.English, Language.Vietnamese],
-        default: Language.English 
+        default: Language.English
     },
     level: {
         type: String,
@@ -44,12 +60,12 @@ export const CourseSchema = new Schema({
     area: {
         type: Schema.Types.ObjectId,
         ref: 'Area',
-        default: null
+        default: null,
     },
     category: {
         type: Schema.Types.ObjectId,
         ref: 'Area.categories',
-        default: null
+        default: null,
     },
     privacy: {
         type: String,
@@ -58,6 +74,7 @@ export const CourseSchema = new Schema({
     },
     password: {
         type: String,
+
         default: null,
         minlength: 6
     },
@@ -77,7 +94,8 @@ export const CourseSchema = new Schema({
         type: Number,
         default: 3.5,
         min: 1,
-        max: 5
+        max: 5,
+        es_indexed: false
     },
     progress: {
         goals: {
@@ -150,4 +168,10 @@ export const CourseSchema = new Schema({
     }
 }, {
     timestamps: true
+})
+
+CourseSchema.plugin(mongoosastic, {
+    populate: [
+        { path: 'authors', select: 'name' }
+    ]
 })

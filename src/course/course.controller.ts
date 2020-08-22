@@ -1,20 +1,28 @@
 import { AuthorService } from '@/author/author.service';
+import { IAuthor } from '@/author/interfaces/author.interface';
 import { ChapterService } from '@/chapter/chapter.service';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { ILecture } from '@/chapter/interfaces/lecture.interface';
 import { HistoryType, MyCourseSortType, Permission, Price, Privacy, Role, ValidateStatus } from '@/config/constants';
 import { HistoryService } from '@/history/history.service';
 import { IHistory } from '@/history/interfaces/history.interface';
-import { SearchService } from '@/search/search.service';
+import { IReviewCourse } from '@/review-course/interfaces/review.course.interface';
+import { ReviewCourseService } from '@/review-course/review-course.service';
+import { ReviewTeacherService } from '@/review-teacher/review-teacher.service';
+import { StudentService } from '@/student/student.service';
 import { TeacherService } from '@/teacher/teacher.service';
 import { Roles } from '@/utils/decorators/roles.decorator';
 import { User } from '@/utils/decorators/user.decorator';
+import { RelaxGuard } from '@/utils/guards/relaxAuth.guard';
 import { RolesGuard } from '@/utils/guards/roles.guard';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ResponseSuccess } from '@/utils/utils';
-import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, MethodNotAllowedException, NotFoundException, Param, Post, Put, Query, Req, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, ForbiddenException, Get, MethodNotAllowedException, NotFoundException, Param, ParseIntPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import * as admin from 'firebase-admin';
+import { ReviewCourseDto } from '../course/dtos/review.course.dto';
 import { CourseService } from './course.service';
+import { AnswerReviewDto } from './dtos/answerReview.dto';
 import { CreateDto } from './dtos/create.dto';
 import { FetchDto } from './dtos/fetch.dto';
 import { FetchGoalsDto } from './dtos/fetchGoals.dto';
@@ -31,16 +39,6 @@ import { ICourse } from './interfaces/course.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
-import { IAuthor } from '@/author/interfaces/author.interface';
-import { StudentService } from '@/student/student.service';
-import { ReviewTeacherService } from '@/review-teacher/review-teacher.service';
-import { ReviewCourseService } from '@/review-course/review-course.service';
-import { ReviewCourseDto } from '../course/dtos/review.course.dto';
-import { IReviewCourse } from '@/review-course/interfaces/review.course.interface';
-import { AnswerReviewDto } from './dtos/answerReview.dto';
-import { RelaxGuard } from '@/utils/guards/relaxAuth.guard';
-import * as admin from 'firebase-admin';
-import Auth = admin.auth.Auth;
 
 @Controller('api/courses')
 export class CourseController {
@@ -49,7 +47,6 @@ export class CourseController {
         private readonly chapterService: ChapterService,
         private readonly historyService: HistoryService,
         private readonly authorService: AuthorService,
-        private readonly searchService: SearchService,
         private readonly teacherService: TeacherService,
         private readonly studentService: StudentService,
         private readonly reviewTeacherService: ReviewTeacherService,
@@ -385,10 +382,10 @@ export class CourseController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     async fetchArticleLectureByTeacher(
-      @User() user,
-      @Param('courseId') courseId: string,
-      @Param('chapterId') chapterId: string,
-      @Param('lectureId') lectureId: string
+        @User() user,
+        @Param('courseId') courseId: string,
+        @Param('chapterId') chapterId: string,
+        @Param('lectureId') lectureId: string
     ): Promise<IResponse<any>> {
         const teacherId: string = user._id;
         const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
@@ -405,11 +402,11 @@ export class CourseController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     async updateArticleLecturePreview(
-      @User() user,
-      @Param('courseId') courseId: string,
-      @Param('chapterId') chapterId: string,
-      @Param('lectureId') lectureId: string,
-      @Body('value') value: boolean
+        @User() user,
+        @Param('courseId') courseId: string,
+        @Param('chapterId') chapterId: string,
+        @Param('lectureId') lectureId: string,
+        @Body('value') value: boolean
     ): Promise<IResponse<string>> {
         const teacherId: string = user._id;
         const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
@@ -490,12 +487,12 @@ export class CourseController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     async updateArticleLectureEstimateTime(
-      @User() user,
-      @Param('courseId') courseId: string,
-      @Param('chapterId') chapterId: string,
-      @Param('lectureId') lectureId: string,
-      @Body('hour') hour: number,
-      @Body('minute') minute: number
+        @User() user,
+        @Param('courseId') courseId: string,
+        @Param('chapterId') chapterId: string,
+        @Param('lectureId') lectureId: string,
+        @Body('hour') hour: number,
+        @Body('minute') minute: number
     ): Promise<IResponse<string>> {
         const teacherId: string = user._id;
         const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
@@ -553,10 +550,10 @@ export class CourseController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     async getLectureDescriptionForTeacher(
-      @User() user,
-      @Param('courseId') courseId: string,
-      @Param('chapterId') chapterId: string,
-      @Param('lectureId') lectureId: string,
+        @User() user,
+        @Param('courseId') courseId: string,
+        @Param('chapterId') chapterId: string,
+        @Param('lectureId') lectureId: string,
     ): Promise<IResponse<any>> {
         const teacherId: string = user._id;
         const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
@@ -573,11 +570,11 @@ export class CourseController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     async updateLectureDescription(
-      @User() user,
-      @Param('courseId') courseId: string,
-      @Param('chapterId') chapterId: string,
-      @Param('lectureId') lectureId: string,
-      @Body('content') content: string
+        @User() user,
+        @Param('courseId') courseId: string,
+        @Param('chapterId') chapterId: string,
+        @Param('lectureId') lectureId: string,
+        @Body('content') content: string
     ): Promise<IResponse<any>> {
         const teacherId: string = user._id;
         const isValidTeacher = await this.authorService.validateTeacherCourse(teacherId, courseId);
@@ -619,7 +616,7 @@ export class CourseController {
         @Req() req,
         @Param('id') courseId: string
     ): Promise<IResponse<any>> {
-        const { 
+        const {
             _id: userId,
             role: userRole
         } = req.user;
@@ -992,7 +989,7 @@ export class CourseController {
         @Param('id') courseId: string
     ): Promise<IResponse<any>> {
         const userId = user._id;
-        const {starRating, comment} = body
+        const { starRating, comment } = body
         const isValidUser = await this.studentService.validateUserCourse(userId, courseId);
         if (!isValidUser)
             throw new ForbiddenException("You don\'t have permission to access this course!");
@@ -1121,10 +1118,10 @@ export class CourseController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
     async fetchMyCourses(
-      @User() user,
-      @Query('skip', ParseIntPipe) skip: number,
-      @Query('limit', ParseIntPipe) limit: number,
-      @Query('sortBy') sortBy: MyCourseSortType
+        @User() user,
+        @Query('skip', ParseIntPipe) skip: number,
+        @Query('limit', ParseIntPipe) limit: number,
+        @Query('sortBy') sortBy: MyCourseSortType
     ): Promise<IResponse<any>> {
         const userId: string = user._id;
         const result = await this.studentService.fetchMyCourses(userId, skip, limit, sortBy);
@@ -1155,7 +1152,7 @@ export class CourseController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
     async fetchInfoItemsForCart(
-      @Query('items') itemsQuery: string
+        @Query('items') itemsQuery: string
     ): Promise<IResponse<Array<any>>> {
         const items: Array<any> = itemsQuery.split('-').map(itemStr => {
             const itemArr = itemStr.split(',');
@@ -1172,8 +1169,8 @@ export class CourseController {
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
     async buyItems(
-      @User() user,
-      @Query('items') itemsQuery: string
+        @User() user,
+        @Query('items') itemsQuery: string
     ): Promise<IResponse<string>> {
         const items: Array<any> = itemsQuery.split('-').map(itemStr => {
             const itemArr = itemStr.split(',');
@@ -1263,5 +1260,30 @@ export class CourseController {
         if (!result)
             throw new NotFoundException('Invalid lecture');
         return new ResponseSuccess('FETCH_OK', result);
+    }
+
+    @Get('/search')
+    async searchCourse(@Query() query): Promise<IResponse<any>> {
+        let res = null
+        await this.courseService.searchCourse(query.query)
+            .then(data => {
+                res = data
+            }).catch(err => {
+                //console.log(err)
+            })
+        return new ResponseSuccess("SUCCESS", res);
+    }
+
+    @Get('/suggest')
+    async getSuggestions(@Query() query ) {
+        let results = null;
+        await this.courseService.getSuggestions(query['keyword'])
+        .then(data => {
+            results = data
+        })
+        .catch(err => {
+            //console.log(err)
+        })
+        return new ResponseSuccess("SUCCESS", results);
     }
 }

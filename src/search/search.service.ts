@@ -30,15 +30,15 @@ export class SearchService {
 
     putMappingElastic() {
         this.elasticsearchService.indices.putMapping({
-            index: this.index,
+            index: 'courses',
             body: {
                 properties: {
-                    name: { type: "text" },
-                    summary: { type: "text" },
-                    avatar: { type: "text" },
-                    authorsName: { type: "text" },
-                    starRating: { type: "integer", index: false },
-                    mongoId: { type: "text" },
+                    // name: { type: "text" },
+                    // summary: { type: "text" },
+                    // avatar: { type: "text" },
+                    // authorsName: { type: "text" },
+                    // starRating: { type: "integer", index: false },
+                    // mongoId: { type: "text" },
                     suggest: {
                         analyzer: "simple",
                         search_analyzer: "simple",
@@ -57,10 +57,10 @@ export class SearchService {
 
         const newDocWithSuggest = {
             ...doc,
-            suggest: doc.name.split(" ")
+            suggest: doc.title.split(" ")
         }
         return await this.elasticsearchService.index({
-            index: this.index,
+            index: 'courses',
             id: doc['_id'],
             body: newDocWithSuggest
         })
