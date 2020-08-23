@@ -11,6 +11,7 @@ export interface ICourse extends Document {
     authors: string[];
     numOfStudents: number;
     description: string;
+    suggest: string[];
     language: Language;
     level: Level;
     area: string;

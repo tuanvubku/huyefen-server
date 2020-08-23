@@ -1,5 +1,6 @@
 import { Schema } from 'mongoose';
 import { TeacherNotificationSchema } from './notification.schema';
+import { CourseSchema } from '@/course/schemas/course.schema';
 var mongoosastic = require('mongoosastic')
 
 export const TeacherSchema = new Schema({
@@ -10,6 +11,13 @@ export const TeacherSchema = new Schema({
         required: true,
         es_indexed: true
     },
+    suggest: {
+        type: [String],
+        es_type: 'completion',
+        es_search_analyzer: 'simple',
+        es_analyzer: 'simple',
+        es_indexed: true
+    },
     password: {
         type: String,
         minlength: 6,
@@ -18,7 +26,6 @@ export const TeacherSchema = new Schema({
     avatar: {
         type: String,
         default: null,
-        es_indexed: true
     },
     biography: {
         type: String,
@@ -63,7 +70,10 @@ export const TeacherSchema = new Schema({
     courses: {
         type: [{
             type: Schema.Types.ObjectId,
-            ref: 'Course'
+            ref: 'Course',
+            es_schema: CourseSchema,
+            es_select: '_id',
+            es_indexed: true,
         }],
         default: []
     },
@@ -80,4 +90,8 @@ export const TeacherSchema = new Schema({
     }
 });
 
-TeacherSchema.plugin(mongoosastic)
+TeacherSchema.plugin(mongoosastic, {
+    populate: [
+        { path: 'courses' , select: '_id'}
+    ]
+})

@@ -25,23 +25,49 @@ export class TeacherService {
         private readonly messagingService: MessagingService,
         private courseService: CourseService
     ) {
-        // (this.teacherModel as any).createMapping(function(err, mapping) {
-        //     if (err) {
-        //       console.log('error creating mapping teacher model (you can safely ignore this)');
-        //       console.log(err);
-        //     } else {
-        //       console.log('mapping created!');
-        //       console.log(mapping);
-        //     }
-        //   });
+        (this.teacherModel as any).createMapping(function (err, mapping) {
+            if (err) {
+                //console.log('error creating mapping (you can safely ignore this)');
+                //console.log(err);
+            } else {
+                console.log('mapping created!');
+                console.log(mapping);
+            }
+        });
+        (this.teacherModel as any).esTruncate(function (err) {
+            let stream = (teacherModel as any).synchronize();
+            let count = 0
+            stream.on('data', () => {
+                count++
+            })
+            stream.on('close', () => {
+                console.log(`Indexed completed ${count}`)
+            })
+            stream.on('error', (err) => {
+                console.log(err)
+            })
+        })
      }
 
     async create(body): Promise<ITeacher> {
         const saltRounds = parseInt(this.configService.get<string>('SALT_ROUNDS'));
         body.password = await bcrypt.hash(body.password, saltRounds);
-        const teacher: ITeacher = new this.teacherModel({
-            ...body
+        
+        let teacher: ITeacher = new this.teacherModel({
+            ...body,
+            suggest: body.name.split(" ")
         });
+
+        teacher.suggest.push(body.name)
+
+
+        teacher = await teacher.save();
+
+        let _teacher = teacher as ITeacher as any;
+        _teacher.on("es-indexed", (err, res) => {
+            if (err) throw err;
+        })
+
         return await teacher.save();
     }
 
@@ -446,5 +472,62 @@ export class TeacherService {
                     courses: courseId
                 }
             });
+    }
+
+    async findNameByListId(listIds: [string]): Promise<ITeacher[]> {
+        const names = await this.teacherModel
+            .find({
+                _id: {
+                    $in: listIds
+                }
+            })
+            .select('name')
+            .exec()
+        return names
+    }
+
+    async handleSuggestData(data: Array<Object>) {
+        
+        const response = {
+            courses: [],
+            authors: []
+        };
+         for (let i = 0; i < data.length; i++) {
+            data[i]['_source'].courses = await this.courseService.findNameByListId(data[i]['_source'].courses);
+        }
+        
+        data.forEach(data => {
+            response.authors.push({
+                name: data['_source'].name,
+                _id: data['_id']
+            }),
+            response.courses = [].concat(data['_source'].courses)
+        })
+        return response;
+    }
+    async getTeacherSuggest(keyword: string, response) {
+        return new Promise((resolve, reject) => {
+            (this.teacherModel as any).search(null, {
+                suggest: {
+                    "teacher-suggest": {
+                        "text": keyword,
+                        "completion": {
+                            "field": "suggest"
+                        }
+                    }
+                }
+            },
+                async (err, results) => {
+                    if (err) {
+                        reject(err)
+                    }
+                    const result =  await this.handleSuggestData(results.suggest['teacher-suggest'][0].options);
+                    response.authors = result.authors;
+                    Array.prototype.push.apply(response.courses, result.courses);
+
+                    resolve();
+                    
+                })
+        })
     }
 }

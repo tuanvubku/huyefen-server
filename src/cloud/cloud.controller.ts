@@ -210,15 +210,26 @@ export class CloudController {
         })
 
         const cb = async (jobId, result) => {
+            console.log("Call this")
             if (_jobId.id === jobId) {
                 console.log(`Producer get: Job ${jobId} completed! Result: ${result}`);
                 const resolutionsObj = JSON.parse(result);
+                console.log("Log the status 1")
+
                 const resKeys = _.keys(resolutionsObj);
+                console.log("Log the status 2")
+
                 resKeys.forEach(key => {
                     resolutionsObj[key].src = `${this.configService.get<string>('HOST')}/courses/videos/${courseId}/${lectureId}/${resolutionsObj[key].src}`;
                 });
+                console.log("Log the status 3")
+
                 const resArr = Object.values(resolutionsObj);
-                const status = await this.chapterService.addVideoResolutionsForLecture(courseId, chapterId, lectureId, resArr);
+
+                console.log("Log the status 4")
+
+                const status = await this.chapterService.addVideoResolutionsForLecture(courseId, chapterId, lectureId, resArr).catch(err => console.log(err));
+                console.log("Log the status", status)
                 console.log(status);
                 if (!status) {
                     throw new NotFoundException('Invalid lecture');

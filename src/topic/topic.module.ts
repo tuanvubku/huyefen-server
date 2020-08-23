@@ -11,6 +11,7 @@ import { TopicSchema } from './schemas/topic.schema';
 		])
 	],
 	controllers: [TopicController],
-	providers: [TopicService]
+	providers: [TopicService],
+	exports: [TopicService]
 })
 export class TopicModule {}

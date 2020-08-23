@@ -32,7 +32,7 @@ export const CourseSchema = new Schema({
             type: Schema.Types.ObjectId,
             ref: 'Teacher',
             es_schema: TeacherSchema,
-            es_select: 'name',
+            es_select: '_id',
             es_indexed: true,
         }],
         default: [],
@@ -40,12 +40,12 @@ export const CourseSchema = new Schema({
     },
     numOfStudents: {
         type: Number,
-        default: 0
+        default: 0,
+        es_indexed: true,
     },
     description: {
         type: String,
         default: null,
-        es_indexed: true
     },
     language: {
         type: String,
@@ -95,7 +95,7 @@ export const CourseSchema = new Schema({
         default: 3.5,
         min: 1,
         max: 5,
-        es_indexed: false
+        es_indexed: true
     },
     progress: {
         goals: {
@@ -172,6 +172,6 @@ export const CourseSchema = new Schema({
 
 CourseSchema.plugin(mongoosastic, {
     populate: [
-        { path: 'authors', select: 'name' }
+        { path: 'authors' , select: '_id'}
     ]
 })

@@ -28,6 +28,10 @@ import { ICourse } from './interfaces/course.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
+import { ITeacher } from '@/teacher/interfaces/teacher.interface';
+import { database } from 'firebase-admin';
+import { response } from 'express';
+import { TopicService } from '@/topic/topic.service';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -44,6 +48,7 @@ export class CourseService {
         private readonly reviewCourseService: ReviewCourseService,
         private readonly studentService: StudentService,
         private readonly userService: UserService,
+        private readonly topicService: TopicService,
         private readonly purchaseHistoryService: PurchaseHistoryService,
     ) {
 
@@ -76,8 +81,10 @@ export class CourseService {
             area,
             title,
             authors: [teacherId],
-            suggest: title
+            suggest: title.split(" ")
         });
+        
+        course.suggest.push(title)
 
         course = await course.save();
         let _course = course as ICourse as any;
@@ -696,6 +703,18 @@ export class CourseService {
         return await this.userService.sendNotificationRecommendCourse(userId, courseInfo, friendIds);
     }
 
+    async findNameByListId(listIds: [string]): Promise<ICourse[]> {
+        const names = await this.courseModel
+            .find({
+                _id: {
+                    $in: listIds
+                }
+            })
+            .select('title')
+            .exec()
+        return names
+    }
+
     async searchCourse(query: string): Promise<any> {
         return new Promise((resolve, reject) => {
             (this.courseModel as any).search({
@@ -711,9 +730,40 @@ export class CourseService {
                 })
         })
     }
-
-    async getSuggestions(keyword: string) {
-        console.log(keyword)
+    
+    convertIdToElasticData = async (listIds) => {
+        for (let i = 0; i < listIds.length; i++ ) {
+            const teacher: ITeacher = await this.teacherService.findTeacherById(listIds[i]);
+            listIds[i].name = teacher.name;
+        }
+        return listIds;
+    }
+    async handleSuggestData(data: Array<Object>) {
+        let highScoreSoFar = 0;
+        let result = []
+        console.log(data)
+        for (let i = 0; i < data.length; i++) {
+            const score = data[i]['_source'].numOfStudents * data[i]['_source'].starRating;
+            if ( score >= highScoreSoFar ) {
+                result.unshift(data[i])
+            } else {
+                result.push(data[i])
+            }
+        }
+        const returnData = result.slice(0,5);
+        const response = {
+            courses: [],
+        };
+       
+        returnData.forEach(data => {
+            response.courses.push({
+                name: data._source.title,
+                _id: data._id
+            })
+        })
+        return response;
+    }
+    async getSuggestions(keyword: string, response) {
         return new Promise((resolve, reject) => {
             (this.courseModel as any).search(null, {
                 suggest: {
@@ -725,12 +775,33 @@ export class CourseService {
                     }
                 }
             },
-                function (err, results) {
+                async (err, results) => {
                     if (err) {
                         reject(err)
                     }
-                    resolve(results)
+
+                    const result = await this.handleSuggestData(
+                        results.suggest['course-suggest'][0].options
+                    )
+                    Array.prototype.push.apply(response.courses, result.courses);
+
+                    resolve()
+                    
                 })
         })
+    }
+
+    async fullSuggest(keyword: string) {
+        const response = {
+            courses: [],
+            topics: [],
+            authors: []
+        };
+        await Promise.all([
+            this.getSuggestions(keyword, response),
+            this.topicService.getTopicSuggest(keyword, response),
+            this.teacherService.getTeacherSuggest(keyword, response)
+        ])
+        return response;
     }
 }

@@ -14,6 +14,7 @@ import { ReviewCourseModule } from '@/review-course/review-course.module';
 import { UserModule } from '@/user/user.module';
 import { FirebaseModule } from '@/firebase/firebase.module';
 import { PurchaseHistoryModule } from '@/purchase-history/purchase-history.module';
+import { TopicModule } from '@/topic/topic.module';
 var mongoosastic = require('mongoosastic')
 
 @Module({
@@ -32,7 +33,8 @@ var mongoosastic = require('mongoosastic')
 		ReviewTeacherModule,
 		ReviewCourseModule,
 		UserModule,
-		PurchaseHistoryModule
+		PurchaseHistoryModule,
+		TopicModule
 	],
 	providers: [CourseService],
 	controllers: [CourseController],

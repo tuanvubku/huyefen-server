@@ -6,6 +6,7 @@ export interface ITeacher extends Document {
     _id: string;
     name: string;
     password: string;
+    suggest: [string];
     avatar: string;
     biography: string;
     headline: string;

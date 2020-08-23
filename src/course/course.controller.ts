@@ -1216,14 +1216,8 @@ export class CourseController {
 
     @Get('/suggest')
     async getSuggestions(@Query() query ) {
-        let results = null;
-        await this.courseService.getSuggestions(query['keyword'])
-        .then(data => {
-            results = data
-        })
-        .catch(err => {
-            //console.log(err)
-        })
-        return new ResponseSuccess("SUCCESS", results);
+        const result = await this.courseService.fullSuggest(query['keyword'])
+      
+        return new ResponseSuccess("SUCCESS", result);
     }
 }
