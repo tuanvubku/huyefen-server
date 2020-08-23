@@ -29,7 +29,7 @@ export enum Resolution {
 	R360p = "480x360",
 	R480p = "852x480",
 	R720p = "1280x720",
-	R1080p = "1920x1080" 
+	R1080p = "1920x1080"
 }
 
 export const mapKeyToPrice = priceKey => {
@@ -50,4 +50,17 @@ export const mkdirRecursive = dir => {
 	const dirname = path.dirname(dir)
 	mkdirRecursive(dirname);
 	fs.mkdirSync(dir);
-  }
+}
+
+export const compareByScore = (a, b) => {
+	const scoreA = a.numOfStudents * a.starRating
+	const scoreB = b.numOfStudents * b.starRating
+
+	let comparison = 0;
+	if (scoreA > scoreB) {
+		comparison = 1;
+	} else if (scoreA < scoreB) {
+		comparison = -1;
+	}
+	return comparison * -1;
+}

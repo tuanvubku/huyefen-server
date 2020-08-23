@@ -44,6 +44,36 @@ export class ChapterService {
             });
     }
 
+    async fetchChaptersWithDuration(userId: string, courseId: string): Promise<any> {
+        const data = await this.chapterModel
+          .find({ course: courseId })
+          .populate('lectures.content')
+          .select({
+            title: 1,
+            'lectures.type': 1,
+            'lectures._id': 1,
+            'lectures.content': 1,
+            'lectures.title': 1,
+            'lectures.completed': 1
+          })
+          .lean()
+          .exec();
+        data.forEach((chapter: any) => {
+          chapter.lectures = _.map(chapter.lectures, lecture => {
+            const lectureData: any = _.pick(lecture, ['_id', 'title', 'type']);
+            if (lecture.type === Lecture.Article) {
+              lectureData.duration = (lecture.content.estimateHour * 60 + lecture.content.estimateMinute) * 60;
+            }
+            else {
+              lectureData.duration = lecture.content.duration;
+            }
+            lectureData.isCompleted = _.indexOf(_.map(lecture.completed, item => item.toString()), userId) > -1;
+            return lectureData;
+          })
+        });
+        return data;
+    }
+
     async create(teacherId: string, courseId: string, title: string, description: string): Promise<{ progress: number, data: IChapter}> {
         let chapter: IChapter = new this.chapterModel({
             title,
@@ -295,6 +325,76 @@ export class ChapterService {
         }
     }
 
+    async fetchArticleLectureByUser(userId: string, courseId: string, chapterId: string, lectureId: string): Promise<any> {
+      let chapter = await this.chapterModel
+        .findOne({
+          _id: chapterId,
+          course: courseId,
+          lectures: {
+            $elemMatch: {
+              _id: lectureId,
+              type: Lecture.Article
+            }
+          }
+        })
+        .populate('lectures.owner', 'avatar name')
+        .lean()
+        .exec();
+      if (!chapter) return null;
+      const maxLength: number = chapter.lectures.length;
+      let lecture: any;
+      let prev: any;
+      let next: any;
+      let lectureIndex: number;
+      let isCompleted: boolean = false;
+      for (let i = 0; i < maxLength; ++i) {
+        if (chapter.lectures[i]._id.toString() === lectureId && chapter.lectures[i].type === Lecture.Article) {
+          lectureIndex = i;
+          lecture = chapter.lectures[i];
+          if (i === 0) {
+            prev = null;
+          }
+          else {
+            prev = _.pick(chapter.lectures[i - 1], ['_id', 'type']);
+          }
+          if (i === maxLength - 1) {
+            next = null;
+          }
+          else {
+            next = _.pick(chapter.lectures[i + 1], ['_id', 'type']);
+          }
+          isCompleted = _.indexOf(_.map(chapter.lectures[i].completed, item => item.toString()), userId) > -1;
+          break;
+        }
+      }
+      const contentResourceId = lecture.content;
+      const article = await this.articleModel
+        .findById(contentResourceId);
+      const resources = {
+        downloadable: [],
+        external: []
+      };
+      lecture.resources.forEach(item => {
+        if (item.type === 'downloadable') {
+          resources.downloadable.push(item);
+        }
+        else {
+          resources.external.push(item);
+        }
+      })
+      return {
+        ..._.pick(lecture, ['_id', 'title', 'owner', 'type', 'updatedAt', 'description']),
+        resources,
+        content: article.content,
+        duration: (article.estimateHour) * 60 + (article.estimateMinute),
+        prevLecture: prev,
+        nextLecture: next,
+        chapter: _.pick(chapter, ['_id', 'title']),
+        lectureIndex,
+        isCompleted
+      }
+    }
+
     async fetchVideoLectureByTeacher(courseId: string, chapterId: string, lectureId: string) {
       let chapter = await this.chapterModel
         .findOne({
@@ -325,6 +425,77 @@ export class ChapterService {
         chapter: _.pick(chapter, ['_id', 'title'])
       }
     }
+
+  async fetchVideoLectureByUser(userId: string, courseId: string, chapterId: string, lectureId: string) {
+    let chapter = await this.chapterModel
+      .findOne({
+        _id: chapterId,
+        course: courseId,
+        lectures: {
+          $elemMatch: {
+            _id: lectureId,
+            type: Lecture.Video
+          }
+        }
+      })
+      .populate('lectures.owner', 'avatar name')
+      .lean()
+      .exec();
+    if (!chapter) return null;
+    const maxLength: number = chapter.lectures.length;
+    let lecture: any;
+    let prev: any;
+    let next: any;
+    let lectureIndex: number;
+    let isCompleted: boolean = false;
+    for (let i = 0; i < maxLength; ++i) {
+      if (chapter.lectures[i]._id.toString() === lectureId && chapter.lectures[i].type === Lecture.Video) {
+        lectureIndex = i;
+        lecture = chapter.lectures[i];
+        if (i === 0) {
+          prev = null;
+        }
+        else {
+          prev = _.pick(chapter.lectures[i - 1], ['_id', 'type']);
+        }
+        if (i === maxLength - 1) {
+          next = null;
+        }
+        else {
+          next = _.pick(chapter.lectures[i + 1], ['_id', 'type']);
+        }
+        isCompleted = _.indexOf(_.map(chapter.lectures[i].completed, item => item.toString()), userId) > -1;
+        break;
+      }
+    }
+    const contentResourceId = lecture.content;
+    const video = await this.videoModel
+      .findById(contentResourceId)
+      .lean()
+      .exec();
+    const resources = {
+      downloadable: [],
+      external: []
+    };
+    lecture.resources.forEach(item => {
+      if (item.type === 'downloadable') {
+        resources.downloadable.push(item);
+      }
+      else {
+        resources.external.push(item);
+      }
+    })
+    return {
+      ..._.pick(lecture, ['_id', 'title', 'owner', 'type', 'updatedAt', 'description']),
+      resources,
+      ..._.pick(video, ['isDownloadable', 'captions', 'resolutions']),
+      prevLecture: prev,
+      nextLecture: next,
+      chapter: _.pick(chapter, ['_id', 'title']),
+      lectureIndex,
+      isCompleted
+    }
+  }
 
     async updateArticleContent(courseId: string, chapterId: string, lectureId: string, newContent: string): Promise<boolean> {
         let chapter = await this.chapterModel
@@ -502,7 +673,7 @@ export class ChapterService {
       return result;
     }
 
-    async addVideoResolutionsForLecture(courseId: string, chapterId: string, lectureId: string, resArr: Array<any>): Promise<boolean> {
+    async addVideoResolutionsForLecture(courseId: string, chapterId: string, lectureId: string, resArr: Array<any>, duration: number): Promise<boolean> {
       let chapter = await this.chapterModel
         .findOne({
           _id: chapterId,
@@ -530,7 +701,8 @@ export class ChapterService {
       await this.videoModel
         .findByIdAndUpdate(videoResourceId, {
           $set: {
-            resolutions: resolutionItems
+            resolutions: resolutionItems,
+            duration: duration
           }
         });
       return true;
@@ -600,6 +772,35 @@ export class ChapterService {
             }
           }
         });
+      return true;
+    }
+
+    async setCompleteLectureStatus(userId: string, courseId: string, chapterId: string, lectureId: string, status: boolean): Promise<any> {
+      let chapter = await this.chapterModel
+        .findOne({
+          _id: chapterId,
+          course: courseId,
+          lectures: {
+            $elemMatch: {
+              _id: lectureId
+            }
+          }
+        }, {
+          lectures: {
+            $elemMatch: { _id: lectureId }
+          }
+        })
+      console.log(chapter);
+      if (!chapter) {
+        return false;
+      };
+      if (status) {
+        chapter.lectures[0].completed.push(userId);
+      }
+      else {
+        chapter.lectures[0].completed = _.filter(chapter.lectures[0].completed, id => id.toString() !== userId);
+      }
+      await chapter.save();
       return true;
     }
 }

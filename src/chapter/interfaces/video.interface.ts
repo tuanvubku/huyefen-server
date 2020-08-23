@@ -18,4 +18,5 @@ export interface IVideo extends Document {
   isDownloadable: boolean;
   captions: Array<ICaption>;
   resolutions: Array<IResolution>;
+  duration: number;
 }

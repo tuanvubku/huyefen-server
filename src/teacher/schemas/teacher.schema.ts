@@ -1,7 +1,7 @@
 import { Schema } from 'mongoose';
-import { TeacherNotificationSchema } from './notification.schema';
-import { CourseSchema } from '@/course/schemas/course.schema';
+import { TeacherNotificationSchema } from './notification.schema';import { CourseSchema } from '@/course/schemas/course.schema';
 var mongoosastic = require('mongoosastic')
+
 
 export const TeacherSchema = new Schema({
     name: {
@@ -95,3 +95,4 @@ TeacherSchema.plugin(mongoosastic, {
         { path: 'courses' , select: '_id'}
     ]
 })
+

@@ -37,5 +37,12 @@ export const LectureSchema = new Schema({
     resources: {
         type: [ResourceSchema],
         default: []
+    },
+    completed: {
+        type: [{
+            type: Schema.Types.ObjectId,
+            ref: 'User'
+        }],
+        default: []
     }
 })

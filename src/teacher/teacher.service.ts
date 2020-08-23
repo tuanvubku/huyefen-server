@@ -47,12 +47,12 @@ export class TeacherService {
                 console.log(err)
             })
         })
-     }
+    }
 
     async create(body): Promise<ITeacher> {
         const saltRounds = parseInt(this.configService.get<string>('SALT_ROUNDS'));
         body.password = await bcrypt.hash(body.password, saltRounds);
-        
+
         let teacher: ITeacher = new this.teacherModel({
             ...body,
             suggest: body.name.split(" ")
@@ -341,7 +341,7 @@ export class TeacherService {
     }
 
     async seen(teacherId: string, notificationId: string): Promise<boolean> {
-        try { 
+        try {
             const teacher: ITeacher = await this.teacherModel.findById(teacherId);
             const index: number = _.indexOf(_.map(teacher.notifications, notification => notification._id.toString()), notificationId);
             if (index === -1) return false;
@@ -404,7 +404,7 @@ export class TeacherService {
         const targetTeacherId: string = notification.owner;
         //@ts-ignore
         const { _id: courseId, title: courseTitle } = notification.course;
-        
+
         //SEND NOTIFICATION TO TEACHER OWNER
         const notificationData = {
             type: Notification.AcceptInvitation,
@@ -487,21 +487,21 @@ export class TeacherService {
     }
 
     async handleSuggestData(data: Array<Object>) {
-        
+
         const response = {
             courses: [],
             authors: []
         };
-         for (let i = 0; i < data.length; i++) {
+        for (let i = 0; i < data.length; i++) {
             data[i]['_source'].courses = await this.courseService.findNameByListId(data[i]['_source'].courses);
         }
-        
+
         data.forEach(data => {
             response.authors.push({
                 name: data['_source'].name,
                 _id: data['_id']
             }),
-            response.courses = [].concat(data['_source'].courses)
+                response.courses = [].concat(data['_source'].courses)
         })
         return response;
     }
@@ -521,12 +521,12 @@ export class TeacherService {
                     if (err) {
                         reject(err)
                     }
-                    const result =  await this.handleSuggestData(results.suggest['teacher-suggest'][0].options);
+                    const result = await this.handleSuggestData(results.suggest['teacher-suggest'][0].options);
                     response.authors = result.authors;
                     Array.prototype.push.apply(response.courses, result.courses);
 
                     resolve();
-                    
+
                 })
         })
     }

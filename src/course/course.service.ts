@@ -17,7 +17,7 @@ import { ReviewTeacherService } from '@/review-teacher/review-teacher.service';
 import { StudentService } from '@/student/student.service';
 import { TeacherService } from '@/teacher/teacher.service';
 import { UserService } from '@/user/user.service';
-import { mapKeyToPrice } from '@/utils/utils';
+import { mapKeyToPrice, compareByScore } from '@/utils/utils';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as _ from 'lodash';
@@ -83,7 +83,7 @@ export class CourseService {
             authors: [teacherId],
             suggest: title.split(" ")
         });
-        
+
         course.suggest.push(title)
 
         course = await course.save();
@@ -598,12 +598,12 @@ export class CourseService {
                 ratingContent: ''
             };
             if (reviewsData[teacherId]) {
-                finalReview.ratingContent = reviewsData[teacherId].rating.comment;
-                finalReview.starRating = reviewsData[teacherId].rating.value;
+                finalReview.ratingContent = reviewsData[teacherId].rating.comment || '';
+                finalReview.starRating = reviewsData[teacherId].rating.value || 3.5;
             }
 
             return {
-                ..._.pick(teachersInfoData[teacherId], ['_id', 'name', 'avatar', 'numOfCourse', 'numOfStudents']),
+                ..._.pick(teachersInfoData[teacherId], ['_id', 'name', 'avatar', 'numOfCourses', 'numOfStudents']),
                 ...finalReview
             };
         });
@@ -710,9 +710,23 @@ export class CourseService {
                     $in: listIds
                 }
             })
-            .select('title')
+            .select('title numOfStudents starRating')
             .exec()
         return names
+    }
+
+    async fetchInfoByLearner(userId: string, courseId: string): Promise<any> {
+        const courseInfo: any = await this.courseModel
+            .findById(courseId)
+            .populate('authors', 'name')
+            .select('title authors')
+            .lean()
+            .exec();
+        if (!courseInfo) return null;
+        courseInfo.authors = _.map(courseInfo.authors, 'name');
+        const chapters = await this.chapterService.fetchChaptersWithDuration(userId, courseId);
+        courseInfo.syllabus = chapters;
+        return courseInfo;
     }
 
     async searchCourse(query: string): Promise<any> {
@@ -730,38 +744,39 @@ export class CourseService {
                 })
         })
     }
-    
+
     convertIdToElasticData = async (listIds) => {
-        for (let i = 0; i < listIds.length; i++ ) {
+        for (let i = 0; i < listIds.length; i++) {
             const teacher: ITeacher = await this.teacherService.findTeacherById(listIds[i]);
             listIds[i].name = teacher.name;
         }
         return listIds;
     }
     async handleSuggestData(data: Array<Object>) {
-        let highScoreSoFar = 0;
-        let result = []
-        console.log(data)
-        for (let i = 0; i < data.length; i++) {
-            const score = data[i]['_source'].numOfStudents * data[i]['_source'].starRating;
-            if ( score >= highScoreSoFar ) {
-                result.unshift(data[i])
-            } else {
-                result.push(data[i])
-            }
-        }
-        const returnData = result.slice(0,5);
-        const response = {
-            courses: [],
-        };
-       
-        returnData.forEach(data => {
-            response.courses.push({
-                name: data._source.title,
-                _id: data._id
+        // let highScoreSoFar = 0;
+        // let result = []
+        // console.log(data)
+        // for (let i = 0; i < data.length; i++) {
+        //     const score = data[i]['_source'].numOfStudents * data[i]['_source'].starRating;
+        //     if (score >= highScoreSoFar) {
+        //         result.unshift(data[i])
+        //     } else {
+        //         result.push(data[i])
+        //     }
+        // }
+        // const returnData = result.slice(0, 5);
+        const courses = [];
+
+
+        data.forEach(data => {
+            courses.push({
+                title: data['_source'].title,
+                numOfStudents: data['_source'].numOfStudents,
+                starRating: data['_source'].starRating,
+                _id: data['_id']
             })
         })
-        return response;
+        return courses;
     }
     async getSuggestions(keyword: string, response) {
         return new Promise((resolve, reject) => {
@@ -783,14 +798,25 @@ export class CourseService {
                     const result = await this.handleSuggestData(
                         results.suggest['course-suggest'][0].options
                     )
-                    Array.prototype.push.apply(response.courses, result.courses);
+                    Array.prototype.push.apply(response.courses, result);
 
                     resolve()
-                    
+
                 })
         })
     }
-
+    takeFiveCourseHighestScore(courses) {
+        const sortCourses = courses.sort(compareByScore);
+        const result = sortCourses.reduce((acc, current) => {
+            const x = acc.find(item =>  item._id == current._id);
+            if (!x) {
+              return acc.concat([current]);
+            } else {
+              return acc;
+            }
+          }, []);
+        return result.slice(0, 5);
+    }
     async fullSuggest(keyword: string) {
         const response = {
             courses: [],
@@ -802,6 +828,7 @@ export class CourseService {
             this.topicService.getTopicSuggest(keyword, response),
             this.teacherService.getTeacherSuggest(keyword, response)
         ])
+        response.courses = this.takeFiveCourseHighestScore(response.courses);
         return response;
     }
 }
