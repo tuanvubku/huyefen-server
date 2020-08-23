@@ -12,4 +12,5 @@ export interface ILecture extends Document {
     isPreviewed?: boolean;
     description: string;
     resources: Array<IResource>;
+    completed: Array<string>;
 };

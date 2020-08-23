@@ -14,7 +14,7 @@ import { ReviewCourseModule } from '@/review-course/review-course.module';
 import { UserModule } from '@/user/user.module';
 import { FirebaseModule } from '@/firebase/firebase.module';
 import { PurchaseHistoryModule } from '@/purchase-history/purchase-history.module';
-var mongoosastic = require('mongoosastic')
+// var mongoosastic = require('mongoosastic')
 
 @Module({
 	imports: [

@@ -1237,7 +1237,7 @@ export class CourseController {
         const isValid = await this.studentService.validateUserCourse(userId, courseId);
         if (!isValid)
             throw new ForbiddenException(`You don\'t have permission to access this course!`);
-        const result = await this.chapterService.fetchArticleLectureByUser(courseId, chapterId, lectureId);
+        const result = await this.chapterService.fetchArticleLectureByUser(userId, courseId, chapterId, lectureId);
         if (!result)
             throw new NotFoundException('Invalid lecture');
         return new ResponseSuccess('FETCH_OK', result);
@@ -1256,34 +1256,54 @@ export class CourseController {
         const isValid = await this.studentService.validateUserCourse(userId, courseId);
         if (!isValid)
             throw new ForbiddenException(`You don\'t have permission to access this course!`);
-        const result = await this.chapterService.fetchVideoLectureByUser(courseId, chapterId, lectureId);
+        const result = await this.chapterService.fetchVideoLectureByUser(userId, courseId, chapterId, lectureId);
         if (!result)
             throw new NotFoundException('Invalid lecture');
         return new ResponseSuccess('FETCH_OK', result);
     }
 
-    @Get('/search')
-    async searchCourse(@Query() query): Promise<IResponse<any>> {
-        let res = null
-        await this.courseService.searchCourse(query.query)
-            .then(data => {
-                res = data
-            }).catch(err => {
-                //console.log(err)
-            })
-        return new ResponseSuccess("SUCCESS", res);
+    @Post('/:courseId/:chapterId/:lectureId/completed')
+    @UseGuards(AuthGuard('jwt'), RolesGuard)
+    @Roles(Role.User)
+    async setCompleteLectureStatus(
+      @User() user,
+      @Param('courseId') courseId: string,
+      @Param('chapterId') chapterId: string,
+      @Param('lectureId') lectureId: string,
+      @Body('status') status: boolean
+    ): Promise<IResponse<any>> {
+        const userId: string = user._id;
+        const isValid = await this.studentService.validateUserCourse(userId, courseId);
+        if (!isValid)
+            throw new ForbiddenException(`You don\'t have permission to access this course!`);
+        const result = await this.chapterService.setCompleteLectureStatus(userId, courseId, chapterId, lectureId, status);
+        if (!result)
+            throw new NotFoundException('Invalid lecture');
+        return new ResponseSuccess('FETCH_OK', result);
     }
 
-    @Get('/suggest')
-    async getSuggestions(@Query() query ) {
-        let results = null;
-        await this.courseService.getSuggestions(query['keyword'])
-        .then(data => {
-            results = data
-        })
-        .catch(err => {
-            //console.log(err)
-        })
-        return new ResponseSuccess("SUCCESS", results);
-    }
+    // @Get('/search')
+    // async searchCourse(@Query() query): Promise<IResponse<any>> {
+    //     let res = null
+    //     await this.courseService.searchCourse(query.query)
+    //         .then(data => {
+    //             res = data
+    //         }).catch(err => {
+    //             //console.log(err)
+    //         })
+    //     return new ResponseSuccess("SUCCESS", res);
+    // }
+    //
+    // @Get('/suggest')
+    // async getSuggestions(@Query() query ) {
+    //     let results = null;
+    //     await this.courseService.getSuggestions(query['keyword'])
+    //     .then(data => {
+    //         results = data
+    //     })
+    //     .catch(err => {
+    //         //console.log(err)
+    //     })
+    //     return new ResponseSuccess("SUCCESS", results);
+    // }
 }

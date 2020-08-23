@@ -13,7 +13,7 @@ import {
     UseInterceptors,
     ForbiddenException,
     NotAcceptableException,
-    NotFoundException,
+    NotFoundException, ParseIntPipe, Query,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AuthGuard } from '@nestjs/passport';
@@ -199,6 +199,7 @@ export class CloudController {
         @Param('id') courseId: string,
         @Param('chapterId') chapterId: string,
         @Param('lectureId') lectureId: string,
+        @Query('duration', ParseIntPipe) duration: number,
         @Res() res
     ) {
         const teacherId: string = user._id;
@@ -218,7 +219,7 @@ export class CloudController {
                     resolutionsObj[key].src = `${this.configService.get<string>('HOST')}/courses/videos/${courseId}/${lectureId}/${resolutionsObj[key].src}`;
                 });
                 const resArr = Object.values(resolutionsObj);
-                const status = await this.chapterService.addVideoResolutionsForLecture(courseId, chapterId, lectureId, resArr);
+                const status = await this.chapterService.addVideoResolutionsForLecture(courseId, chapterId, lectureId, resArr, duration);
                 console.log(status);
                 if (!status) {
                     throw new NotFoundException('Invalid lecture');

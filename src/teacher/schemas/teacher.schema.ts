@@ -1,6 +1,6 @@
 import { Schema } from 'mongoose';
 import { TeacherNotificationSchema } from './notification.schema';
-var mongoosastic = require('mongoosastic')
+//var mongoosastic = require('mongoosastic')
 
 export const TeacherSchema = new Schema({
     name: {
@@ -80,4 +80,4 @@ export const TeacherSchema = new Schema({
     }
 });
 
-TeacherSchema.plugin(mongoosastic)
+//TeacherSchema.plugin(mongoosastic)

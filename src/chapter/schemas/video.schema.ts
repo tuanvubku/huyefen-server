@@ -38,6 +38,10 @@ export const VideoSchema = new Schema({
     resolutions: {
         type: [ResolutionSchema],
         default: []
+    },
+    duration: {
+        type: Number,
+        default: 0
     }
 })
 

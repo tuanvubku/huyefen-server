@@ -4,7 +4,7 @@ import { WhatLearnSchema } from './whatLearn.schema';
 import { RequirementSchema } from './requirement.schema';
 import { TargetStudentSchema } from './targetStudent.schema';
 import { TeacherSchema } from '../../teacher/schemas/teacher.schema'
-var mongoosastic = require('mongoosastic')
+//var mongoosastic = require('mongoosastic')
 
 export const CourseSchema = new Schema({
     title: {
@@ -169,9 +169,9 @@ export const CourseSchema = new Schema({
 }, {
     timestamps: true
 })
-
-CourseSchema.plugin(mongoosastic, {
-    populate: [
-        { path: 'authors', select: 'name' }
-    ]
-})
+//
+// CourseSchema.plugin(mongoosastic, {
+//     populate: [
+//         { path: 'authors', select: 'name' }
+//     ]
+// })

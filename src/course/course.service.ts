@@ -47,28 +47,28 @@ export class CourseService {
         private readonly purchaseHistoryService: PurchaseHistoryService,
     ) {
 
-        (this.courseModel as any).createMapping(function (err, mapping) {
-            if (err) {
-                //console.log('error creating mapping (you can safely ignore this)');
-                //console.log(err);
-            } else {
-                //console.log('mapping created!');
-                //console.log(mapping);
-            }
-        });
-        (this.courseModel as any).esTruncate(function (err) {
-            let stream = (courseModel as any).synchronize();
-            let count = 0
-            stream.on('data', () => {
-                count++
-            })
-            stream.on('close', () => {
-                console.log(`Indexed completed ${count}`)
-            })
-            stream.on('error', (err) => {
-                console.log(err)
-            })
-        })
+        // (this.courseModel as any).createMapping(function (err, mapping) {
+        //     if (err) {
+        //         //console.log('error creating mapping (you can safely ignore this)');
+        //         //console.log(err);
+        //     } else {
+        //         //console.log('mapping created!');
+        //         //console.log(mapping);
+        //     }
+        // });
+        // (this.courseModel as any).esTruncate(function (err) {
+        //     let stream = (courseModel as any).synchronize();
+        //     let count = 0
+        //     stream.on('data', () => {
+        //         count++
+        //     })
+        //     stream.on('close', () => {
+        //         console.log(`Indexed completed ${count}`)
+        //     })
+        //     stream.on('error', (err) => {
+        //         console.log(err)
+        //     })
+        // })
     }
 
     async create(teacherId: string, area: string, title: string): Promise<ICourse> {
@@ -705,7 +705,7 @@ export class CourseService {
           .exec();
         if (!courseInfo) return null;
         courseInfo.authors = _.map(courseInfo.authors, 'name');
-        const chapters = await this.chapterService.fetchChapters(courseId);
+        const chapters = await this.chapterService.fetchChaptersWithDuration(userId, courseId);
         courseInfo.syllabus = chapters;
         return courseInfo;
     }
