@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards, NotFoundException, Res } from '@nestjs/common';
+import {
+    Body,
+    Controller,
+    Delete,
+    Get,
+    Param,
+    Post,
+    Put,
+    UseGuards,
+    NotFoundException,
+    Res,
+    Query, Inject, forwardRef,
+} from '@nestjs/common';
 import { ResponseSuccess } from '@/utils/utils';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { AreaService } from './area.service';
@@ -14,11 +26,13 @@ import { CreateCategoryDto, CreateCategoryParamDto } from './dtos/createCategory
 import { UpdateCategoryDto, UpdateCategoryParamDto } from './dtos/updateCategory.dto';
 import { FetchCategoryParamDto } from './dtos/fetchCategory.dto';
 import { FetchDto } from './dtos/fetch.dto';
+import { CourseService } from '@/course/course.service';
 
 @Controller('api/areas')
 export class AreaController {
     constructor (
-        private readonly areaService: AreaService
+        private readonly areaService: AreaService,
+        @Inject(forwardRef(() => CourseService)) private readonly courseService: CourseService
     ) {}
 
     @Get()
@@ -94,6 +108,41 @@ export class AreaController {
         if (!category)
             throw new NotFoundException('Invalid information about category');
         return new ResponseSuccess<ICategory>('FETCH_CATE_INFO_OK', category);
+    }
+
+    @Get('/:areaId/courses')
+    async fetchCoursesOfArea(
+      @Param('areaId') areaId: string,
+      @Query() query: any
+    ): Promise<any> {
+        const area: IArea = await this.areaService.fetchInfo(areaId);
+        if (!area)
+            throw new NotFoundException('Invalid area');
+        let categories = await this.areaService.fetchCategoriesOfArea(areaId);
+        let categoriesObj = {};
+        categories.forEach(cate => {
+            categoriesObj[cate._id] = cate.title;
+        });
+        const result = await this.courseService.fetchCoursesByAreaId(areaId, null, query, categoriesObj);
+        return new ResponseSuccess('FETCH_OK', result);
+    }
+
+    @Get('/:areaId/:categoryId/courses')
+    async fetchCoursesOfCategory(
+      @Param('areaId') areaId: string,
+      @Param('categoryId') categoryId: string,
+      @Query() query: any
+    ): Promise<any> {
+        const category = await this.areaService.fetchCategory(areaId, categoryId);
+        if (!category)
+            throw new NotFoundException('Invalid area');
+        let categories = await this.areaService.fetchCategoriesOfArea(areaId);
+        let categoriesObj = {};
+        categories.forEach(cate => {
+            categoriesObj[cate._id] = cate.title;
+        });
+        const result = await this.courseService.fetchCoursesByAreaId(areaId, categoryId, query, categoriesObj);
+        return new ResponseSuccess('FETCH_OK', result);
     }
 }
 

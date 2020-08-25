@@ -23,7 +23,7 @@ export class TeacherService {
         private readonly userService: UserService,
         private readonly configService: ConfigService,
         private readonly messagingService: MessagingService,
-        private courseService: CourseService
+        @Inject(forwardRef(() => CourseService)) private courseService: CourseService
     ) {
         (this.teacherModel as any).createMapping(function (err, mapping) {
             if (err) {

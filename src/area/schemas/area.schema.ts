@@ -1,6 +1,8 @@
 import { Schema } from 'mongoose';
 import { CategorySchema } from './category.schema';
-//var mongoosastic = require('mongoosastic')
+
+const mongoosastic = require('mongoosastic');
+
 export const AreaSchema = new Schema({
 	title: {
 		type: String,

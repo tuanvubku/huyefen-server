@@ -3,13 +3,14 @@ import { ChapterService } from '@/chapter/chapter.service';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { ILecture } from '@/chapter/interfaces/lecture.interface';
 import {
+    Language,
     Lecture,
+    Level,
     Price,
     Privacy,
     ProgressBase,
-
     Role,
-    TeacherCoursesSort as Sort
+    TeacherCoursesSort as Sort,
 } from '@/config/constants';
 import { PurchaseHistoryService } from '@/purchase-history/purchase-history.service';
 import { ReviewCourseService } from '@/review-course/review-course.service';
@@ -17,7 +18,13 @@ import { ReviewTeacherService } from '@/review-teacher/review-teacher.service';
 import { StudentService } from '@/student/student.service';
 import { TeacherService } from '@/teacher/teacher.service';
 import { UserService } from '@/user/user.service';
-import { mapKeyToPrice, compareByScore } from '@/utils/utils';
+import {
+    compareByScore,
+    mapKeyToLanguage,
+    mapKeyToLevel,
+    mapKeyToPrice,
+    mapStarValueToStarRangeObj,
+} from '@/utils/utils';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as _ from 'lodash';
@@ -29,8 +36,6 @@ import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { ITeacher } from '@/teacher/interfaces/teacher.interface';
-import { database } from 'firebase-admin';
-import { response } from 'express';
 import { TopicService } from '@/topic/topic.service';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
@@ -40,19 +45,18 @@ type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
 @Injectable()
 export class CourseService {
     constructor(
-        @InjectModel('Course') private readonly courseModel: Model<ICourse>,
-        private readonly authorService: AuthorService,
-        private readonly chapterService: ChapterService,
-        @Inject(forwardRef(() => TeacherService)) private teacherService: TeacherService,
-        private readonly reviewTeacherService: ReviewTeacherService,
-        private readonly reviewCourseService: ReviewCourseService,
-        private readonly studentService: StudentService,
-        private readonly userService: UserService,
-        private readonly topicService: TopicService,
-        private readonly purchaseHistoryService: PurchaseHistoryService,
+      @InjectModel('Course') private readonly courseModel: Model<ICourse>,
+      private readonly authorService: AuthorService,
+      private readonly chapterService: ChapterService,
+      @Inject(forwardRef(() => TeacherService)) private teacherService: TeacherService,
+      private readonly reviewTeacherService: ReviewTeacherService,
+      private readonly reviewCourseService: ReviewCourseService,
+      private readonly studentService: StudentService,
+      private readonly userService: UserService,
+      private readonly topicService: TopicService,
+      private readonly purchaseHistoryService: PurchaseHistoryService,
     ) {
-
-        (this.courseModel as any).createMapping(function (err, mapping) {
+        (this.courseModel as any).createMapping(function(err, mapping) {
             if (err) {
                 //console.log('error creating mapping (you can safely ignore this)');
                 //console.log(err);
@@ -61,7 +65,7 @@ export class CourseService {
                 //console.log(mapping);
             }
         });
-        (this.courseModel as any).esTruncate(function (err) {
+        (this.courseModel as any).esTruncate(function(err) {
             let stream = (courseModel as any).synchronize();
             let count = 0
             stream.on('data', () => {
@@ -97,33 +101,61 @@ export class CourseService {
         return course;
     }
 
+    // async test() {
+    //     const subTitles = [
+    //       'Much like setState in Class components created by extending React.Component or React.PureComponent, the state update using the updater provided by useState hook is also asynchronous, and will not be reflected immediately.',
+    //       'Also, the main issue here is not just the asynchronous nature but the fact that state values are used by functions based on their current closures',
+    //       'As far as the syntax to update state is concerned, setMovies(result) will replace the previous movies value in the state with those available from the async reques'
+    //
+    //     ];
+    //     const levels = [Level.Expert, Level.Intermediate, Level.AllLevel, Level.Beginner];
+    //     const languages = [Language.English, Language.Vietnamese];
+    //     const category = ['5edcfb4a9e3ec67b94474593', '5edcfb5a9e3ec67b94474594'];
+    //     const avatars = ['https://images.pexels.com/photos/682375/pexels-photo-682375.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+    //     'https://images.pexels.com/photos/247583/pexels-photo-247583.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+    //       'https://images.pexels.com/photos/162256/wolf-predator-european-wolf-carnivores-162256.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+    //       'https://images.pexels.com/photos/1573134/pexels-photo-1573134.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260'
+    //     ];
+    //     const courses = await this.courseModel.find({});
+    //     courses.forEach(course => {
+    //         course.subTitle = subTitles[(new Date().getTime()) % 3];
+    //         course.level = levels[Math.ceil(Math.random() * 100) % 4];
+    //         course.language = languages[Math.ceil(Math.random() * 100) % 2];
+    //         course.category = category[Math.ceil(Math.random() * 100) % 2];
+    //         course.area = '5ed8651e260ae02af256da15';
+    //         course.avatar = avatars[Math.ceil(Math.random() * 100) % 4];
+    //         course.price = `tier${Math.ceil(Math.random() * 100) % 3 + 1}`;
+    //         course.save();
+    //     })
+    // }
+
     async fetch(teacherId: string, sort: Sort, page: number, limit: number): Promise<{ total: number, list: Array<any> }> {
+
         let authors: Array<any>;
         if (sort === Sort.Newest || sort === Sort.Oldest) {
             authors = await this.authorService.fetchWithTimeSortType(teacherId, sort);
-        }
-        else {
+        } else {
             authors = await this.authorService.fetchWithoutTimeSortType(teacherId);
             authors = _.orderBy(
-                authors,
-                ['course.title', 'createdAt'],
-                [(sort === Sort.AtoZ) ? 'asc' : 'desc', 'desc']
+              authors,
+              ['course.title', 'createdAt'],
+              [(sort === Sort.AtoZ) ? 'asc' : 'desc', 'desc']
             );
         }
         const total: number = _.size(authors);
         authors = _.slice(
-            authors,
-            (page - 1) * limit,
-            page * limit
+          authors,
+          (page - 1) * limit,
+          page * limit
         );
         const courses = _.map(authors, item => {
             const course = item.course;
             const progress: number =
-                + (course.progress.goals * ProgressBase.Goals)
-                + (course.progress.syllabus * ProgressBase.Syllabus)
-                + (course.progress.landing * ProgressBase.Landing)
-                + (course.progress.price * ProgressBase.Price)
-                + (course.progress.messages * ProgressBase.Messages)
+              +(course.progress.goals * ProgressBase.Goals)
+              + (course.progress.syllabus * ProgressBase.Syllabus)
+              + (course.progress.landing * ProgressBase.Landing)
+              + (course.progress.price * ProgressBase.Price)
+              + (course.progress.messages * ProgressBase.Messages)
             course.progress = progress;
             return course;
         });
@@ -135,16 +167,16 @@ export class CourseService {
 
     async validateCourse(courseId: string): Promise<boolean> {
         const course: ICourse = await this.courseModel
-            .findById(courseId);
+          .findById(courseId);
         return !!course;
     }
 
     async fetchInfo(courseId: string): Promise<any> {
         let info: any = await this.courseModel
-            .findById(courseId)
-            .select('title privacy progress')
-            .lean()
-            .exec();
+          .findById(courseId)
+          .select('title privacy progress')
+          .lean()
+          .exec();
         if (info) {
             let completeStatus = {};
             _.forEach(_.keys(info.progress), key => {
@@ -166,14 +198,14 @@ export class CourseService {
 
     async fetchGoals(courseId: string): Promise<any> {
         return await this.courseModel
-            .findById(courseId)
-            .select({
-                whatLearns: 1,
-                requirements: 1,
-                targetStudents: 1,
-                _id: 0
-            })
-            .populate('whatLearns.owner requirements.owner targetStudents.owner', 'name avatar');
+          .findById(courseId)
+          .select({
+              whatLearns: 1,
+              requirements: 1,
+              targetStudents: 1,
+              _id: 0
+          })
+          .populate('whatLearns.owner requirements.owner targetStudents.owner', 'name avatar');
     }
 
     async finalGoals(course: ICourse, field: GoalFields): Promise<{ progress: number, data: IGoals[] }> {
@@ -198,18 +230,18 @@ export class CourseService {
                 owner: teacherId
             }));
             course.whatLearns = _.concat(
-                _.map(
-                    _.filter(
-                        course.whatLearns,
-                        (item: IWhatLearn) => _.indexOf(deleteArr, item._id.toString()) === -1
-                    ),
-                    (item: IWhatLearn) => {
-                        if (updateObj[item._id])
-                            item.content = updateObj[item._id];
-                        return item;
-                    }
+              _.map(
+                _.filter(
+                  course.whatLearns,
+                  (item: IWhatLearn) => _.indexOf(deleteArr, item._id.toString()) === -1
                 ),
-                addWhatLearns as IWhatLearn[]
+                (item: IWhatLearn) => {
+                    if (updateObj[item._id])
+                        item.content = updateObj[item._id];
+                    return item;
+                }
+              ),
+              addWhatLearns as IWhatLearn[]
             );
             await course.save();
             course = await this.courseModel.findById(courseId).populate('whatLearns.owner', 'name avatar');
@@ -241,18 +273,18 @@ export class CourseService {
                 owner: teacherId
             }));
             course.requirements = _.concat(
-                _.map(
-                    _.filter(
-                        course.requirements,
-                        (item: IRequirement) => _.indexOf(deleteArr, item._id.toString()) === -1
-                    ),
-                    (item: IRequirement) => {
-                        if (updateObj[item._id])
-                            item.content = updateObj[item._id];
-                        return item;
-                    }
+              _.map(
+                _.filter(
+                  course.requirements,
+                  (item: IRequirement) => _.indexOf(deleteArr, item._id.toString()) === -1
                 ),
-                addRequirements as IRequirement[]
+                (item: IRequirement) => {
+                    if (updateObj[item._id])
+                        item.content = updateObj[item._id];
+                    return item;
+                }
+              ),
+              addRequirements as IRequirement[]
             );
             await course.save();
             course = await this.courseModel.findById(courseId).populate('requirements.owner', 'name avatar');
@@ -270,18 +302,18 @@ export class CourseService {
                 owner: teacherId
             }));
             course.targetStudents = _.concat(
-                _.map(
-                    _.filter(
-                        course.targetStudents,
-                        (item: ITargetStudent) => _.indexOf(deleteArr, item._id.toString()) === -1
-                    ),
-                    (item: ITargetStudent) => {
-                        if (updateObj[item._id])
-                            item.content = updateObj[item._id];
-                        return item;
-                    }
+              _.map(
+                _.filter(
+                  course.targetStudents,
+                  (item: ITargetStudent) => _.indexOf(deleteArr, item._id.toString()) === -1
                 ),
-                addTargetStudents as ITargetStudent[]
+                (item: ITargetStudent) => {
+                    if (updateObj[item._id])
+                        item.content = updateObj[item._id];
+                    return item;
+                }
+              ),
+              addTargetStudents as ITargetStudent[]
             );
             await course.save();
             course = await this.courseModel.findById(courseId).populate('targetStudents.owner', 'name avatar');
@@ -292,11 +324,11 @@ export class CourseService {
 
     async saveSyllabusProgress(courseId: string, progress: number): Promise<void> {
         await this.courseModel
-            .updateOne({ _id: courseId }, {
-                $set: {
-                    'progress.syllabus': progress
-                }
-            });
+          .updateOne({ _id: courseId }, {
+              $set: {
+                  'progress.syllabus': progress
+              }
+          });
     }
 
     async createChapter(teacherId: string, courseId: string, title: string, description: string): Promise<{ progress: number, data: IChapter }> {
@@ -319,11 +351,11 @@ export class CourseService {
     }
 
     async createLecture(
-        teacherId: string,
-        courseId: string,
-        chapterId: string,
-        title: string,
-        type: Lecture
+      teacherId: string,
+      courseId: string,
+      chapterId: string,
+      title: string,
+      type: Lecture
     ): Promise<{ status: boolean, data: ILecture }> {
         const data: {
             status: boolean,
@@ -334,9 +366,9 @@ export class CourseService {
     }
 
     async deleteLecture(
-        courseId: string,
-        chapterId: string,
-        lectureId: string
+      courseId: string,
+      chapterId: string,
+      lectureId: string
     ): Promise<{ status: boolean, data: { progress: number, data: string } }> {
         const { status, progress } = await this.chapterService.deleteLecture(courseId, chapterId, lectureId);
         if (!status) return { status, data: null };
@@ -352,20 +384,20 @@ export class CourseService {
 
     async fetchLanding(courseId: string): Promise<any> {
         const landing = await this.courseModel
-            .findById(courseId)
-            .select({
-                title: 1,
-                subTitle: 1,
-                description: 1,
-                language: 1,
-                level: 1,
-                area: 1,
-                category: 1,
-                primaryTopic: 1,
-                topics: 1,
-                avatar: 1
-            })
-            .populate('topics');
+          .findById(courseId)
+          .select({
+              title: 1,
+              subTitle: 1,
+              description: 1,
+              language: 1,
+              level: 1,
+              area: 1,
+              category: 1,
+              primaryTopic: 1,
+              topics: 1,
+              avatar: 1
+          })
+          .populate('topics');
         if (landing) {
             //find topic for courseId
         }
@@ -397,45 +429,45 @@ export class CourseService {
 
     async updateLanding(courseId: string, params: UpdateLandingDto): Promise<{ status: boolean, data: { progress: number, data: any } }> {
         const course: ICourse = await this.courseModel
-            .findByIdAndUpdate(courseId, {
-                $set: params as ICourse
-            }, {
-                new: true,
-                runValidators: true
-            })
-            .populate('topics');
+          .findByIdAndUpdate(courseId, {
+              $set: params as ICourse
+          }, {
+              new: true,
+              runValidators: true
+          })
+          .populate('topics');
         if (!course) return { status: false, data: null };
         return await this.finalLanding(course, ['title', 'subTitle', 'description', 'language', 'level', 'area', 'category', 'topics', 'primaryTopic']);
     }
 
     async updateAvatar(courseId: string, url: string): Promise<{ status: boolean, data: { progress: number, data: any } }> {
         const course: ICourse = await this.courseModel
-            .findByIdAndUpdate(courseId, {
-                $set: {
-                    avatar: url
-                }
-            }, {
-                new: true,
-                runValidators: true
-            });
+          .findByIdAndUpdate(courseId, {
+              $set: {
+                  avatar: url
+              }
+          }, {
+              new: true,
+              runValidators: true
+          });
         if (!course) return { status: false, data: null };
         return await this.finalLanding(course, ['avatar']);
     }
 
     async fetchPrice(courseId: string): Promise<Price | false> {
         const course: ICourse = await this.courseModel
-            .findById(courseId);
+          .findById(courseId);
         return course ? course.price : false;
     }
 
     async updatePrice(courseId: string, price: Price): Promise<{ status: boolean, data: { progress: number, data: Price } }> {
         const course: ICourse = await this.courseModel
-            .findByIdAndUpdate(courseId, {
-                price
-            }, {
-                new: true,
-                runValidators: true
-            });
+          .findByIdAndUpdate(courseId, {
+              price
+          }, {
+              new: true,
+              runValidators: true
+          });
         if (!course) return { status: false, data: null };
         const progress: number = course.price ? 100 : 0;
         course.progress.price = progress;
@@ -451,23 +483,23 @@ export class CourseService {
 
     async fetchMessages(courseId: string): Promise<any> {
         const course: ICourse = await this.courseModel
-            .findById(courseId);
+          .findById(courseId);
         return course ? course.messages : null;
     }
 
     async updateMessages(courseId: string, welcome: string, congratulation: string): Promise<{ status: boolean, data: { progress: number, data: any } }> {
         const course: ICourse = await this.courseModel
-            .findByIdAndUpdate(courseId, {
-                $set: {
-                    messages: {
-                        welcome,
-                        congratulation
-                    }
-                }
-            }, {
-                new: true,
-                runValidators: true
-            });
+          .findByIdAndUpdate(courseId, {
+              $set: {
+                  messages: {
+                      welcome,
+                      congratulation
+                  }
+              }
+          }, {
+              new: true,
+              runValidators: true
+          });
         if (!course) return { status: false, data: null };
         let count: number = 0;
         if (course.messages.welcome) count++;
@@ -487,13 +519,13 @@ export class CourseService {
         if (privacy !== Privacy.Password)
             password = null;
         const course: ICourse = await this.courseModel
-            .findByIdAndUpdate(courseId, {
-                privacy,
-                password
-            }, {
-                new: true,
-                runValidators: true
-            })
+          .findByIdAndUpdate(courseId, {
+              privacy,
+              password
+          }, {
+              new: true,
+              runValidators: true
+          })
         if (!course)
             return { status: false };
         return { status: true }
@@ -501,42 +533,42 @@ export class CourseService {
 
     async getCourseName(courseId: string): Promise<String> {
         const course = await this.courseModel
-            .findById(courseId)
+          .findById(courseId)
         return course.title;
     }
 
     async deleteAuthor(memberId: string, courseId: string) {
         const author = await this.authorService
-            .deleteById(memberId);
+          .deleteById(memberId);
         if (!author) return false;
         const teacherId: string = author.teacher;
         await this.teacherService.removeCourse(teacherId, courseId);
         const course: ICourse = await this.courseModel
-            .findByIdAndUpdate(courseId, {
-                $pull: {
-                    authors: teacherId
-                }
-            }, {
-                runValidators: true
-            });
+          .findByIdAndUpdate(courseId, {
+              $pull: {
+                  authors: teacherId
+              }
+          }, {
+              runValidators: true
+          });
         return true;
     }
 
     async fetchCourseOverview(courseId: string): Promise<Object> {
         const overview = this.courseModel
-            .findById(courseId)
-            .select({
-                '_id': 0,
-                'whatLearns._id': 1,
-                'whatLearns.content': 1,
-                'requirements._id': 1,
-                'requirements.content': 1,
-                'targetStudents._id': 1,
-                'targetStudents.content': 1,
-                'description': 1
-            })
-            .lean()
-            .exec()
+          .findById(courseId)
+          .select({
+              '_id': 0,
+              'whatLearns._id': 1,
+              'whatLearns.content': 1,
+              'requirements._id': 1,
+              'requirements.content': 1,
+              'targetStudents._id': 1,
+              'targetStudents.content': 1,
+              'description': 1
+          })
+          .lean()
+          .exec()
         if (!overview)
             return null;
         return overview;
@@ -553,20 +585,20 @@ export class CourseService {
 
     async fetchOverview(courseId: string): Promise<any> {
         const course = await this.courseModel
-            .findById(courseId)
-            .select({
-                subTitle: 1,
-                starRating: 1,
-                numOfStudents: 1,
-                language: 1,
-                level: 1,
-                description: 1,
-                'whatLearns.content': 1,
-                'requirements.content': 1,
-                'targetStudents.content': 1
-            })
-            .lean()
-            .exec();
+          .findById(courseId)
+          .select({
+              subTitle: 1,
+              starRating: 1,
+              numOfStudents: 1,
+              language: 1,
+              level: 1,
+              description: 1,
+              'whatLearns.content': 1,
+              'requirements.content': 1,
+              'targetStudents.content': 1
+          })
+          .lean()
+          .exec();
         if (!course) return null;
         const courseLecturesInfo: {
             totalTime: number,
@@ -586,10 +618,10 @@ export class CourseService {
 
     async fetchReviewInstructor(courseId: string, userId: string): Promise<any> {
         const teachersInfo = await this.authorService
-            .fetchAuthorsByCourseId(courseId);
+          .fetchAuthorsByCourseId(courseId);
         const teacherIds = _.map(teachersInfo, '_id');
         const reviews = await this.reviewTeacherService
-            .fetchReview(userId, teacherIds) as any;
+          .fetchReview(userId, teacherIds) as any;
         const teachersInfoData = _.keyBy(teachersInfo, '_id');
         const reviewsData = _.keyBy(reviews, 'teacher');
         return _.map(teacherIds, teacherId => {
@@ -626,13 +658,13 @@ export class CourseService {
 
     async fetchPublicInfo(courseId: string, user: { _id: string, role: Role }): Promise<any> {
         const course = await this.courseModel
-            .findById(courseId)
-            .populate('primaryTopic')
-            .populate('area', 'title')
-            .populate('authors', 'name')
-            .select('-whatLearns -requirements -targetStudents -lastUpdated -category -topics -description -privacy -password -progress -messages -createdAt')
-            .lean()
-            .exec();
+          .findById(courseId)
+          .populate('primaryTopic')
+          .populate('area', 'title')
+          .populate('authors', 'name')
+          .select('-whatLearns -requirements -targetStudents -lastUpdated -category -topics -description -privacy -password -progress -messages -createdAt')
+          .lean()
+          .exec();
         if (!course) return null;
         const numOfRatings: number = await this.reviewCourseService.countNumRatings(courseId);
         let checkRegistered: boolean = false;
@@ -650,15 +682,15 @@ export class CourseService {
     async fetchInfosForCart(items: Array<any>): Promise<Array<any>> {
         const courseItemIds = _.map(_.filter(items, item => item.type === 'course'), '_id');
         let courseInfos = await this.courseModel
-            .find({
-                _id: {
-                    $in: courseItemIds
-                }
-            })
-            .populate('authors', 'name')
-            .select('title avatar price authors')
-            .lean()
-            .exec();
+          .find({
+              _id: {
+                  $in: courseItemIds
+              }
+          })
+          .populate('authors', 'name')
+          .select('title avatar price authors')
+          .lean()
+          .exec();
         //TODO: bundle
         courseInfos = _.map(courseInfos, courseInfo => ({
             ...courseInfo,
@@ -672,27 +704,27 @@ export class CourseService {
         let totalPrice: number = 0;
         const courseItemIds = _.map(_.filter(items, item => item.type === 'course'), '_id');
         const coursePrice: number = _.sum(_.map(_.map(
-            await this.courseModel
-                .find({
-                    _id: {
-                        $in: courseItemIds
-                    }
-                })
-                .lean()
-                .exec(),
-            'price'
-        ), price => mapKeyToPrice(price)));
-        totalPrice += coursePrice;
-        await this.courseModel
-            .updateMany({
+          await this.courseModel
+            .find({
                 _id: {
                     $in: courseItemIds
                 }
-            }, {
-                $inc: {
-                    numOfStudents: 1
-                }
-            });
+            })
+            .lean()
+            .exec(),
+          'price'
+        ), price => mapKeyToPrice(price)));
+        totalPrice += coursePrice;
+        await this.courseModel
+          .updateMany({
+              _id: {
+                  $in: courseItemIds
+              }
+          }, {
+              $inc: {
+                  numOfStudents: 1
+              }
+          });
         await this.studentService.createMany(userId, courseItemIds);
         await this.purchaseHistoryService.createOne(userId, items, totalPrice);
     }
@@ -705,23 +737,23 @@ export class CourseService {
 
     async findNameByListId(listIds: [string]): Promise<ICourse[]> {
         const names = await this.courseModel
-            .find({
-                _id: {
-                    $in: listIds
-                }
-            })
-            .select('title numOfStudents starRating')
-            .exec()
+          .find({
+              _id: {
+                  $in: listIds
+              }
+          })
+          .select('title numOfStudents starRating')
+          .exec()
         return names
     }
 
     async fetchInfoByLearner(userId: string, courseId: string): Promise<any> {
         const courseInfo: any = await this.courseModel
-            .findById(courseId)
-            .populate('authors', 'name')
-            .select('title authors')
-            .lean()
-            .exec();
+          .findById(courseId)
+          .populate('authors', 'name')
+          .select('title authors')
+          .lean()
+          .exec();
         if (!courseInfo) return null;
         courseInfo.authors = _.map(courseInfo.authors, 'name');
         const chapters = await this.chapterService.fetchChaptersWithDuration(userId, courseId);
@@ -732,16 +764,16 @@ export class CourseService {
     async searchCourse(query: string): Promise<any> {
         return new Promise((resolve, reject) => {
             (this.courseModel as any).search({
-                query_string: {
-                    query: query
-                }
-            },
-                function (err, results) {
-                    if (err) {
-                        reject(err)
-                    }
-                    resolve(results.hits.hits)
-                })
+                  query_string: {
+                      query: query
+                  }
+              },
+              function(err, results) {
+                  if (err) {
+                      reject(err)
+                  }
+                  resolve(results.hits.hits)
+              })
         })
     }
 
@@ -752,6 +784,7 @@ export class CourseService {
         }
         return listIds;
     }
+
     async handleSuggestData(data: Array<Object>) {
         // let highScoreSoFar = 0;
         // let result = []
@@ -778,45 +811,48 @@ export class CourseService {
         })
         return courses;
     }
+
     async getSuggestions(keyword: string, response) {
         return new Promise((resolve, reject) => {
             (this.courseModel as any).search(null, {
-                suggest: {
-                    "course-suggest": {
-                        "text": keyword,
-                        "completion": {
-                            "field": "suggest"
-                        }
-                    }
-                }
-            },
-                async (err, results) => {
-                    if (err) {
-                        reject(err)
-                    }
+                  suggest: {
+                      "course-suggest": {
+                          "text": keyword,
+                          "completion": {
+                              "field": "suggest"
+                          }
+                      }
+                  }
+              },
+              async (err, results) => {
+                  if (err) {
+                      reject(err)
+                  }
 
-                    const result = await this.handleSuggestData(
-                        results.suggest['course-suggest'][0].options
-                    )
-                    Array.prototype.push.apply(response.courses, result);
+                  const result = await this.handleSuggestData(
+                    results.suggest['course-suggest'][0].options
+                  )
+                  Array.prototype.push.apply(response.courses, result);
 
-                    resolve()
+                  resolve()
 
-                })
+              })
         })
     }
+
     takeFiveCourseHighestScore(courses) {
         const sortCourses = courses.sort(compareByScore);
         const result = sortCourses.reduce((acc, current) => {
-            const x = acc.find(item =>  item._id == current._id);
+            const x = acc.find(item => item._id == current._id);
             if (!x) {
-              return acc.concat([current]);
+                return acc.concat([current]);
             } else {
-              return acc;
+                return acc;
             }
-          }, []);
+        }, []);
         return result.slice(0, 5);
     }
+
     async fullSuggest(keyword: string) {
         const response = {
             courses: [],
@@ -830,5 +866,235 @@ export class CourseService {
         ])
         response.courses = this.takeFiveCourseHighestScore(response.courses);
         return response;
+    }
+
+    async fetchCoursesByAreaId(areaId: string, categoryId: string | null, query: any, categoriesObj): Promise<any> {
+        const {
+            page,
+            pageSize,
+            sortBy,             //highest-rated popularity newest lowest-price highest-price
+            topics = '',
+            categories = '',
+            languages = '',
+            ratings = '',
+            levels = '',
+            prices = ''
+        } = query;
+        const topicsArr = topics !== '' ? topics.split(',') : [];
+        const languagesArr = languages !== '' ? languages.split(',') : [];
+        const categoryArr = categories !== '' ? categories.split(',') : [];
+        const ratingsArr = ratings !== '' ? ratings.split(',') : [];
+        const levelsArr = levels !== '' ? levels.split(',') : []
+        const pricesArr = prices !== '' ? prices.split(',') : [];
+        return await this.searchCoursesForArea(areaId, categoryId, sortBy, {
+            topicsArr,
+            languagesArr,
+            categoryArr,
+            ratingsArr,
+            levelsArr,
+            pricesArr
+        }, { page: parseInt(page), pageSize: parseInt(pageSize) }, categoriesObj);
+    }
+
+    async searchCoursesForArea(areaId, categoryId, sortBy, query, pagination, categoriesObj) {
+        const filterObj: any = {
+            area: areaId,
+            //topics: { $all: query.topicsArr }
+        };
+        if (categoryId) {
+            filterObj.category = categoryId;
+        }
+        if (query.topicsArr.length > 0) {
+            query.topics = { $all: query.topicsArr };
+        }
+        if (query.languagesArr.length > 0) {
+            filterObj.language = {
+                $in: query.languagesArr
+            };
+        }
+        if (query.categoryArr.length > 0) {
+            filterObj.category = {
+                $in: query.categoryArr
+            };
+        }
+        if (query.ratingsArr.length > 0) {
+            let compareArr = [];
+            query.ratingsArr.forEach(item => {
+                const [start, end] = _.map(item.split('-to-'), item => parseInt(item));
+                const startCond = { $or: [{ $gt: start }, { $eq: start }] };
+                const endCond = { $lt: end };
+                const temp = { $and: [startCond, endCond] };
+                compareArr.push(temp);
+            })
+            filterObj.starRating = {
+                $or: compareArr
+            };
+        }
+        if (query.pricesArr.length > 0) {
+            filterObj.price = {
+                $in: query.pricesArr
+            };
+        }
+        if (query.levelsArr.length > 0) {
+            filterObj.level = {
+                $in: query.levelsArr
+            };
+        }
+        if (query.pricesArr.length > 0) {
+            filterObj.price = {
+                $in: query.pricesArr
+            };
+        }
+        let sort = '';
+        if (sortBy === 'highest-rated') {
+            sort = '-starRating';
+        } else if (sortBy === 'popularity') {
+            sort = '-numOfStudents';
+        } else if (sortBy === 'newest') {
+            sort = '-createdAt';
+        }
+        const data = await this.courseModel
+          .find(filterObj)
+          .sort(sort)
+          .populate('topics', 'title')
+          .populate('primaryTopic')
+          .populate('authors', 'name')
+          .populate('area', 'title')
+          .select('title authors avatar updatedAt category area topics starRating numOfStudents subTitle level language whatLearns._id whatLearns.content price primaryTopic ')
+          .lean()
+          .exec();
+        const total = data.length;
+        let filterResult = {
+            topics: {
+                select: query.topicsArr,
+                list: {}
+            },
+            languages: {
+                select: query.languagesArr,
+                list: {}
+            },
+            categories: {
+                select: query.categoryArr,
+                list: {}
+            },
+            levels: {
+                select: query.levelsArr,
+                list: {}
+            },
+            prices: {
+                select: query.pricesArr,
+                list: {}
+            },
+            ratings: {
+                select: query.ratingsArr,
+                list: {}
+            }
+        };
+        data.forEach(item => {
+            //prices
+            if (item.price !== null) {
+                if (!filterResult.prices.list[item.price]) {
+                    filterResult.prices.list[item.price] = {
+                        key: item.price,
+                        title: `$${mapKeyToPrice(item.price)}`,
+                        count: 1
+                    }
+                } else {
+                    filterResult.prices.list[item.price].count += 1;
+                }
+            }
+            //levels
+            if (item.level !== null) {
+                if (!filterResult.levels.list[item.level]) {
+                    filterResult.levels.list[item.level] = {
+                        key: item.level,
+                        title: mapKeyToLevel(item.level),
+                        count: 1
+                    }
+                } else {
+                    filterResult.levels.list[item.level].count += 1;
+                }
+            }
+            //languages
+            if (item.language !== null) {
+                if (!filterResult.languages.list[item.language]) {
+                    filterResult.languages.list[item.language] = {
+                        key: item.language,
+                        title: mapKeyToLanguage(item.language),
+                        count: 1
+                    }
+                } else {
+                    filterResult.languages.list[item.language].count += 1;
+                }
+            }
+            //categories
+
+            if (item.category !== null) {
+                const cateId = item.category;
+                const cateStr = categoriesObj[cateId];
+                if (!filterResult.categories.list[cateId]) {
+                    filterResult.categories.list[cateId] = {
+                        key: cateId,
+                        title: cateStr,
+                        count: 1
+                    }
+                } else {
+                    filterResult.categories.list[cateId].count += 1;
+                }
+            }
+            //star ratings
+            if (item.starRating !== null) {
+                const { rangeKey, rangeStr } = mapStarValueToStarRangeObj(item.starRating);
+                if (!filterResult.ratings.list[rangeKey]) {
+                    filterResult.ratings.list[rangeKey] = {
+                        key: rangeKey,
+                        title: rangeStr,
+                        star: _.floor(item.starRating),
+                        count: 1
+                    }
+                } else {
+                    filterResult.ratings.list[rangeKey].count += 1;
+                }
+            }
+            //topics
+            item.topics.forEach(topic => {
+                //@ts-ignore
+                const topicId = topic._id;
+                //@ts-ignore
+                const topicStr = topic.title;
+                if (!filterResult.topics.list[topicId]) {
+                    filterResult.topics.list[topicId] = {
+                        key: topicId,
+                        title: topicStr,
+                        count: 1
+                    }
+                } else {
+                    filterResult.topics.list[topicId].count += 1;
+                }
+            })
+        })
+        const filterResultKeys = _.keys(filterResult);
+        filterResultKeys.forEach(key => {
+            filterResult[key].list = _.toArray(filterResult[key].list)
+        });
+        const { page, pageSize } = pagination;
+        let dataResult: any = _.slice(data, (page - 1) * pageSize, page * pageSize);
+        dataResult = _.map(dataResult, dataItem => ({
+            ...dataItem,
+            primaryTopic: (dataItem.primaryTopic && dataItem.primaryTopic.title) || 'C++',
+            area: dataItem.area.title,
+            category: categoriesObj[dataItem.category] || 'React',
+            level: mapKeyToLevel(dataItem.level),
+            language: mapKeyToLanguage(dataItem.language),
+            authors: _.map(dataItem.authors, 'name'),
+            price: mapKeyToPrice(dataItem.price),
+            realPrice: 29.99
+        }))
+        return {
+            total,
+            list: dataResult,
+            filters: filterResult,
+            sortBy
+        }
     }
 }

@@ -41,6 +41,14 @@ export class AreaService {
         return _.flatMap(areas, area => area.categories);
     }
 
+    async fetchCategoriesOfArea(areaId: string): Promise<any> {
+        const area = await this.areaModel.findById(areaId);
+        if (!area) {
+            return null;
+        }
+        return area.categories;
+    }
+
     async createCategory(areaId: string, title: string, description: string): Promise<ICategory> {
         const area = await this.areaModel
             .findByIdAndUpdate(areaId, {
@@ -85,8 +93,8 @@ export class AreaService {
         return null;
     }
 
-    async fetchCategory(areaId: string, categoryId: string): Promise<ICategory> {
-        const area: IArea = await this.areaModel
+    async fetchCategory(areaId: string, categoryId: string): Promise<any> {
+        const area: any = await this.areaModel
             .findOne({
                 _id: areaId,
                 categories: {
@@ -99,7 +107,9 @@ export class AreaService {
                     $elemMatch: { _id: categoryId }
                 }
             })
-            .select('-categories.description');
-        return area ? _.head(area.categories) : null;
+            .select('-categories.description')
+          .lean()
+          .exec();
+        return area ? { ..._.head(area.categories), areaId } : null;
     }
 }

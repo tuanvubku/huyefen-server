@@ -220,6 +220,15 @@ export class CourseController {
         return new ResponseSuccess<IChapter[]>('FETCH_SYLLABUS_OK', syllabus);
     }
 
+    @Get('/:id/syllabus/public')
+    async fetchPublicSyllabus(@Req() req, @Param('id') courseId: string): Promise<IResponse<any>> {
+        const checkCourse = await this.courseService.validateCourse(courseId);
+        if (!checkCourse)
+            throw new NotFoundException('Invalid course');
+        const syllabus = await this.chapterService.fetchPublicChaptersWithDuration(courseId);
+        return new ResponseSuccess('FETCH_PUBLIC_SYLLABUS_OK', syllabus);
+    }
+
     @Post('/:id/chapters')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
@@ -1300,6 +1309,4 @@ export class CourseController {
             throw new NotFoundException('Invalid lecture');
         return new ResponseSuccess('FETCH_OK', result);
     }
-
-   
 }

@@ -31,4 +31,9 @@ async function bootstrap() {
     module.hot.dispose(() => app.close());
   }
 }
-bootstrap();
+try {
+  bootstrap();
+}
+catch (err) {
+  console.log(err.message);
+}

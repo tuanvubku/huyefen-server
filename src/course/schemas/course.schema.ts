@@ -4,7 +4,7 @@ import { WhatLearnSchema } from './whatLearn.schema';
 import { RequirementSchema } from './requirement.schema';
 import { TargetStudentSchema } from './targetStudent.schema';
 import { TeacherSchema } from '../../teacher/schemas/teacher.schema'
-var mongoosastic = require('mongoosastic')
+const mongoosastic = require('mongoosastic');
 
 export const CourseSchema = new Schema({
     title: {
@@ -23,7 +23,7 @@ export const CourseSchema = new Schema({
     },
     subTitle: {
         type: String,
-        maxlength: 150,
+        maxlength: 250,
         default: null,
         es_indexed: true
     },
@@ -170,8 +170,13 @@ export const CourseSchema = new Schema({
     timestamps: true
 })
 
-CourseSchema.plugin(mongoosastic, {
-    populate: [
-        { path: 'authors' , select: '_id'}
-    ]
-})
+try {
+    CourseSchema.plugin(mongoosastic, {
+        populate: [
+            { path: 'authors' , select: '_id'}
+        ]
+    })
+}
+catch (err) {
+    console.log(err.message);
+}

@@ -18,4 +18,9 @@ export const TopicSchema = new Schema({
     },
 });
 
-TopicSchema.plugin(mongoosastic)
+try {
+    TopicSchema.plugin(mongoosastic)
+}
+catch (err) {
+    console.log(err.message);
+}
