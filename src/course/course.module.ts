@@ -15,6 +15,7 @@ import { UserModule } from '@/user/user.module';
 import { FirebaseModule } from '@/firebase/firebase.module';
 import { PurchaseHistoryModule } from '@/purchase-history/purchase-history.module';
 import { TopicModule } from '@/topic/topic.module';
+import { AreaModule } from '@/area/area.module';
 
 @Module({
 	imports: [
@@ -33,7 +34,8 @@ import { TopicModule } from '@/topic/topic.module';
 		ReviewCourseModule,
 		UserModule,
 		PurchaseHistoryModule,
-		TopicModule
+		TopicModule,
+		AreaModule
 	],
 	providers: [CourseService],
 	controllers: [CourseController],

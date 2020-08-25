@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import * as _ from 'lodash';
 import { IArea } from './interfaces/area.interface';
 import { ICategory } from './interfaces/category.interface';
+import { TeacherNotificationSchema } from '@/teacher/schemas/notification.schema';
 
 @Injectable()
 export class AreaService {
@@ -29,6 +30,11 @@ export class AreaService {
         });
     }
 
+    async findNameById(areaId: string): Promise<IArea> {
+        return await this.areaModel.findById(areaId)
+                        .select('title')
+                        .exec();
+    }
     async create(title: string): Promise<IArea> {
         const area: IArea = new this.areaModel({
             title: title

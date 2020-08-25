@@ -11,6 +11,7 @@ import { AreaService } from './area.service';
         ])
     ],
     controllers: [AreaController],
+    exports: [AreaService],
     providers: [AreaService]
 })
 export class AreaModule {}

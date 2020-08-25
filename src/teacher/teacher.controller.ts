@@ -175,6 +175,17 @@ export class TeacherController {
         }
         return new ResponseSuccess<null>('FETCH_OK', null);
     }
+    @Get('/search')
+    async searchTeacher(@Query() query): Promise<IResponse<any>> {
+        let res = null
+        await this.teacherService.searchTeacher(query.query, query.page, query.pageSize)
+            .then(data => {
+                res = data
+            }).catch(err => {
+                //console.log(err)
+            })
+        return new ResponseSuccess("SUCCESS", res);
+    }
 
     @Get('/:id')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -233,4 +244,6 @@ export class TeacherController {
         const result = await this.authorService.fetchCoursesDataOfTeacher(teacherId, skip, limit, hashMap);
         return new ResponseSuccess('FETCH_OK', result);
     }
+
+    
 }

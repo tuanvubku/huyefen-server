@@ -530,4 +530,44 @@ export class TeacherService {
                 })
         })
     }
+
+    async searchTeacher(query: string, page: number, pageSize: number): Promise<any> {
+        return new Promise((resolve, reject) => {
+            (this.teacherModel as any).search(
+                {
+                    "multi_match": {
+                        "fields": ["name"],
+                        "query": query,
+                        "fuzziness": "AUTO"
+                    }
+                },
+                {
+                    from: (page - 1) * pageSize,
+                    size: pageSize,
+                    hydrate: true
+                },
+                async (err, results) => {
+                    if (err) {
+                        reject(err)
+                    }
+                    const result = results.hits.hits.map(teacher => {
+                        const { name, avatar } = teacher;
+                        const returnTeacher = {
+                            _id: teacher._id,
+                            name,
+                            avatar,
+                            numOfStudents: 0,
+                            numOfCourses: 0
+                        };
+                        return returnTeacher;
+                    })
+                
+                    const respond = {
+                        total: results.hits.total,
+                        list: result
+                    }
+                    resolve(respond);
+                })
+        })
+    }
 }

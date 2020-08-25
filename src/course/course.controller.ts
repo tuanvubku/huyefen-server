@@ -1209,7 +1209,7 @@ export class CourseController {
     @Get('/search')
     async searchCourse(@Query() query): Promise<IResponse<any>> {
         let res = null
-        await this.courseService.searchCourse(query.query)
+        await this.courseService.searchCourse(query.query, query.page, query.pageSize)
             .then(data => {
                 res = data
             }).catch(err => {

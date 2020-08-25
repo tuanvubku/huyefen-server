@@ -4,6 +4,7 @@ import { WhatLearnSchema } from './whatLearn.schema';
 import { RequirementSchema } from './requirement.schema';
 import { TargetStudentSchema } from './targetStudent.schema';
 import { TeacherSchema } from '../../teacher/schemas/teacher.schema'
+import { AreaSchema } from '@/area/schemas/area.schema';
 var mongoosastic = require('mongoosastic')
 
 export const CourseSchema = new Schema({
@@ -23,7 +24,7 @@ export const CourseSchema = new Schema({
     },
     subTitle: {
         type: String,
-        maxlength: 150,
+        maxlength: 1000,
         default: null,
         es_indexed: true
     },
@@ -32,7 +33,7 @@ export const CourseSchema = new Schema({
             type: Schema.Types.ObjectId,
             ref: 'Teacher',
             es_schema: TeacherSchema,
-            es_select: '_id',
+            es_select: 'name',
             es_indexed: true,
         }],
         default: [],
@@ -60,6 +61,9 @@ export const CourseSchema = new Schema({
     area: {
         type: Schema.Types.ObjectId,
         ref: 'Area',
+        es_schema: AreaSchema,
+        es_select: 'title _id',
+        es_indexed: true,
         default: null,
     },
     category: {
@@ -172,6 +176,7 @@ export const CourseSchema = new Schema({
 
 CourseSchema.plugin(mongoosastic, {
     populate: [
-        { path: 'authors' , select: '_id'}
+        { path: 'authors', select: 'name' },
+        {path: 'area' , select: 'title'}
     ]
 })

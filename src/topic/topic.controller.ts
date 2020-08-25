@@ -51,5 +51,17 @@ export class TopicController {
         return new ResponseSuccess("SUCCESS", result);
     }
 
+    @Get('/search')
+    async searchTopic(@Query() query): Promise<IResponse<any>> {
+        let res = null
+        await this.topicService.searchTopic(query.query, query.page, query.pageSize)
+            .then(data => {
+                res = data
+            }).catch(err => {
+                //console.log(err)
+            })
+        return new ResponseSuccess("SUCCESS", res);
+    }
+
 }
 

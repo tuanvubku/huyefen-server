@@ -91,4 +91,41 @@ export class TopicService {
                 })
         })
     }
+
+    async searchTopic(query: string, page: number, pageSize: number): Promise<any> {
+        return new Promise((resolve, reject) => {
+            (this.topicModel as any).search(
+                {
+                    "multi_match": {
+                        "fields": ["title"],
+                        "query": query,
+                        "fuzziness": "AUTO"
+                    }
+                },
+                {
+                    from: (page - 1) * pageSize,
+                    size: pageSize,
+                    hydrate: true
+                },
+                async (err, results) => {
+                    if (err) {
+                        reject(err)
+                    }
+                    const result = results.hits.hits.map(teacher => {
+                        const { title } = teacher;
+                        const returnTopic = {
+                            _id: teacher._id,
+                            title
+                        };
+                        return returnTopic;
+                    })
+                
+                    const respond = {
+                        total: results.hits.total,
+                        list: result
+                    }
+                    resolve(respond);
+                })
+        })
+    }
 }

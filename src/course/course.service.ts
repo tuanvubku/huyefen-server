@@ -32,6 +32,7 @@ import { ITeacher } from '@/teacher/interfaces/teacher.interface';
 import { database } from 'firebase-admin';
 import { response } from 'express';
 import { TopicService } from '@/topic/topic.service';
+import { AreaService } from '@/area/area.service';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -50,15 +51,16 @@ export class CourseService {
         private readonly userService: UserService,
         private readonly topicService: TopicService,
         private readonly purchaseHistoryService: PurchaseHistoryService,
+        private readonly areaService: AreaService
     ) {
 
         (this.courseModel as any).createMapping(function (err, mapping) {
             if (err) {
                 //console.log('error creating mapping (you can safely ignore this)');
-                //console.log(err);
+                console.log(err);
             } else {
                 //console.log('mapping created!');
-                //console.log(mapping);
+                console.log(mapping);
             }
         });
         (this.courseModel as any).esTruncate(function (err) {
@@ -729,18 +731,51 @@ export class CourseService {
         return courseInfo;
     }
 
-    async searchCourse(query: string): Promise<any> {
+    async searchCourse(query: string, page: number, pageSize: number): Promise<any> {
         return new Promise((resolve, reject) => {
-            (this.courseModel as any).search({
-                query_string: {
-                    query: query
-                }
-            },
-                function (err, results) {
+            (this.courseModel as any).search(
+                {
+                    "multi_match": {
+                        "fields": ["title"],
+                        "query": query,
+                        "fuzziness": "AUTO"
+                    }
+                },
+                {
+                    from: (page - 1) * pageSize,
+                    size: pageSize,
+                    hydrate: true
+                },
+                async (err, results) => {
                     if (err) {
                         reject(err)
                     }
-                    resolve(results.hits.hits)
+                    const result = results.hits.hits.map(course => {
+                        const { title, subTitle, authors, updatedAt, avatar, numOfStudents, area, price } = course;
+                        const returnCourse = {
+                            _id: course._id,
+                            title,
+                            subTitle,
+                            authors,
+                            updatedAt,
+                            avatar,
+                            numOfStudents,
+                            area,
+                            price: mapKeyToPrice(price)
+                        };
+                        return returnCourse;
+                    })
+                    for (let i = 0; i < result.length; i++) {
+                        result[i].authors = await this.teacherService.findNameByListId(result[i].authors);
+                        result[i].area = await this.areaService.findNameById(result[i].area);
+                        result[i].area = result[i].area.title;
+
+                    }
+                    const respond = {
+                        total: results.hits.total,
+                        list: result
+                    }
+                    resolve(respond);
                 })
         })
     }
@@ -753,20 +788,8 @@ export class CourseService {
         return listIds;
     }
     async handleSuggestData(data: Array<Object>) {
-        // let highScoreSoFar = 0;
-        // let result = []
-        // console.log(data)
-        // for (let i = 0; i < data.length; i++) {
-        //     const score = data[i]['_source'].numOfStudents * data[i]['_source'].starRating;
-        //     if (score >= highScoreSoFar) {
-        //         result.unshift(data[i])
-        //     } else {
-        //         result.push(data[i])
-        //     }
-        // }
-        // const returnData = result.slice(0, 5);
-        const courses = [];
 
+        const courses = [];
 
         data.forEach(data => {
             courses.push({
@@ -808,15 +831,16 @@ export class CourseService {
     takeFiveCourseHighestScore(courses) {
         const sortCourses = courses.sort(compareByScore);
         const result = sortCourses.reduce((acc, current) => {
-            const x = acc.find(item =>  item._id == current._id);
+            const x = acc.find(item => item._id == current._id);
             if (!x) {
-              return acc.concat([current]);
+                return acc.concat([current]);
             } else {
-              return acc;
+                return acc;
             }
-          }, []);
+        }, []);
         return result.slice(0, 5);
     }
+
     async fullSuggest(keyword: string) {
         const response = {
             courses: [],
