@@ -522,7 +522,7 @@ export class TeacherService {
                         reject(err)
                     }
                     const result = await this.handleSuggestData(results.suggest['teacher-suggest'][0].options);
-                    response.authors = result.authors;
+                    response.teachers = result.authors;
                     Array.prototype.push.apply(response.courses, result.courses);
 
                     resolve();

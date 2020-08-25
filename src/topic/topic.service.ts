@@ -62,7 +62,7 @@ export class TopicService {
         const topics = [];
         data.forEach(data => {
             topics.push({
-                name: data['_source'].title,
+                title: data['_source'].title,
                 _id: data['_id']
             })
         })

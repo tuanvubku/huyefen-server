@@ -843,7 +843,7 @@ export class CourseService {
     takeFiveCourseHighestScore(courses) {
         const sortCourses = courses.sort(compareByScore);
         const result = sortCourses.reduce((acc, current) => {
-            const x = acc.find(item => item._id == current._id);
+            const x = acc.find(item => item._id === current._id);
             if (!x) {
                 return acc.concat([current]);
             } else {
@@ -857,7 +857,7 @@ export class CourseService {
         const response = {
             courses: [],
             topics: [],
-            authors: []
+            teachers: []
         };
         await Promise.all([
             this.getSuggestions(keyword, response),
