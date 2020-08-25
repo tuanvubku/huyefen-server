@@ -3,13 +3,14 @@ import { ChapterService } from '@/chapter/chapter.service';
 import { IChapter } from '@/chapter/interfaces/chapter.interface';
 import { ILecture } from '@/chapter/interfaces/lecture.interface';
 import {
+    Language,
     Lecture,
+    Level,
     Price,
     Privacy,
     ProgressBase,
-
     Role,
-    TeacherCoursesSort as Sort
+    TeacherCoursesSort as Sort,
 } from '@/config/constants';
 import { PurchaseHistoryService } from '@/purchase-history/purchase-history.service';
 import { ReviewCourseService } from '@/review-course/review-course.service';
@@ -17,7 +18,13 @@ import { ReviewTeacherService } from '@/review-teacher/review-teacher.service';
 import { StudentService } from '@/student/student.service';
 import { TeacherService } from '@/teacher/teacher.service';
 import { UserService } from '@/user/user.service';
-import { mapKeyToPrice, compareByScore } from '@/utils/utils';
+import {
+    compareByScore,
+    mapKeyToLanguage,
+    mapKeyToLevel,
+    mapKeyToPrice,
+    mapStarValueToStarRangeObj,
+} from '@/utils/utils';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as _ from 'lodash';
@@ -29,8 +36,6 @@ import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { ITeacher } from '@/teacher/interfaces/teacher.interface';
-import { database } from 'firebase-admin';
-import { response } from 'express';
 import { TopicService } from '@/topic/topic.service';
 import { AreaService } from '@/area/area.service';
 
@@ -52,8 +57,8 @@ export class CourseService {
         private readonly topicService: TopicService,
         private readonly purchaseHistoryService: PurchaseHistoryService,
         private readonly areaService: AreaService
-    ) {
 
+    ) {
         (this.courseModel as any).createMapping(function (err, mapping) {
             if (err) {
                 //console.log('error creating mapping (you can safely ignore this)');
@@ -99,12 +104,40 @@ export class CourseService {
         return course;
     }
 
+    // async test() {
+    //     const subTitles = [
+    //       'Much like setState in Class components created by extending React.Component or React.PureComponent, the state update using the updater provided by useState hook is also asynchronous, and will not be reflected immediately.',
+    //       'Also, the main issue here is not just the asynchronous nature but the fact that state values are used by functions based on their current closures',
+    //       'As far as the syntax to update state is concerned, setMovies(result) will replace the previous movies value in the state with those available from the async reques'
+    //
+    //     ];
+    //     const levels = [Level.Expert, Level.Intermediate, Level.AllLevel, Level.Beginner];
+    //     const languages = [Language.English, Language.Vietnamese];
+    //     const category = ['5edcfb4a9e3ec67b94474593', '5edcfb5a9e3ec67b94474594'];
+    //     const avatars = ['https://images.pexels.com/photos/682375/pexels-photo-682375.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+    //     'https://images.pexels.com/photos/247583/pexels-photo-247583.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+    //       'https://images.pexels.com/photos/162256/wolf-predator-european-wolf-carnivores-162256.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+    //       'https://images.pexels.com/photos/1573134/pexels-photo-1573134.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260'
+    //     ];
+    //     const courses = await this.courseModel.find({});
+    //     courses.forEach(course => {
+    //         course.subTitle = subTitles[(new Date().getTime()) % 3];
+    //         course.level = levels[Math.ceil(Math.random() * 100) % 4];
+    //         course.language = languages[Math.ceil(Math.random() * 100) % 2];
+    //         course.category = category[Math.ceil(Math.random() * 100) % 2];
+    //         course.area = '5ed8651e260ae02af256da15';
+    //         course.avatar = avatars[Math.ceil(Math.random() * 100) % 4];
+    //         course.price = `tier${Math.ceil(Math.random() * 100) % 3 + 1}`;
+    //         course.save();
+    //     })
+    // }
+
     async fetch(teacherId: string, sort: Sort, page: number, limit: number): Promise<{ total: number, list: Array<any> }> {
+
         let authors: Array<any>;
         if (sort === Sort.Newest || sort === Sort.Oldest) {
             authors = await this.authorService.fetchWithTimeSortType(teacherId, sort);
-        }
-        else {
+        } else {
             authors = await this.authorService.fetchWithoutTimeSortType(teacherId);
             authors = _.orderBy(
                 authors,
@@ -121,7 +154,7 @@ export class CourseService {
         const courses = _.map(authors, item => {
             const course = item.course;
             const progress: number =
-                + (course.progress.goals * ProgressBase.Goals)
+                +(course.progress.goals * ProgressBase.Goals)
                 + (course.progress.syllabus * ProgressBase.Syllabus)
                 + (course.progress.landing * ProgressBase.Landing)
                 + (course.progress.price * ProgressBase.Price)
@@ -787,6 +820,7 @@ export class CourseService {
         }
         return listIds;
     }
+
     async handleSuggestData(data: Array<Object>) {
 
         const courses = [];
@@ -801,6 +835,7 @@ export class CourseService {
         })
         return courses;
     }
+
     async getSuggestions(keyword: string, response) {
         return new Promise((resolve, reject) => {
             (this.courseModel as any).search(null, {
@@ -828,10 +863,12 @@ export class CourseService {
                 })
         })
     }
+
     takeFiveCourseHighestScore(courses) {
         const sortCourses = courses.sort(compareByScore);
         const result = sortCourses.reduce((acc, current) => {
             const x = acc.find(item => item._id == current._id);
+
             if (!x) {
                 return acc.concat([current]);
             } else {
@@ -845,7 +882,7 @@ export class CourseService {
         const response = {
             courses: [],
             topics: [],
-            authors: []
+            teachers: []
         };
         await Promise.all([
             this.getSuggestions(keyword, response),
@@ -854,5 +891,235 @@ export class CourseService {
         ])
         response.courses = this.takeFiveCourseHighestScore(response.courses);
         return response;
+    }
+
+    async fetchCoursesByAreaId(areaId: string, categoryId: string | null, query: any, categoriesObj): Promise<any> {
+        const {
+            page,
+            pageSize,
+            sortBy,             //highest-rated popularity newest lowest-price highest-price
+            topics = '',
+            categories = '',
+            languages = '',
+            ratings = '',
+            levels = '',
+            prices = ''
+        } = query;
+        const topicsArr = topics !== '' ? topics.split(',') : [];
+        const languagesArr = languages !== '' ? languages.split(',') : [];
+        const categoryArr = categories !== '' ? categories.split(',') : [];
+        const ratingsArr = ratings !== '' ? ratings.split(',') : [];
+        const levelsArr = levels !== '' ? levels.split(',') : []
+        const pricesArr = prices !== '' ? prices.split(',') : [];
+        return await this.searchCoursesForArea(areaId, categoryId, sortBy, {
+            topicsArr,
+            languagesArr,
+            categoryArr,
+            ratingsArr,
+            levelsArr,
+            pricesArr
+        }, { page: parseInt(page), pageSize: parseInt(pageSize) }, categoriesObj);
+    }
+
+    async searchCoursesForArea(areaId, categoryId, sortBy, query, pagination, categoriesObj) {
+        const filterObj: any = {
+            area: areaId,
+            //topics: { $all: query.topicsArr }
+        };
+        if (categoryId) {
+            filterObj.category = categoryId;
+        }
+        if (query.topicsArr.length > 0) {
+            query.topics = { $all: query.topicsArr };
+        }
+        if (query.languagesArr.length > 0) {
+            filterObj.language = {
+                $in: query.languagesArr
+            };
+        }
+        if (query.categoryArr.length > 0) {
+            filterObj.category = {
+                $in: query.categoryArr
+            };
+        }
+        if (query.ratingsArr.length > 0) {
+            let compareArr = [];
+            query.ratingsArr.forEach(item => {
+                const [start, end] = _.map(item.split('-to-'), item => parseInt(item));
+                const startCond = { $or: [{ $gt: start }, { $eq: start }] };
+                const endCond = { $lt: end };
+                const temp = { $and: [startCond, endCond] };
+                compareArr.push(temp);
+            })
+            filterObj.starRating = {
+                $or: compareArr
+            };
+        }
+        if (query.pricesArr.length > 0) {
+            filterObj.price = {
+                $in: query.pricesArr
+            };
+        }
+        if (query.levelsArr.length > 0) {
+            filterObj.level = {
+                $in: query.levelsArr
+            };
+        }
+        if (query.pricesArr.length > 0) {
+            filterObj.price = {
+                $in: query.pricesArr
+            };
+        }
+        let sort = '';
+        if (sortBy === 'highest-rated') {
+            sort = '-starRating';
+        } else if (sortBy === 'popularity') {
+            sort = '-numOfStudents';
+        } else if (sortBy === 'newest') {
+            sort = '-createdAt';
+        }
+        const data = await this.courseModel
+            .find(filterObj)
+            .sort(sort)
+            .populate('topics', 'title')
+            .populate('primaryTopic')
+            .populate('authors', 'name')
+            .populate('area', 'title')
+            .select('title authors avatar updatedAt category area topics starRating numOfStudents subTitle level language whatLearns._id whatLearns.content price primaryTopic ')
+            .lean()
+            .exec();
+        const total = data.length;
+        let filterResult = {
+            topics: {
+                select: query.topicsArr,
+                list: {}
+            },
+            languages: {
+                select: query.languagesArr,
+                list: {}
+            },
+            categories: {
+                select: query.categoryArr,
+                list: {}
+            },
+            levels: {
+                select: query.levelsArr,
+                list: {}
+            },
+            prices: {
+                select: query.pricesArr,
+                list: {}
+            },
+            ratings: {
+                select: query.ratingsArr,
+                list: {}
+            }
+        };
+        data.forEach(item => {
+            //prices
+            if (item.price !== null) {
+                if (!filterResult.prices.list[item.price]) {
+                    filterResult.prices.list[item.price] = {
+                        key: item.price,
+                        title: `$${mapKeyToPrice(item.price)}`,
+                        count: 1
+                    }
+                } else {
+                    filterResult.prices.list[item.price].count += 1;
+                }
+            }
+            //levels
+            if (item.level !== null) {
+                if (!filterResult.levels.list[item.level]) {
+                    filterResult.levels.list[item.level] = {
+                        key: item.level,
+                        title: mapKeyToLevel(item.level),
+                        count: 1
+                    }
+                } else {
+                    filterResult.levels.list[item.level].count += 1;
+                }
+            }
+            //languages
+            if (item.language !== null) {
+                if (!filterResult.languages.list[item.language]) {
+                    filterResult.languages.list[item.language] = {
+                        key: item.language,
+                        title: mapKeyToLanguage(item.language),
+                        count: 1
+                    }
+                } else {
+                    filterResult.languages.list[item.language].count += 1;
+                }
+            }
+            //categories
+
+            if (item.category !== null) {
+                const cateId = item.category;
+                const cateStr = categoriesObj[cateId];
+                if (!filterResult.categories.list[cateId]) {
+                    filterResult.categories.list[cateId] = {
+                        key: cateId,
+                        title: cateStr,
+                        count: 1
+                    }
+                } else {
+                    filterResult.categories.list[cateId].count += 1;
+                }
+            }
+            //star ratings
+            if (item.starRating !== null) {
+                const { rangeKey, rangeStr } = mapStarValueToStarRangeObj(item.starRating);
+                if (!filterResult.ratings.list[rangeKey]) {
+                    filterResult.ratings.list[rangeKey] = {
+                        key: rangeKey,
+                        title: rangeStr,
+                        star: _.floor(item.starRating),
+                        count: 1
+                    }
+                } else {
+                    filterResult.ratings.list[rangeKey].count += 1;
+                }
+            }
+            //topics
+            item.topics.forEach(topic => {
+                //@ts-ignore
+                const topicId = topic._id;
+                //@ts-ignore
+                const topicStr = topic.title;
+                if (!filterResult.topics.list[topicId]) {
+                    filterResult.topics.list[topicId] = {
+                        key: topicId,
+                        title: topicStr,
+                        count: 1
+                    }
+                } else {
+                    filterResult.topics.list[topicId].count += 1;
+                }
+            })
+        })
+        const filterResultKeys = _.keys(filterResult);
+        filterResultKeys.forEach(key => {
+            filterResult[key].list = _.toArray(filterResult[key].list)
+        });
+        const { page, pageSize } = pagination;
+        let dataResult: any = _.slice(data, (page - 1) * pageSize, page * pageSize);
+        dataResult = _.map(dataResult, dataItem => ({
+            ...dataItem,
+            primaryTopic: (dataItem.primaryTopic && dataItem.primaryTopic.title) || 'C++',
+            area: dataItem.area.title,
+            category: categoriesObj[dataItem.category] || 'React',
+            level: mapKeyToLevel(dataItem.level),
+            language: mapKeyToLanguage(dataItem.language),
+            authors: _.map(dataItem.authors, 'name'),
+            price: mapKeyToPrice(dataItem.price),
+            realPrice: 29.99
+        }))
+        return {
+            total,
+            list: dataResult,
+            filters: filterResult,
+            sortBy
+        }
     }
 }

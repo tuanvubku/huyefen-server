@@ -1,7 +1,7 @@
 import { Schema } from 'mongoose';
-import { TeacherNotificationSchema } from './notification.schema';import { CourseSchema } from '@/course/schemas/course.schema';
+import { TeacherNotificationSchema } from './notification.schema';
+import { CourseSchema } from '@/course/schemas/course.schema';
 var mongoosastic = require('mongoosastic')
-
 
 export const TeacherSchema = new Schema({
     name: {
@@ -90,9 +90,13 @@ export const TeacherSchema = new Schema({
     }
 });
 
-TeacherSchema.plugin(mongoosastic, {
-    populate: [
-        { path: 'courses' , select: '_id'}
-    ]
-})
-
+try {
+    TeacherSchema.plugin(mongoosastic, {
+        populate: [
+            { path: 'courses' , select: '_id'}
+        ]
+    })
+}
+catch (err) {
+    console.log(err);
+}

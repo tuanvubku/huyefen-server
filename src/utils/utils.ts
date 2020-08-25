@@ -2,6 +2,7 @@ import { extname } from "path";
 import { IResponse } from "./interfaces/response.interface";
 import * as fs from 'fs'
 import * as path from 'path'
+import { Level } from '@/config/constants';
 export class ResponseSuccess<T> implements IResponse<T> {
 	constructor(
 		public message: string,
@@ -43,6 +44,62 @@ export const mapKeyToPrice = priceKey => {
 		default:
 			return 0;
 	}
+}
+
+export const mapKeyToLanguage = langKey => {
+	switch (langKey) {
+		case 'english':
+			return 'English';
+		case 'vietnamese':
+			return 'Vietnamese';
+		default:
+			return 'English';
+	}
+}
+
+export const mapKeyToLevel = levelKey => {
+	switch(levelKey) {
+		case Level.Beginner:
+			return 'Beginner';
+		case Level.AllLevel:
+			return 'All Level';
+		case Level.Intermediate:
+			return 'Intermediate';
+		case Level.Expert:
+			return 'Expert';
+	}
+}
+
+export const mapStarValueToStarRangeObj = starVal => {
+	if (starVal < 1) {
+		return {
+			rangeKey: '0-to-1',
+			rangeStr: '0 to 1.0'
+		};
+	}
+	else if (starVal < 2) {
+		return {
+			rangeKey: '1-to-2',
+			rangeStr: '1.0 to 2.0'
+		};
+	}
+	else if (starVal < 3) {
+		return {
+			rangeKey: '2-to-3',
+			rangeStr: '2.0 to 3.0'
+		};
+	}
+	else if (starVal < 4) {
+		return {
+			rangeKey: '3-to-4',
+			rangeStr: '3.0 to 4.0'
+		};
+	}
+	else
+		return {
+			rangeKey: '4-to-5',
+			rangeStr: '4.0 to 5.0'
+		};
 }
 
 export const mkdirRecursive = dir => {

@@ -74,6 +74,35 @@ export class ChapterService {
         return data;
     }
 
+    async fetchPublicChaptersWithDuration(courseId: string): Promise<any> {
+      const data = await this.chapterModel
+        .find({ course: courseId })
+        .populate('lectures.content')
+        .select({
+          title: 1,
+          'lectures.type': 1,
+          'lectures._id': 1,
+          'lectures.content': 1,
+          'lectures.title': 1,
+          'lectures.isPreviewed': 1
+        })
+        .lean()
+        .exec();
+      data.forEach((chapter: any) => {
+        chapter.lectures = _.map(chapter.lectures, lecture => {
+          const lectureData: any = _.pick(lecture, ['_id', 'title', 'type', 'isPreviewed']);
+          if (lecture.type === Lecture.Article) {
+            lectureData.duration = (lecture.content.estimateHour * 60 + lecture.content.estimateMinute) * 60;
+          }
+          else {
+            lectureData.duration = lecture.content.duration;
+          }
+          return lectureData;
+        })
+      });
+      return data;
+    }
+
     async create(teacherId: string, courseId: string, title: string, description: string): Promise<{ progress: number, data: IChapter}> {
         let chapter: IChapter = new this.chapterModel({
             title,
