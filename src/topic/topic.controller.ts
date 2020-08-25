@@ -1,4 +1,4 @@
-import { Controller, Get, Post, UseGuards, Body, Delete, Param, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, UseGuards, Body, Delete, Param, NotFoundException, Query } from '@nestjs/common';
 import { IResponse } from '@/utils/interfaces/response.interface';
 import { ITopic } from './interfaces/topic.interface';
 import { TopicService } from './topic.service';
@@ -41,4 +41,15 @@ export class TopicController {
             throw new NotFoundException('Invalid topic');
         return new ResponseSuccess<string>('DELETE_OK', 'ok');
     }
+
+    @Get('/suggest')
+    async getTopicSuggestions(@Query() query) {
+        const result = {
+            topics: []
+        }
+        await this.topicService.getTopicSuggest(query['keyword'], result);
+        return new ResponseSuccess("SUCCESS", result);
+    }
+
 }
+
