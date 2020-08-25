@@ -35,7 +35,8 @@ import { AreaModule } from '@/area/area.module';
 		UserModule,
 		PurchaseHistoryModule,
 		TopicModule,
-		AreaModule
+		forwardRef(() => AreaModule),
+
 	],
 	providers: [CourseService],
 	controllers: [CourseController],
