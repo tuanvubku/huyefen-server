@@ -178,7 +178,7 @@ export class TeacherController {
     @Get('/search')
     async searchTeacher(@Query() query): Promise<IResponse<any>> {
         let res = null
-        await this.teacherService.searchTeacher(query.query, query.page, query.pageSize)
+        await this.teacherService.searchTeacher(query.keyword, parseInt(query.page), parseInt(query.pageSize))
             .then(data => {
                 res = data
             }).catch(err => {

@@ -570,4 +570,21 @@ export class TeacherService {
                 })
         })
     }
+
+    async findNamesMapFromListId(teacherIds: string[]): Promise<any> {
+        const result = await this.teacherModel
+          .find({
+              _id: {
+                  $in: teacherIds
+              }
+          })
+          .select('name')
+          .lean()
+          .exec()
+        const hashMap: any = {};
+        result.forEach(teacher => {
+            hashMap[teacher._id] = teacher.name
+        });
+        return hashMap;
+    }
 }

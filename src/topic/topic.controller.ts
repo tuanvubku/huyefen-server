@@ -54,7 +54,7 @@ export class TopicController {
     @Get('/search')
     async searchTopic(@Query() query): Promise<IResponse<any>> {
         let res = null
-        await this.topicService.searchTopic(query.query, query.page, query.pageSize)
+        await this.topicService.searchTopic(query.keyword, parseInt(query.page), parseInt(query.pageSize))
             .then(data => {
                 res = data
             }).catch(err => {

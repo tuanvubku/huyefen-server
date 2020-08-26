@@ -118,4 +118,21 @@ export class AreaService {
           .exec();
         return area ? { ..._.head(area.categories), areaId } : null;
     }
+
+    async findNamesMapFromListId(areaIds: string[]): Promise<any> {
+        const result = await this.areaModel
+          .find({
+              _id: {
+                  $in: areaIds
+              }
+          })
+          .select('title')
+          .lean()
+          .exec()
+        const hashMap: any = {};
+        result.forEach(area => {
+            hashMap[area._id] = area.title
+        });
+        return hashMap;
+    }
 }

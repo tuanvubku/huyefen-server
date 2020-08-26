@@ -1218,7 +1218,7 @@ export class CourseController {
     @Get('/search')
     async searchCourse(@Query() query): Promise<IResponse<any>> {
         let res = null
-        await this.courseService.searchCourse(query.query, query.page, query.pageSize)
+        await this.courseService.searchCourse(query.keyword, parseInt(query.page), parseInt(query.pageSize))
             .then(data => {
                 res = data
             }).catch(err => {
