@@ -6,8 +6,7 @@ var mongoosastic = require('mongoosastic')
 export const TeacherSchema = new Schema({
     name: {
         type: String,
-        minlength: 8,
-        maxlength: 50,
+        maxlength: 150,
         required: true,
         es_indexed: true
     },

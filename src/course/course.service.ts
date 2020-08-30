@@ -104,33 +104,33 @@ export class CourseService {
         return course;
     }
 
-    async test() {
-        const subTitles = [
-          'Much like setState in Class components created by extending React.Component or React.PureComponent, the state update using the updater provided by useState hook is also asynchronous, and will not be reflected immediately.',
-          'Also, the main issue here is not just the asynchronous nature but the fact that state values are used by functions based on their current closures',
-          'As far as the syntax to update state is concerned, setMovies(result) will replace the previous movies value in the state with those available from the async reques'
-
-        ];
-        const levels = [Level.Expert, Level.Intermediate, Level.AllLevel, Level.Beginner];
-        const languages = [Language.English, Language.Vietnamese];
-        const category = ['5edcfb4a9e3ec67b94474593', '5edcfb5a9e3ec67b94474594'];
-        const avatars = ['https://images.pexels.com/photos/682375/pexels-photo-682375.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-        'https://images.pexels.com/photos/247583/pexels-photo-247583.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-          'https://images.pexels.com/photos/73873/star-clusters-rosette-nebula-star-galaxies-73873.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-          'https://images.pexels.com/photos/1573134/pexels-photo-1573134.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260'
-        ];
-        const courses = await this.courseModel.find({});
-        courses.forEach(course => {
-            course.subTitle = subTitles[(new Date().getTime()) % 3];
-            course.level = levels[Math.ceil(Math.random() * 100) % 4];
-            course.language = languages[Math.ceil(Math.random() * 100) % 2];
-            course.category = category[Math.ceil(Math.random() * 100) % 2];
-            course.area = '5ed8651e260ae02af256da15';
-            course.avatar = avatars[Math.ceil(Math.random() * 100) % 4];
-            course.price = `tier${Math.ceil(Math.random() * 100) % 3 + 1}`;
-            course.save();
-        })
-    }
+    // async test() {
+    //     const subTitles = [
+    //       'Much like setState in Class components created by extending React.Component or React.PureComponent, the state update using the updater provided by useState hook is also asynchronous, and will not be reflected immediately.',
+    //       'Also, the main issue here is not just the asynchronous nature but the fact that state values are used by functions based on their current closures',
+    //       'As far as the syntax to update state is concerned, setMovies(result) will replace the previous movies value in the state with those available from the async reques'
+    //
+    //     ];
+    //     const levels = [Level.Expert, Level.Intermediate, Level.AllLevel, Level.Beginner];
+    //     const languages = [Language.English, Language.Vietnamese];
+    //     const category = ['5edcfb4a9e3ec67b94474593', '5edcfb5a9e3ec67b94474594'];
+    //     const avatars = ['https://images.pexels.com/photos/682375/pexels-photo-682375.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+    //     'https://images.pexels.com/photos/247583/pexels-photo-247583.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+    //       'https://images.pexels.com/photos/73873/star-clusters-rosette-nebula-star-galaxies-73873.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+    //       'https://images.pexels.com/photos/1573134/pexels-photo-1573134.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260'
+    //     ];
+    //     const courses = await this.courseModel.find({});
+    //     courses.forEach(course => {
+    //         course.subTitle = subTitles[(new Date().getTime()) % 3];
+    //         course.level = levels[Math.ceil(Math.random() * 100) % 4];
+    //         course.language = languages[Math.ceil(Math.random() * 100) % 2];
+    //         course.category = category[Math.ceil(Math.random() * 100) % 2];
+    //         course.area = '5ed8651e260ae02af256da15';
+    //         course.avatar = avatars[Math.ceil(Math.random() * 100) % 4];
+    //         course.price = `tier${Math.ceil(Math.random() * 100) % 3 + 1}`;
+    //         course.save();
+    //     })
+    // }
 
     async fetch(teacherId: string, sort: Sort, page: number, limit: number): Promise<{ total: number, list: Array<any> }> {
 

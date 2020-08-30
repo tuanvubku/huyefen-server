@@ -34,6 +34,7 @@ import { ReviewCourseModule } from './review-course/review-course.module';
 import { PurchaseHistoryModule } from './purchase-history/purchase-history.module';
 import { PublicModule } from './public/public.module';
 import { ChapterGateway } from './chapter/chapter.gateway';
+import { RecommendModule } from './recommend/recommend.module';
 
 @Module({
 	imports: [
@@ -71,7 +72,8 @@ import { ChapterGateway } from './chapter/chapter.gateway';
         ReviewTeacherModule,
         ReviewCourseModule,
         PurchaseHistoryModule,
-        PublicModule
+        PublicModule,
+        RecommendModule
 	],
 	providers: [
 		{

@@ -10,8 +10,7 @@ const mongoosastic = require('mongoosastic')
 export const CourseSchema = new Schema({
     title: {
         type: String,
-        maxlength: 60,
-        minlength: 8,
+        maxlength: 600,
         default: null,
         es_indexed: true
     },
@@ -78,9 +77,7 @@ export const CourseSchema = new Schema({
     },
     password: {
         type: String,
-
-        default: null,
-        minlength: 6
+        default: null
     },
     topics: {
         type: [{
