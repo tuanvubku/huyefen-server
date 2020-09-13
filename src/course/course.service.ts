@@ -764,6 +764,18 @@ export class CourseService {
         return courseInfo;
     }
 
+    async getAllCourseIds(): Promise<string[]> {
+        const result = await this.courseModel.find().lean().exec();
+        return _.map(result, '_id');
+    }
+
+    async updateStarRatings(bulkUpdateOps) {
+        await this.courseModel.collection.bulkWrite(bulkUpdateOps, (err, result) => {
+            console.log(err);
+            console.log(result);
+        })
+    }
+
     async searchCourse(query: string, page: number, pageSize: number): Promise<any> {
         return new Promise((resolve, reject) => {
             (this.courseModel as any).search(
@@ -1138,5 +1150,33 @@ export class CourseService {
             filters: filterResult,
             sortBy
         }
+    }
+
+    async createMostPopularCourses(minNumStudents: number, minStarRating: number): Promise<Array<any>> {
+        const data = await this.courseModel.find({
+            numOfStudents: {
+                $gt: minNumStudents
+            },
+            starRating: {
+                $gt: minStarRating
+            }
+        })
+          .lean()
+          .exec();
+        return data;
+    }
+
+    async createHighRatingCourses(minNumStudents: number, minStarRating: number): Promise<Array<any>> {
+        const data = await this.courseModel.find({
+            numOfStudents: {
+                $gt: minNumStudents
+            },
+            starRating: {
+                $gt: minStarRating
+            }
+        })
+          .lean()
+          .exec();
+        return data;
     }
 }

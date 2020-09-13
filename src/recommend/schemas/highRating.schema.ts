@@ -5,9 +5,5 @@ export const HighRatingSchema = new Schema({
     type: Schema.Types.ObjectId,
     ref: 'Course',
     required: true
-  },
-  score: {
-    type: Number,
-    required: true
   }
 });

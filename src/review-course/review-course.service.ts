@@ -235,4 +235,18 @@ export class ReviewCourseService {
     async countNumRatings(courseId: string): Promise<number> {
         return (await this.reviewCourseModel.find({ course: courseId })).length;
     }
+
+    async getCountedStarRatingHashMap(): Promise<any> {
+        const result = await this.reviewCourseModel
+          .aggregate([
+              {
+                  $group: {
+                      _id: "$course",
+                      total: { $sum: "$starRating" },
+                      size: { $sum: 1 }
+                  }
+              }
+          ]);
+        return _.keyBy(result, '_id');
+    }
 }
