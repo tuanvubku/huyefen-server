@@ -1015,7 +1015,7 @@ export class CourseController {
       @Body('starRating') starRating: string,
       @Body('comment') comment: string,
       @Param('id') courseId: string
-    ): Promise<IResponse<Boolean>> {
+    ): Promise<IResponse<boolean>> {
         const userId = user._id;
         const isValidTeacher = await this.authorService.validateTeacherCourse(instructorId, courseId);
         if (!isValidTeacher)
@@ -1024,7 +1024,7 @@ export class CourseController {
         if (!isValidUser)
             throw new ForbiddenException("You don\'t have permission to access this course!");
         const status = await this.reviewTeacherService.updateReviewInstructor(userId, instructorId, parseFloat(starRating), comment);
-        return new ResponseSuccess<Boolean>("UPDATE_REVIEW_OK", status);
+        return new ResponseSuccess<boolean>("UPDATE_REVIEW_OK", status);
     }
 
     @Get('/:id/reviews/instructors')
@@ -1307,6 +1307,52 @@ export class CourseController {
         const result = await this.chapterService.setCompleteLectureStatus(userId, courseId, chapterId, lectureId, status);
         if (!result)
             throw new NotFoundException('Invalid lecture');
+        return new ResponseSuccess('FETCH_OK', result);
+    }
+
+    @Get('/recommend/mine')
+    @UseGuards(RelaxGuard)
+    async fetchRecommendCoursesForUser(
+      @Req() req
+    ): Promise<IResponse<any>> {
+        let result;
+        const user = req.user;
+        if (user) {
+            result = await this.courseService.fetchRecommendCoursesForAuthorizedUser(user);
+        }
+        else {
+            result = await this.courseService.fetchRecommendCoursesForUnauthorizedUser();
+        }
+        return new ResponseSuccess('FETCH_OK', result);
+    }
+
+    @Get('/areas/:areaId/recommend/courses')
+    @UseGuards(RelaxGuard)
+    async fetchRecommendCoursesOfArea(
+      @Req() req,
+      @Param('areaId') areaId: string
+    ): Promise<any> {
+        const user = req.user;
+        const result = await this.courseService.fetchRecommendCoursesOfArea(user, areaId);
+        return new ResponseSuccess('FETCH_OK', result);
+    }
+
+    @Get('/categories/:categoryId/recommend/courses')
+    @UseGuards(RelaxGuard)
+    async fetchRecommendCoursesOfCategory(
+      @Req() req,
+      @Param('categoryId') categoryId: string
+    ): Promise<any> {
+        const user = req.user;
+        const result = await this.courseService.fetchRecommendCoursesOfCategory(user, categoryId);
+        return new ResponseSuccess('FETCH_OK', result);
+    }
+
+    @Get('/:courseId/related-courses')
+    async fetchRelatedCourses(
+      @Param('courseId') courseId: string
+    ): Promise<any> {
+        const result = await this.courseService.fetchRelatedCourses(courseId);
         return new ResponseSuccess('FETCH_OK', result);
     }
 }

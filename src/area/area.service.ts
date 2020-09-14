@@ -4,7 +4,9 @@ import { Model } from 'mongoose';
 import * as _ from 'lodash';
 import { IArea } from './interfaces/area.interface';
 import { ICategory } from './interfaces/category.interface';
-import { TeacherNotificationSchema } from '@/teacher/schemas/notification.schema';
+import { randomFromArray } from '@/utils/utils';
+import { Role } from '@/config/constants';
+import * as recommendNetwork from '@/universal-recommender/api';
 
 @Injectable()
 export class AreaService {
@@ -28,6 +30,25 @@ export class AreaService {
             new: true,
             runValidators: true
         });
+    }
+
+    async fetchRandomCategories(): Promise<any> {
+        const areas = await this.areaModel.find().lean().exec();
+        let allCategories = [];
+        areas.forEach(area => {
+            allCategories = _.concat(allCategories, area.categories);
+        });
+        return randomFromArray(allCategories, 4);
+    }
+
+    async getFullInfoCategories(categoryIds: string[]): Promise<any> {
+        const areas = await this.areaModel.find().lean().exec();
+        let allCategories: any = [];
+        areas.forEach(area => {
+            allCategories = _.concat(allCategories, area.categories);
+        });
+        const allCategoriesMap = _.keyBy(allCategories, '_id');
+        return categoryIds.map(categoryId => allCategoriesMap[categoryId]);
     }
 
     async findNameById(areaId: string): Promise<IArea> {
@@ -100,6 +121,7 @@ export class AreaService {
     }
 
     async fetchCategory(areaId: string, categoryId: string): Promise<any> {
+        console.log('SKT SKT KST');
         const area: any = await this.areaModel
             .findOne({
                 _id: areaId,
@@ -113,9 +135,10 @@ export class AreaService {
                     $elemMatch: { _id: categoryId }
                 }
             })
-            .select('-categories.description')
+            //.select('-categories.description')
           .lean()
           .exec();
+        console.log('gay');
         return area ? { ..._.head(area.categories), areaId } : null;
     }
 

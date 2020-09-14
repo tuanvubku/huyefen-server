@@ -9,7 +9,7 @@ import {
     UseGuards,
     NotFoundException,
     Res,
-    Query, Inject, forwardRef,
+    Query, Inject, forwardRef, Req,
 } from '@nestjs/common';
 import { ResponseSuccess } from '@/utils/utils';
 import { IResponse } from '@/utils/interfaces/response.interface';
@@ -27,6 +27,7 @@ import { UpdateCategoryDto, UpdateCategoryParamDto } from './dtos/updateCategory
 import { FetchCategoryParamDto } from './dtos/fetchCategory.dto';
 import { FetchDto } from './dtos/fetch.dto';
 import { CourseService } from '@/course/course.service';
+import { RelaxGuard } from '@/utils/guards/relaxAuth.guard';
 
 @Controller('api/areas')
 export class AreaController {
@@ -77,7 +78,7 @@ export class AreaController {
         return new ResponseSuccess('CATEGORIES_FETCH_OK', categories);
     }
 
-    @Post(':id/categories')
+    @Post('/:id/categories')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     async createCategory(@Param() params: CreateCategoryParamDto, @Body() body: CreateCategoryDto): Promise<IResponse<ICategory>> {
@@ -89,7 +90,7 @@ export class AreaController {
         return new ResponseSuccess<ICategory>('CREATE_CATE_OK', category);
     }
 
-    @Put(':areaId/categories/:categoryId')
+    @Put('/:areaId/categories/:categoryId')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.Teacher)
     async updateCategory(@Param() params: UpdateCategoryParamDto, @Body() body: UpdateCategoryDto): Promise<IResponse<ICategory>> {
@@ -101,10 +102,13 @@ export class AreaController {
         return new ResponseSuccess<ICategory>('UPDATE_CATE_OK', category);
     }
 
-    @Get(':areaId/categories/:categoryId')
+    @Get('/:areaId/categories/:categoryId')
     async fetchCategoryInfo(@Param() params: FetchCategoryParamDto): Promise<IResponse<ICategory>> {
+        console.log('fdadaffddfdffdaadfsadfsdfas');
         const { areaId, categoryId } = params;
         const category: ICategory = await this.areaService.fetchCategory(areaId, categoryId);
+        console.log('hellooooooo');
+        console.log(category);
         if (!category)
             throw new NotFoundException('Invalid information about category');
         return new ResponseSuccess<ICategory>('FETCH_CATE_INFO_OK', category);
@@ -141,6 +145,7 @@ export class AreaController {
         categories.forEach(cate => {
             categoriesObj[cate._id] = cate.title;
         });
+
         const result = await this.courseService.fetchCoursesByAreaId(areaId, categoryId, query, categoriesObj);
         return new ResponseSuccess('FETCH_OK', result);
     }

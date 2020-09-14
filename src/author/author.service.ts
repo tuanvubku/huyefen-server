@@ -3,7 +3,7 @@ import { ITeacher } from '@/teacher/interfaces/teacher.interface';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as _ from 'lodash';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { IAuthor } from './interfaces/author.interface';
 
 @Injectable()
@@ -122,7 +122,7 @@ export class AuthorService {
         return isOwner || permission;
     }
 
-    async updatePermission(courseId: string, permissionList: Object): Promise<boolean> {
+    async updatePermission(courseId: string, permissionList: any): Promise<boolean> {
         await Promise.all(_.map(_.keys(permissionList), async memberId => {
             await this.authorModel
                 .findByIdAndUpdate(memberId, {
@@ -224,5 +224,27 @@ export class AuthorService {
     async deleteById(memberId: string): Promise<any> {
         return await this.authorModel
             .findByIdAndDelete(memberId);
+    }
+
+    async fetchSampleCoursesByAuthors(courseId: string, authorIds: string[]): Promise<any> {
+        const data = await this.authorModel
+          .aggregate([
+              {
+                  $match: {
+                      course: {
+                          $ne: Types.ObjectId(courseId)
+                      },
+                      teacher: {
+                          $in: authorIds.map(id => Types.ObjectId(id))
+                      }
+                  }
+              },
+              {
+                  $sample: {
+                      size: 4
+                  }
+              }
+          ]);
+        return data.map(item => item.course);
     }
 }

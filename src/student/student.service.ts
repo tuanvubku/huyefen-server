@@ -4,11 +4,13 @@ import { Model } from 'mongoose';
 import { IStudent } from './interfaces/student.interface';
 import { MyCourseSortType } from '@/config/constants';
 import * as _ from 'lodash';
+import { ChapterService } from '@/chapter/chapter.service';
 
 @Injectable()
 export class StudentService {
     constructor (
-        @InjectModel('Student') private readonly studentModel: Model<IStudent>
+        @InjectModel('Student') private readonly studentModel: Model<IStudent>,
+        private readonly chapterService: ChapterService
     ) {}
 
     async createTest(userId: string, courseId: string): Promise<IStudent> {
@@ -61,9 +63,11 @@ export class StudentService {
           })
           .lean()
           .exec();
+        const courseIds = students.map(student => student.course._id);
+        const progressMap = await this.chapterService.getProgressMap(userId, courseIds);
         let courses = _.map(students, student => ({
             _id: student.course._id,
-            progress: student.progress,
+            progress: progressMap[student.course._id] ? (progressMap[student.course._id].finish * 100 / progressMap[student.course._id].sum) : 0,
             registerTime: student.createdAt,
             authors: _.map(student.course.authors, 'name'),
             title: student.course.title,
@@ -86,6 +90,7 @@ export class StudentService {
         }
         const hasMore = (limit !== -1) && skip + limit < _.size(courses);
         const list = limit === -1 ? _.slice(courses, skip) : _.slice(courses, skip, skip + limit);
+
         return {
             hasMore,
             list

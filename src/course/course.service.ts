@@ -23,7 +23,7 @@ import {
     mapKeyToLanguage,
     mapKeyToLevel,
     mapKeyToPrice,
-    mapStarValueToStarRangeObj,
+    mapStarValueToStarRangeObj, randomFromArray,
 } from '@/utils/utils';
 import { forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
@@ -38,6 +38,7 @@ import { IWhatLearn } from './interfaces/whatLearn.interface';
 import { ITeacher } from '@/teacher/interfaces/teacher.interface';
 import { TopicService } from '@/topic/topic.service';
 import { AreaService } from '@/area/area.service';
+import * as recommendNetwork from '@/universal-recommender/api';
 
 type IGoals = IWhatLearn | IRequirement | ITargetStudent;
 type GoalFields = 'whatLearns' | 'requirements' | 'targetStudents';
@@ -850,7 +851,7 @@ export class CourseService {
         return listIds;
     }
 
-    async handleSuggestData(data: Array<Object>) {
+    async handleSuggestData(data: Array<any>) {
 
         const courses = [];
 
@@ -1178,5 +1179,216 @@ export class CourseService {
           .lean()
           .exec();
         return data;
+    }
+
+    async fetchRecommendCoursesForAuthorizedUser(user: { _id: string, role: Role }): Promise<any> {
+        const userId: string = user._id.toString();
+        const interestedCategories = await this.userService.fetchInterestedCategories(userId);
+        let randomInterestedCategories = [];
+        if (interestedCategories.length > 0) {
+            randomInterestedCategories = randomFromArray(interestedCategories, 4);
+            randomInterestedCategories = await this.areaService.getFullInfoCategories(randomInterestedCategories);
+        }
+        else {
+            randomInterestedCategories = await this.areaService.fetchRandomCategories();
+        }
+        const businessRuleQueries = this.createBusinessRuleQueriesFromCategoriesList(randomInterestedCategories.map(category => category._id));
+        const rawResults = await Promise.all([
+            recommendNetwork.fetchNonPersonalizedRecommend(),
+            recommendNetwork.fetchPersonalizedRecommend(userId),
+            ...businessRuleQueries.map(rules => {
+                return recommendNetwork.fetchBusinessRulesRecommendForUser('0', rules)
+            })
+        ]);
+        const courseIds = _.map(_.flatten(rawResults), item => item.item);
+        const courseInfoMap = await this.getCourseInfoMap(courseIds);
+        const [nonPersonalizedResult, personalizedResult, ...interestedCategoriesResults] = rawResults;
+        const result = {
+            categories: {}
+        };
+        if (nonPersonalizedResult.length > 0) {
+            result['nonPersonalized'] = {
+                starRatings: [],
+                mostPopular: nonPersonalizedResult.map(course => courseInfoMap[course.item])
+            }
+        }
+        if (personalizedResult.length > 0) {
+            result['personalized'] = personalizedResult.map(course => courseInfoMap[course.item]);
+        }
+        randomInterestedCategories.forEach((category, index) => {
+            const list = interestedCategoriesResults[index];
+            if (list.length > 0) {
+                result['categories'][category._id] = {
+                    _id: category._id,
+                    title: category.title,
+                    list: list.map(course => courseInfoMap[course.item])
+                };
+            }
+        });
+        return result;
+    }
+
+    async getCourseInfoMap(courseIds: string[]): Promise<any> {
+        const courses = await this.courseModel
+          .find({
+            _id: {
+                $in: courseIds
+            }
+          })
+          .populate('topics', 'title')
+          .populate('primaryTopic')
+          .populate('authors', 'name')
+          .populate('area', 'title')
+          .select('title authors avatar updatedAt category area topics starRating numOfStudents subTitle level language whatLearns._id whatLearns.content price primaryTopic ')
+          .lean()
+          .exec()
+        const courseArr = courses.map(courseItem => ({
+            ...courseItem,
+            //@ts-ignore
+            primaryTopic: (courseItem.primaryTopic && courseItem.primaryTopic.title) || 'C++',
+            //@ts-ignore
+            area: courseItem.area && courseItem.area.title,
+            level: mapKeyToLevel(courseItem.level),
+            language: mapKeyToLanguage(courseItem.language),
+            authors: _.map(courseItem.authors, 'name'),
+            price: mapKeyToPrice(courseItem.price),
+            realPrice: 29.99,
+            lastUpdated: courseItem.updatedAt
+        }));
+        return _.keyBy(courseArr, '_id');
+    }
+
+    async fetchRecommendCoursesForUnauthorizedUser(): Promise<any> {
+        const randomCategories = await this.areaService.fetchRandomCategories();
+        const businessRuleQueries = this.createBusinessRuleQueriesFromCategoriesList(randomCategories.map(category => category._id));
+        const rawResults = await Promise.all([
+          recommendNetwork.fetchNonPersonalizedRecommend(),
+          ...businessRuleQueries.map(rules => {
+              return recommendNetwork.fetchBusinessRulesRecommendForUser('0', rules)
+          })
+        ]);
+        const courseIds = _.map(_.flatten(rawResults), item => item.item);
+        const courseInfoMap = await this.getCourseInfoMap(courseIds);
+        const [nonPersonalizedResult, ...interestedCategoriesResults] = rawResults;
+        const result = {
+            categories: {}
+        };
+        if (nonPersonalizedResult.length > 0) {
+            result['nonPersonalized'] = {
+                starRatings: [],
+                mostPopular: nonPersonalizedResult.map(course => courseInfoMap[course.item])
+            }
+        }
+        randomCategories.forEach((category, index) => {
+            const list = interestedCategoriesResults[index];
+            if (list.length > 0) {
+                result['categories'][category._id] = {
+                    _id: category._id,
+                    title: category.title,
+                    list: list.map(course => courseInfoMap[course.item])
+                };
+            }
+        });
+        return result;
+    }
+
+    createBusinessRuleQueriesFromCategoriesList(categories: string[]): Array<any> {
+        return categories.map(category => {
+            return [
+                {
+                    name: 'category',
+                    values: [category.toString()],
+                    bias: -1
+                }
+            ];
+        });
+    }
+
+    async fetchRecommendCoursesOfArea(user: { _id: string, role: Role }, areaId: string): Promise<any> {
+        const rules = [
+            {
+                name: 'area',
+                values: [areaId.toString()],
+                bias: -1
+            }
+        ];
+        const nonPersonalizedResult = await recommendNetwork.fetchBusinessRulesRecommendForUser('0', rules);
+        const courseIds = _.map(nonPersonalizedResult, item => item.item);
+        const courseInfoMap = await this.getCourseInfoMap(courseIds);
+        const result = {};
+        result['nonPersonalized'] = {
+            starRatings: [],
+            mostPopular: nonPersonalizedResult.map(course => courseInfoMap[course.item])
+        }
+        return result;
+    }
+
+    async fetchRecommendCoursesOfCategory(user: { _id: string, role: Role }, categoryId: string): Promise<any> {
+        const rules = [
+            {
+                name: 'category',
+                values: [categoryId.toString()],
+                bias: -1
+            }
+        ];
+        const nonPersonalizedResult = await recommendNetwork.fetchBusinessRulesRecommendForUser('0', rules);
+        const courseIds = _.map(nonPersonalizedResult, item => item.item);
+        const courseInfoMap = await this.getCourseInfoMap(courseIds);
+        const result = {};
+        result['nonPersonalized'] = {
+            starRatings: [],
+            mostPopular: nonPersonalizedResult.map(course => courseInfoMap[course.item])
+        }
+        return result;
+    }
+
+    async fetchRelatedCourses(courseId: string): Promise<any> {
+        const [
+          alsoBoughtResult,
+          sameAuthorResult
+        ] = await Promise.all([
+          recommendNetwork.fetchItemBaseRecommend(courseId.toString()),
+          this.fetchSameAuthorCourses(courseId)
+        ]);
+        const alsoBoughtCourseIds = alsoBoughtResult.map(course => course.item);
+        const courseInfoMap = await this.getCourseInfoMapForAlsoBought(alsoBoughtCourseIds);
+        return {
+            alsoBought: alsoBoughtCourseIds.map(courseId => courseInfoMap[courseId]),
+            sameAuthors: sameAuthorResult,
+            frequent: {}
+        };
+    }
+
+    async getCourseInfoMapForAlsoBought(courseIds: string[]): Promise<any> {
+        const [courses, numOfLectureMap] = await Promise.all([
+            this.courseModel
+              .find({
+                  _id: {
+                      $in: courseIds
+                  }
+              })
+              .populate('authors', 'name')
+              .select('title authors avatar updatedAt starRating numOfStudents price')
+              .lean()
+              .exec(),
+            this.chapterService.getNumOfLectureMap(courseIds)
+        ]);
+        const courseArr = courses.map(courseItem => ({
+            ...courseItem,
+            authors: _.map(courseItem.authors, 'name'),
+            price: mapKeyToPrice(courseItem.price),
+            realPrice: 29.99,
+            lastUpdated: courseItem.updatedAt,
+            numOfLectures: numOfLectureMap[courseItem._id] || 0
+        }));
+        return _.keyBy(courseArr, '_id');
+    }
+
+    async fetchSameAuthorCourses(courseId: string): Promise<Array<any>> {
+        const course = await this.courseModel.findById(courseId).lean().exec();
+        const authorIds = course.authors;
+        const courseIds = await this.authorService.fetchSampleCoursesByAuthors(courseId, authorIds);
+        const courseInfoMap = await this.getCourseInfoMap(courseIds);
+        return courseIds.map(courseId => courseInfoMap[courseId]);
     }
 }

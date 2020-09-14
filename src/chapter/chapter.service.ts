@@ -33,6 +33,34 @@ export class ChapterService {
         return syllabus;
     }
 
+    async getProgressMap(userId: string, courseIds: string[]): Promise<any> {
+        const data = await this.chapterModel
+          .find({
+            course: {
+              $in: courseIds
+            }
+          })
+          .lean()
+          .exec();
+        const result = {};
+        data.forEach(item => {
+          const courseId = item.course.toString();
+          if (!result[courseId]) {
+            result[courseId] = {
+              sum: 0,
+              finish: 0
+            };
+          }
+          result[courseId].sum += item.lectures.length;
+          item.lectures.forEach(lecture => {
+            if (lecture.completed.map(x => x.toString()).indexOf(userId) > -1) {
+              result[courseId].finish += 1;
+            }
+          });
+        });
+        return result;
+    }
+
     async fetchChapters(courseId: string): Promise<any[]> {
         return await this.chapterModel
             .find({ course: courseId })
@@ -831,5 +859,26 @@ export class ChapterService {
       }
       await chapter.save();
       return true;
+    }
+
+    async getNumOfLectureMap(courseIds: string[]): Promise<any> {
+      const data = await this.chapterModel.find({
+        course: {
+          $in: courseIds
+        }
+      })
+        .lean()
+        .exec();
+      const result = {};
+      data.forEach(item => {
+        const courseId = item.course.toString();
+        if (!result[courseId]) {
+          result[courseId] = item.lectures.length;
+        }
+        else {
+          result[courseId] += item.lectures.length;
+        }
+      });
+      return result;
     }
 }

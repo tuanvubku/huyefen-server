@@ -121,3 +121,17 @@ export const compareByScore = (a, b) => {
 	}
 	return comparison * -1;
 }
+
+export function randomFromArray(arr, n) {
+	let len = arr.length;
+	let count = n < len ? n : len;
+	const result = new Array(count);
+	const taken = new Array(len);
+
+	while (count--) {
+		const x = Math.floor(Math.random() * len);
+		result[count] = arr[x in taken ? taken[x] : x];
+		taken[x] = --len in taken ? taken[len] : len;
+	}
+	return result;
+}

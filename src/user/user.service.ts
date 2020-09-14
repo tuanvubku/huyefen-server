@@ -704,4 +704,9 @@ export class UserService {
         }
         return 1;
     }
+
+    async fetchInterestedCategories(userId: string): Promise<any> {
+        const user = await this.userModel.findById(userId).lean().exec();
+        return user.catesOfConcern;
+    }
 }
