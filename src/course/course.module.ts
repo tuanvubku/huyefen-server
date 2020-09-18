@@ -16,6 +16,7 @@ import { FirebaseModule } from '@/firebase/firebase.module';
 import { PurchaseHistoryModule } from '@/purchase-history/purchase-history.module';
 import { TopicModule } from '@/topic/topic.module';
 import { AreaModule } from '@/area/area.module';
+import { CourseMessengerModule } from '@/course-messenger/course-messenger.module';
 
 @Module({
 	imports: [
@@ -36,7 +37,7 @@ import { AreaModule } from '@/area/area.module';
 		PurchaseHistoryModule,
 		TopicModule,
 		forwardRef(() => AreaModule),
-
+		CourseMessengerModule
 	],
 	providers: [CourseService],
 	controllers: [CourseController],

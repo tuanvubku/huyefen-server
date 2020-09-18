@@ -39,6 +39,7 @@ import { ICourse } from './interfaces/course.interface';
 import { IRequirement } from './interfaces/requirement.interface';
 import { ITargetStudent } from './interfaces/targetStudent.interface';
 import { IWhatLearn } from './interfaces/whatLearn.interface';
+import { CourseMessengerService } from '@/course-messenger/course-messenger.service';
 
 @Controller('api/courses')
 export class CourseController {
@@ -50,7 +51,8 @@ export class CourseController {
         private readonly teacherService: TeacherService,
         private readonly studentService: StudentService,
         private readonly reviewTeacherService: ReviewTeacherService,
-        private readonly reviewCourseService: ReviewCourseService
+        private readonly reviewCourseService: ReviewCourseService,
+
     ) { }
 
     @Post()
@@ -1042,6 +1044,8 @@ export class CourseController {
         return new ResponseSuccess("FETCH_REVIEW_OK", reviews);
     }
 
+
+
     @Get('/:id/reviews/public')
     @UseGuards(RelaxGuard)
     async fetchReviews(
@@ -1290,6 +1294,8 @@ export class CourseController {
         return new ResponseSuccess('FETCH_OK', result);
     }
 
+
+
     @Post('/:courseId/:chapterId/:lectureId/completed')
     @UseGuards(AuthGuard('jwt'), RolesGuard)
     @Roles(Role.User)
@@ -1355,4 +1361,19 @@ export class CourseController {
         const result = await this.courseService.fetchRelatedCourses(courseId);
         return new ResponseSuccess('FETCH_OK', result);
     }
+
+    @Post('/:courseId/submit-view')
+    @UseGuards(RelaxGuard)
+    async submitViewCourse(
+      @User() user,
+      @Param('courseId') courseId: string
+    ): Promise<any> {
+        if (user) {
+            await this.courseService.submitView(user._id, courseId);
+        }
+        return new ResponseSuccess('OK', '');
+    }
+
+
+
 }

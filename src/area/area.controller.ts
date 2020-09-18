@@ -104,11 +104,8 @@ export class AreaController {
 
     @Get('/:areaId/categories/:categoryId')
     async fetchCategoryInfo(@Param() params: FetchCategoryParamDto): Promise<IResponse<ICategory>> {
-        console.log('fdadaffddfdffdaadfsadfsdfas');
         const { areaId, categoryId } = params;
         const category: ICategory = await this.areaService.fetchCategory(areaId, categoryId);
-        console.log('hellooooooo');
-        console.log(category);
         if (!category)
             throw new NotFoundException('Invalid information about category');
         return new ResponseSuccess<ICategory>('FETCH_CATE_INFO_OK', category);

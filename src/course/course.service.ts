@@ -100,8 +100,13 @@ export class CourseService {
             if (err) throw err;
         })
         const courseId: string = course._id;
-        await this.authorService.create(teacherId, courseId);
-        await this.teacherService.addCourse(teacherId, courseId);
+        await Promise.all([
+            this.authorService.create(teacherId, courseId),
+            this.teacherService.addCourse(teacherId, courseId),
+            recommendNetwork.inputCourseData(courseId.toString(), {
+                area: [area.toString()]
+            })
+        ]);
         return course;
     }
 
@@ -440,6 +445,14 @@ export class CourseService {
                 runValidators: true
             })
             .populate('topics');
+        const properties: any = {};
+        if (params.area) {
+            properties.area = [params.area.toString()];
+        }
+        if (params.category) {
+            properties.category = [params.category.toString()];
+        }
+        await recommendNetwork.inputCourseData(courseId.toString(), properties);
         if (!course) return { status: false, data: null };
         return await this.finalLanding(course, ['title', 'subTitle', 'description', 'language', 'level', 'area', 'category', 'topics', 'primaryTopic']);
     }
@@ -719,18 +732,22 @@ export class CourseService {
             'price'
         ), price => mapKeyToPrice(price)));
         totalPrice += coursePrice;
-        await this.courseModel
-            .updateMany({
-                _id: {
-                    $in: courseItemIds
-                }
-            }, {
-                $inc: {
-                    numOfStudents: 1
-                }
-            });
-        await this.studentService.createMany(userId, courseItemIds);
-        await this.purchaseHistoryService.createOne(userId, items, totalPrice);
+        await Promise.all([
+            this.courseModel
+              .updateMany({
+                  _id: {
+                      $in: courseItemIds
+                  }
+              }, {
+                  $inc: {
+                      numOfStudents: 1
+                  }
+              }),
+            this.studentService.createMany(userId, courseItemIds),
+            this.purchaseHistoryService.createOne(userId, items, totalPrice),
+            ...courseItemIds.map(courseId => { return recommendNetwork.inputBuyEvent(userId.toString(), courseId.toString()); })
+        ]);
+
     }
 
     async recommendCoursesForFriends(userId: string, courseId: string, friendIds: string[]): Promise<number> {
@@ -1390,5 +1407,9 @@ export class CourseService {
         const courseIds = await this.authorService.fetchSampleCoursesByAuthors(courseId, authorIds);
         const courseInfoMap = await this.getCourseInfoMap(courseIds);
         return courseIds.map(courseId => courseInfoMap[courseId]);
+    }
+
+    async submitView(userId: string, courseId: string): Promise<any> {
+        await recommendNetwork.inputViewEvent(userId.toString(), courseId.toString());
     }
 }

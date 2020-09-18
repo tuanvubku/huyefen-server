@@ -42,6 +42,15 @@ export class TopicController {
         return new ResponseSuccess<string>('DELETE_OK', 'ok');
     }
 
+    @Get('/:id')
+    async getTopicDetail(@Param('id') topicId: string): Promise<IResponse<any>> {
+        const result = await this.topicService.findById(topicId);
+        if (!result) {
+            throw new NotFoundException('Invalid topic');
+        }
+        return new ResponseSuccess('FETCH_OK', result);
+    }
+
     @Get('/suggest')
     async getTopicSuggestions(@Query() query) {
         const result = {

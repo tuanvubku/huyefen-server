@@ -61,7 +61,6 @@ export class RecommendService {
     const minStar = 3.6;
     const minNumStudents = 1000;
     const courses = await this.courseService.createMostPopularCourses(minNumStudents, minStar);
-    console.log(courses.length);
     const data = courses.map(course => {
       return async () => {
         const t = new this.mostPopularModel({

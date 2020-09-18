@@ -35,6 +35,8 @@ import { PurchaseHistoryModule } from './purchase-history/purchase-history.modul
 import { PublicModule } from './public/public.module';
 import { ChapterGateway } from './chapter/chapter.gateway';
 import { RecommendModule } from './recommend/recommend.module';
+import { CourseMessengerModule } from './course-messenger/course-messenger.module';
+import { CourseMessengerGateway } from './course-messenger/course-messenger.gateway';
 
 @Module({
 	imports: [
@@ -73,7 +75,8 @@ import { RecommendModule } from './recommend/recommend.module';
         ReviewCourseModule,
         PurchaseHistoryModule,
         PublicModule,
-        RecommendModule
+        RecommendModule,
+        CourseMessengerModule
 	],
 	providers: [
 		{

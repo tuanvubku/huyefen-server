@@ -696,7 +696,6 @@ export class ChapterService {
           }
         })
       if (!chapter) return false;
-      console.log(resource);
       const newResource = new this.resourceModel(resource);
       chapter.lectures[0].resources.push(newResource);
       await chapter.save();
@@ -847,7 +846,6 @@ export class ChapterService {
             $elemMatch: { _id: lectureId }
           }
         })
-      console.log(chapter);
       if (!chapter) {
         return false;
       };

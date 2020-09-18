@@ -64,13 +64,11 @@ export class AuthorService {
     }
 
     async validateTeacherCourse(teacherId: string, courseId: string): Promise<boolean> {
-        console.log(teacherId, courseId);
         const author: IAuthor = await this.authorModel
             .findOne({
                 teacher: teacherId,
                 course: courseId
             });
-        console.log(author);
         return !!author;
     }
 

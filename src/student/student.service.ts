@@ -123,4 +123,20 @@ export class StudentService {
             list: courses
         }
     }
+
+    async getMembers(courseId: string, skip: number, limit: number): Promise<any> {
+        const length = await this.studentModel.find({ course: courseId }).count();
+        const list = await this.studentModel
+            .find({ course: courseId })
+            .populate('user', '_id name avatar')
+            .skip(skip)
+            .limit(limit)
+            .select('-progress -createdAt')
+            .lean()
+            .exec();
+        return {
+            hasMore: skip + limit < length,
+            list
+        }
+    }
 }

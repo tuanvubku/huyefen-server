@@ -121,7 +121,6 @@ export class AreaService {
     }
 
     async fetchCategory(areaId: string, categoryId: string): Promise<any> {
-        console.log('SKT SKT KST');
         const area: any = await this.areaModel
             .findOne({
                 _id: areaId,
@@ -138,7 +137,6 @@ export class AreaService {
             //.select('-categories.description')
           .lean()
           .exec();
-        console.log('gay');
         return area ? { ..._.head(area.categories), areaId } : null;
     }
 

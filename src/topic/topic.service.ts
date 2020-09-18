@@ -128,4 +128,8 @@ export class TopicService {
                 })
         })
     }
+
+    async findById(topicId: string): Promise<any> {
+        return await this.topicModel.findById(topicId);
+    }
 }

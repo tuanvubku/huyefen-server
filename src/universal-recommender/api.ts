@@ -21,7 +21,6 @@ export const fetchItemBaseRecommend = async (itemId: string) => {
 }
 
 export const fetchBusinessRulesRecommendForUser = async (userId: string, rules: Array<any>) => {
-  console.log(rules);
   const response = await axiosInstance.post('queries', {
     user: userId,
     num: 12,

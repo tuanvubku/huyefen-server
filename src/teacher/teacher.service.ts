@@ -27,8 +27,6 @@ export class TeacherService {
     ) {
         (this.teacherModel as any).createMapping(function (err, mapping) {
             if (err) {
-                //console.log('error creating mapping (you can safely ignore this)');
-                //console.log(err);
             } else {
                 console.log('mapping created!');
                 console.log(mapping);
